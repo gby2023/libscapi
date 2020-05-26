@@ -336,7 +336,7 @@ byte * PrgFromOpenSSLAES::getPRGBytesEX(int outLen)
 
 }
 
-void PrgFromOpenSSLAES::getPRGBytes(byte* & outBytes, int outLen){
+void PrgFromOpenSSLAES::getPRGBytes(byte* outBytes, int outLen){
 	//key must be set in order to get randoms
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
