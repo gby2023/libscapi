@@ -26,48 +26,43 @@ CPP_FILES     := $(wildcard src/*/*.cpp)
 CPP_FILES     += $(wildcard tools/circuits/scapiBristolConverter/*.cpp)
 CPP_FILES     += $(wildcard tools/circuits/scapiNecConverter/*.cpp)
 CPP_FILES     += $(wildcard src/*/*.cpp)
-ifeq ($(uname_arch), x86_64)
 C_FILES       := $(wildcard src/*/*.c)
-OBJ_FILES     += $(patsubst src/%.c,obj/%.o,$(C_FILES))
-endif
 OBJ_FILES     := $(patsubst src/%.cpp,obj/%.o,$(CPP_FILES))
+OBJ_FILES     += $(patsubst src/%.c,obj/%.o,$(C_FILES))
 OBJ_FILES     += $(patsubst tools/circuits/scapiBristolConverter/%.cpp,obj/tools/scapiBristolConverter/%.o,$(CPP_FILES))
 OBJ_FILES     += $(patsubst tools/circuits/scapiNecConverter/%.cpp,obj/tools/scapiNecConverter/%.o,$(CPP_FILES))
 
 GCC_STANDARD = c++14
 
 ifeq ($(uname_os), Linux)
-	INC            = -Iinstall/include -Iinstall/include/OTExtensionBristol -Iinstall/include/libOTe \
-	 -Iinstall/include/libOTe/cryptoTools -I$(HOME) -I$(HOME)/OTExtensionBristol
+    INC            = -Iinstall/include -Iinstall/include/OTExtensionBristol -Iinstall/include/libOTe \
+	 -Iinstall/include/libOTe/cryptoTools -I$(HOME) -I$(HOME)/OTExtensionBristol -I$(HOME)/OTExtension/ \
+	 -I$(HOME)/OTExtension/extern/ENCRYPTO_utils/src/ -I$(HOME)/OTExtension/extern/ENCRYPTO_utils/extern/relic/include/
     LIBRARIES_DIR  = -Linstall/lib
 endif
 ifeq ($(uname_os), Darwin)
     INC            = -Iinstall/include -Iinstall/include/OTExtensionBristol -Iinstall/include/libOTe \
-    -Iinstall/include/libOTe/cryptoTools
-    LIBRARIES_DIR  = -Linstall/lib
+    -Iinstall/include/libOTe/cryptoTools -I/usr/local/opt/openssl@1.1/include
+    LIBRARIES_DIR  = -Linstall/lib -L/usr/local/opt/openssl@1.1/lib
 endif
 
 ifeq ($(uname_arch), x86_64)
 	OUT_DIR        = obj obj/primitives obj/interactive_mid_protocols obj/mid_layer obj/comm obj/infra obj/cryptoInfra \
 	obj/circuits obj/circuits_c obj/tools/scapiNecConverter obj/tools/scapiBristolConverter
-	CPP_OPTIONS   := -g -std=$(GCC_STANDARD) $(INC) -mavx -maes -msse4.1 -mpclmul -Wall \
-	-Wno-uninitialized -Wno-unused-but-set-variable -Wno-unused-function -Wno-unused-variable -Wno-unused-result \
-	-Wno-sign-compare -Wno-parentheses -Wno-ignored-attributes -O3 -fPIC
+	CPP_OPTIONS   := -g -std=$(GCC_STANDARD) $(INC) -mavx -maes -msse4.1 -mpclmul -Wall -Wno-ignored-attributes \
+	-Wno-maybe-uninitialized -O3 -fPIC
 endif
 ifeq ($(uname_arch), armv7l)
 	OUT_DIR        = obj obj/primitives obj/interactive_mid_protocols obj/mid_layer obj/comm obj/infra obj/cryptoInfra \
 	obj/tools/scapiNecConverter obj/tools/scapiBristolConverter
-	CPP_OPTIONS   := -g -std=$(GCC_STANDARD) $(INC) -mfpu=neon -Wall -Wno-narrowing -Wno-uninitialized \
-	-Wno-unused-but-set-variable -Wno-unused-function -Wno-unused-variable -Wno-unused-result \
-	-Wno-sign-compare -Wno-parentheses -Wno-ignored-attributes -O3 -fPIC
+	CPP_OPTIONS   := -g -std=$(GCC_STANDARD) $(INC) -mfpu=neon -Wall -Wno-ignored-attributes \
+	-Wno-maybe-uninitialized -O3 -fPIC
 endif
 ifeq ($(uname_arch), aarch64)
 	OUT_DIR        = obj obj/primitives obj/interactive_mid_protocols obj/mid_layer obj/comm obj/infra obj/cryptoInfra \
-	obj/tools/scapiNecConverter obj/tools/scapiBristolConverter obj/circuits
-	CPP_OPTIONS   := -g -std=$(GCC_STANDARD) $(INC) -Wall -Wno-narrowing -Wno-uninitialized \
-	-Wno-unused-but-set-variable -Wno-unused-function -Wno-unused-variable -Wno-unused-result \
-	-Wno-sign-compare -Wno-parentheses -Wno-ignored-attributes -Wno-return-type \
-	 -O3 -fPIC -march=armv8-a+crypto -flax-vector-conversions
+	obj/circuits obj/tools/scapiNecConverter obj/tools/scapiBristolConverter
+	CPP_OPTIONS   := -g -std=$(GCC_STANDARD) $(INC) -Wall -Wall -Wno-ignored-attributes \
+	-Wno-maybe-uninitialized -O3 -fPIC
 endif
 
 $(COMPILE.cpp) = g++ -c $(CPP_OPTIONS) -o $@ $<
@@ -90,7 +85,7 @@ endif
 endif # Linux c++11
 
 ifeq ($(uname_os), Darwin)
-    libs:  compile-ntl compile-blake compile-kcp
+    libs:  compile-ntl compile-blake
 endif # Darwin c++11
 endif # c++11
 
@@ -101,7 +96,7 @@ ifeq ($(uname_arch), x86_64)
     libs: compile-ntl compile-blake compile-libote compile-otextension-bristol compile-kcp
 endif
 ifeq ($(uname_arch), aarch64)
-    libs:  compile-ntl compile-kcp
+    libs:  compile-ntl compile-kcp compile-otextension-encrypto
 endif
 endif # Linux c++14
 ifeq ($(uname_os), Darwin)
@@ -116,13 +111,18 @@ $(OUT_DIR):
 	mkdir -p $(OUT_DIR)
 
 $(SLib): $(OBJ_FILES)
-	ar ru $@ $^ 
+	ar r $@ $^
 	ranlib $@
 
 tests: compile-tests
 
 obj/circuits_c/%.o: src/circuits_c/%.c
+ifeq ($(uname_arch), x86_64)
 	gcc -fPIC -mavx -maes -mpclmul -DRDTSC -DTEST=AES128  -O3 -c -o $@ $<
+endif
+ifeq ($(uname_arch), aarch64)
+	gcc -fPIC -march=armv8-a+crypto -flax-vector-conversions -O3 -c -o $@ $<
+endif
 obj/circuits/%.o: src/circuits/%.cpp
 	g++ -c $(CPP_OPTIONS) -o $@ $<
 obj/comm/%.o: src/comm/%.cpp
@@ -167,22 +167,19 @@ compile-blake:
 compile-libote:
 	@echo "Compiling libOTe library..."
 	@cp -r lib/libOTe $(builddir)/libOTe
-ifeq ($(uname_os), Darwin)
-	@cd $(builddir)/libOTe/cryptoTools/thirdparty/miracl/source && bash linux64 && cd ../../../../../../
-endif
 	@cmake $(builddir)/libOTe/CMakeLists.txt -DCMAKE_BUILD_TYPE=Release -DLIBSCAPI_ROOT=$(PWD)
 	@$(MAKE) -C $(builddir)/libOTe/
 	@cp $(builddir)/libOTe/lib/*.a install/lib/
 	@mv install/lib/liblibOTe.a install/lib/libOTe.a
 	$(info$(shell mkdir -p install/include/libOTe))
-	@cd $(builddir)/libOTe/ && find . -name "*.h" -type f |xargs -I {} cp --parents {} $(PWD)/install/include/libOTe
 ifeq ($(uname_os), Linux)
+	@cd $(builddir)/libOTe/ && find . -name "*.h" -type f |xargs -I {} cp --parents {} $(PWD)/install/include/libOTe
 	@cp -r $(builddir)/libOTe/cryptoTools/cryptoTools/gsl $(PWD)/install/include/libOTe/cryptoTools/cryptoTools
 endif
 ifeq ($(uname_os), Darwin)
-	@cp -R $(builddir)/libOTe/cryptoTools/cryptoTools/gsl $(PWD)/install/include/libOTe/cryptoTools/cryptoTools
+	@cd $(builddir)/libOTe/ && find . -name "*.h" -type f |xargs -I {} rsync -R {} $(PWD)/install/include/libOTe
+	@rsync -R $(builddir)/libOTe/cryptoTools/cryptoTools/gsl $(PWD)/install/include/libOTe/cryptoTools/cryptoTools
 endif
-	@cp $(builddir)/libOTe/cryptoTools/thirdparty/miracl/source/libmiracl.a install/lib
 	@touch compile-libote
 
 compile-otextension-bristol:
@@ -201,6 +198,16 @@ compile-kcp:
 	@cp -r $(builddir)/KCP/*.h install/include/KCP
 	@mv $(builddir)/KCP/ikcp.a install/lib
 	@touch compile-kcp
+
+compile-otextension-encrypto:
+	@echo "Compiling the OTExtension Encrypto group library..."
+	@cp -r lib/OTExtensionEncrypto $(builddir)/OTExtensionEncrypto
+	@cmake $(builddir)/OTExtensionEncrypto/CMakeLists.txt -DCMAKE_INSTALL_PREFIX=$(builddir)/OTExtensionEncrypto
+	@$(MAKE) -C $(builddir)/OTExtensionEncrypto CXX=$(CXX)
+	@$(MAKE) -C $(builddir)/OTExtensionEncrypto CXX=$(CXX) install
+	@cp -r $(builddir)/OTExtensionEncrypto/include $(PWD)/install/include/OTExtensionEncrypto
+	@cp $(builddir)/OTExtensionEncrypto/lib/*.a $(PWD)/install/lib
+	@touch compile-otextension-encrypto
 
 #### Tests compilation ####
 .PHONY: compile-tests
@@ -236,6 +243,11 @@ clean-kcp:
 	@echo "Cleaning KCP library"
 	@rm -rf $(builddir)/KCP/
 	@rm -f compile-kcp
+
+clean-otextension-encrypto:
+	@echo "Cleaning OTExtensionEncrypto library"
+	@rm -rf $(builddir)/OTExtensionEncrypto/
+	@rm -f compile-otextension-encrypto
 
 clean-cpp:
 	@echo "cleaning .obj files"

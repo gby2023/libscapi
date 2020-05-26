@@ -47,7 +47,7 @@
 #include <algorithm>
 #include <iterator>
 #include <iomanip>
-#include <sys/resource.h>
+#include <sys/sysinfo.h>
 #include <sys/time.h>
 #include "ConfigFile.hpp"
 #include "json.hpp"
@@ -61,36 +61,40 @@ using json = nlohmann::json;
 class Measurement {
 public:
     Measurement(Protocol &protocol);
-    Measurement(Protocol &protocol, vector<string> names);
-    Measurement(string protocolName, int internalIterationsNumber, int partyId, int partiesNumber, string partiesFile);
-    Measurement(string protocolName, int internalIterationsNumber, int partyId, int partiesNumber,
-                string partiesFile, vector<string> names);
+    Measurement(Protocol &protocol, vector<string> &names);
+    Measurement(const string &protocolName, int internalIterationsNumber, int partyId, int partiesNumber);
+    Measurement(const string & protocolName, int internalIterationsNumber, int partyId, int partiesNumber,
+                vector<string> & names);
     void addTaskNames(vector<string> & names);
     ~Measurement();
-    void startSubTask(string taskName, int currentIterationNum);
-    void endSubTask(string taskName, int currentIterationNum);
+    void startSubTask(const string &taskName, int currentIterationNum);
+    void endSubTask(const string &taskName, int currentIterationNum);
+    void writeData(const string &key, const string &value);
+    void analyzeComm(const json & j, const string &fileName);
 
 
 private:
-    string getcwdStr()
-    {
-        char* buff;//automatically cleaned when it exits scope
+    string getcwdStr() {
+        char buff[255];//automatically cleaned when it exits scope
         return string(getcwd(buff,255));
     }
 
     void init(Protocol &protocol);
-    void init(vector <string> names);
-    void setTaskNames(vector<string> & names);
-    void init(string protocolName, int internalIterationsNumber, int partyId, int partiesNumber, string partiesFile);
-    int getTaskIdx(string name); // return the index of given task name
+    void init(const vector <string> &names);
+    void setTaskNames(const vector<string> & names);
+    void init(const string &protocolName, int internalIterationsNumber, int partyId, int partiesNumber);
+    int getTaskIdx(const string &name); // return the index of given task name
 
     void analyze(); // create JSON file with cpu times
-    void createJsonFile(json j, string fileName);
+    void analyzeMemory();
+    void createJsonFile(const json &j, const string &fileName);
 
     vector<vector<double>> *m_cpuStartTimes;
     vector<vector<double>> *m_cpuEndTimes;
+    vector<vector<double>> *m_memoryUsage;
     vector<string> m_names;
     vector<pair<string, string>> m_arguments;
+    map<string, string> m_auxiliaryData;
 
     string m_protocolName;
     int m_partyId = 0;

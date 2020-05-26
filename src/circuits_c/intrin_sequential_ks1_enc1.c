@@ -6,16 +6,15 @@
 /* IPG, Architecture, Israel Development Center, Haifa, Israel      */
 /********************************************************************/
 
-#ifdef __x86_64__
 #include <stdint.h>
 #include <stdio.h>
+#ifdef __x86_64__
 #include <wmmintrin.h>
-
-#if defined(__INTEL_COMPILER)
-# include <ia32intrin.h> 
-#elif defined(__GNUC__)
 # include <emmintrin.h>
 # include <smmintrin.h>
+#elif __aarch64__
+#include "../../include/infra/sse2neon.h"
+#include "../../include/infra/aes_arm.h"
 #endif
 
 
@@ -134,5 +133,3 @@ void intrin_sequential_ks1_enc1(const unsigned char* PT, unsigned char* CT, int 
 		
 	}
 }
-
-#endif

@@ -25,25 +25,27 @@
 * 
 */
 
+#ifndef INTERACTIVE_MID_TEST
+#define INTERACTIVE_MID_TEST
 
 #include "catch.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocol.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolDlog.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolDH.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolDHExtended.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolPedersenCmtKnowledge.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolPedersenCommittedValue.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolElGamalCmtKnowledge.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolElGamalCommittedValue.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolElGamalPrivateKey.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolElGamalEncryptedValue.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolCramerShoupEncryptedValue.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolDamgardJurikEncryptedZero.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolDamgardJurikEncryptedValue.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolDamgardJurikProduct.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolAnd.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolOrTwo.hpp"
-#include "../include//interactive_mid_protocols/SigmaProtocolOrMultiple.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocol.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolDlog.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolDH.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolDHExtended.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolPedersenCmtKnowledge.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolPedersenCommittedValue.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolElGamalCmtKnowledge.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolElGamalCommittedValue.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolElGamalPrivateKey.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolElGamalEncryptedValue.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolCramerShoupEncryptedValue.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolDamgardJurikEncryptedZero.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolDamgardJurikEncryptedValue.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolDamgardJurikProduct.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolAnd.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolOrTwo.hpp"
+#include "../include/interactive_mid_protocols/SigmaProtocolOrMultiple.hpp"
 
 void computeSigmaProtocol(SigmaProverComputation* prover, SigmaVerifierComputation* verifier,
 	SigmaCommonInput* commonInput, shared_ptr<SigmaProverInput> proverInput) {
@@ -538,3 +540,5 @@ TEST_CASE("SigmaProtocols", "[SigmaProtocolDlog, SigmaProtocolDH]")
 		
 	}
 }
+
+#endif

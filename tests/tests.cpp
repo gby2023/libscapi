@@ -26,6 +26,9 @@
 */
 
 
+#ifndef TESTS
+#define TESTS
+
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 
 #include "../include/infra/Common.hpp"
@@ -50,7 +53,11 @@
 #include "../include/interactive_mid_protocols/SigmaProtocol.hpp"
 #include "../include/primitives/Mersenne.hpp"
 #include <ctype.h>
+#ifdef __x86_64__
 #include <smmintrin.h>
+#elif __aarch64__
+#include "../include/infra/sse2neon.h"
+#endif
 
 
 biginteger endcode_decode(biginteger bi) {
@@ -248,7 +255,6 @@ TEST_CASE("boosts multiprecision", "[boost, multiprecision]") {
 	{
 		string s = "12345678910123456789123456789123456789123456789123456789123456789123456789123456789";
 		biginteger bi(s);
-		REQUIRE((string)bi == s);
 		REQUIRE(bi.str()  == s);
 		biginteger b2 = bi - 3;
 		auto st_res = s.substr(0, s.size() - 1)+"6";
@@ -478,17 +484,13 @@ TEST_CASE("field operations", "[ZpMersenneIntElement, ZpMersenneLongElement, ZpM
 	SECTION("testing ZpMersenneIntElement") {
 
         ZpMersenneIntElement elem1;
-
-
         test_field(elem1);
 
 	}
-
+#ifdef __x86_64__
 	SECTION("testing ZpMersenneLongElement") {
 
         ZpMersenneLongElement elem1;
-
-
         test_field(elem1);
 
 	}
@@ -496,12 +498,10 @@ TEST_CASE("field operations", "[ZpMersenneIntElement, ZpMersenneLongElement, ZpM
 	SECTION("testing ZpMersenne127Element") {
 
         ZpMersenne127Element elem1;
-
-
         test_field(elem1);
 
 	}
-
+#endif
 
 }
 
@@ -901,22 +901,13 @@ TEST_CASE("Gates and Wires", "") {
 	}
 
 	SECTION("Boolean Circuit From file") {
-#ifdef _WIN32
-		BooleanCircuit bc(new scannerpp::File("../../../../test/testCircuit.txt"));
-		bc.write("../../../../test/testCircuitOutput.txt");
-#else
-
 		BooleanCircuit bc(new scannerpp::File("testCircuit.txt"));
 		bc.write("testCircuitOutput.txt");
-
 		BooleanCircuit aesbc(new scannerpp::File("NigelAes.txt"));
 		aesbc.write("NigelAesOutput.txt");
-#endif
 		REQUIRE(bc.getNumberOfInputs(1) == 4);
 		REQUIRE(bc.getNumberOfInputs(2) == 1);
 		REQUIRE(bc.getOutputWireIndices().size() == 1);
-
-
 	}
 }
 
@@ -1155,3 +1146,4 @@ TEST_CASE("asymmetric encryption")
 	}
 }
 
+#endif
