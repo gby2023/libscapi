@@ -68,7 +68,7 @@ public:
     void addTaskNames(vector<string> & names);
     ~Measurement();
     void startSubTask(const string &taskName, int currentIterationNum);
-    void endSubTask(const string &taskName, int currentIterationNum);
+    void endSubTask(const string &taskName, int currentIterationNum, bool = false);
     void writeData(const string &key, const string &value);
     void analyzeComm(const json & j, const string &fileName);
 

@@ -112,13 +112,24 @@ void Measurement::startSubTask(const string &taskName, int currentIterationNum) 
     (*m_cpuStartTimes)[taskIdx][currentIterationNum] = ms;
 }
 
-void Measurement::endSubTask(const string &taskName, int currentIterationNum) {
+void Measurement::endSubTask(const string &taskName, int currentIterationNum, bool singleTask) {
     int taskIdx = getTaskIdx(taskName);
     auto now = system_clock::now();
     auto ms = (double) time_point_cast<nanoseconds>(now).time_since_epoch().count() / 1000000;
     (*m_cpuEndTimes)[taskIdx][currentIterationNum] = ms - (*m_cpuStartTimes)[taskIdx][currentIterationNum];
     struct sysinfo systemInfo;
-    (*m_memoryUsage)[taskIdx][currentIterationNum] = systemInfo.totalram / systemInfo.mem_unit;
+    if (systemInfo.mem_unit != 0) {
+        (*m_memoryUsage)[taskIdx][currentIterationNum] = systemInfo.totalram / systemInfo.mem_unit;
+    } else {
+        (*m_memoryUsage)[taskIdx][currentIterationNum] = 0;
+    }
+
+    if (singleTask) {
+        for (int i=0; i<m_numberOfIterations; i++){
+            (*m_cpuEndTimes)[taskIdx][i] =  (*m_cpuEndTimes)[taskIdx][currentIterationNum];
+            (*m_memoryUsage)[taskIdx][i] = (*m_memoryUsage)[taskIdx][currentIterationNum];
+        }
+    }
 }
 
 void Measurement::writeData(const string &key, const string &value) {
