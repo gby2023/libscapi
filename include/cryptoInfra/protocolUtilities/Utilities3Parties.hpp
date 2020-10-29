@@ -61,9 +61,9 @@ private:
     //The roles are implemented in the three follow functions:
     //The reverse parameter indicates whether to compute the regular shuffle or the reverse shuffle.
     // The code is very similar so we implement that in the same function.
-    int share_shuffle_upstream(vector<vector<byte>> & input, int numElements, bool reverse);
-    int share_shuffle_downstream(vector<vector<byte>> & input, int numElements, bool reverse);
-    int share_shuffle_passive(vector<vector<byte>> & input, int numElements);
+    int share_shuffle_upstream(vector<byte*> & input, vector<int> & sizes, int numElements, bool reverse);
+    int share_shuffle_downstream(vector<byte*> & input, vector<int> & sizes, int numElements, bool reverse);
+    int share_shuffle_passive(vector<byte*> & input, vector<int> & sizes, int numElements);
 
     void computeShuffleFinalPermutation(vector<int> & shufflePermutation,
                                         vector<int> & shuffleFinalPermutation,
@@ -71,8 +71,8 @@ private:
                                         PrgFromOpenSSLAES* prg);
 
     //Swap the elements in the vector according to the given shuffle permutation
-    void computeShufflePermutation(vector<int> & shuffleFinalPermutation,vector<vector<byte>> & input);
-    int workers_shufflePermutation(vector<int> & shuffleFinalPermutation, vector<vector<byte>> & input);
+    void computeShufflePermutation(vector<int> & shuffleFinalPermutation, vector<byte*> & input, vector<int> & sizes);
+    int workers_shufflePermutation(vector<int> & shuffleFinalPermutation, vector<byte*> & input, vector<int> & sizes);
 
     bool checkSort(byte* recBufs, int numBytes, int elementSize);
     void printOpenedSharesArr(byte* recBufs, int numBytes, int elementSize, ofstream* output);
@@ -113,7 +113,7 @@ private:
 
 
     //Copy each share to the right place according to the mapping SH32
-    void permuteVector(vector<byte> & vToPermute, int numElements, int elementSize, vector<int> & mapping);
+    void permuteVector(byte* vToPermute, int numElements, int elementSize, vector<int> & mapping);
 
 //    void createThreadFiles(string partiesFile);
 
@@ -127,9 +127,9 @@ public:
     ~Utilities3Parties();
 
     //Compute the shuffle algorithm
-    int shuffle(vector<vector<byte>> & input, int numElements);
+    int shuffle(vector<byte*> & input, vector<int> & sizes, int numElements);
     //Compute the reverse shuffle algorithm
-    int shuffleBack(vector<vector<byte>> & input, int numElements);
+    int shuffleBack(vector<byte*> & input, vector<int> & sizes, int numElements);
 
     //Open the shares.
     //Each party send the first share to both other parties and does xor between his value and the other two values.
@@ -142,9 +142,9 @@ public:
     //Compute the sort algorithm
     int sort(vector<byte*> & input, vector<int> & sizes, size_t numElements, byte* sortParamFirst, byte* sortParamSecond, int sortParamSize, bool malicious, bool sortWithID);
 
-    void permute(vector<vector<byte>> & input, int numElements, vector<int> & mapping);
+    void permute(vector<byte*> & input, vector<int> & sizes, int numElements, vector<int> & mapping);
     //The next functions are the protocol flow:
-    void workers_permute(vector<vector<byte>> & input, int numElements, vector<int> & mapping);
+    void workers_permute(vector<byte*> & input, vector<int> & sizes, int numElements, vector<int> & mapping);
 };
 
 #endif //SCAPI_UTILITIES3PARTIES_H

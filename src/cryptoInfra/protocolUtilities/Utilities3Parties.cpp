@@ -232,7 +232,7 @@ bool Utilities3Parties::checkSort(byte* recBufs, int numBytes, int elementSize){
     return sorted;
 }
 
-void Utilities3Parties::permute(vector<vector<byte>>& input, int numElements, vector<int> & mapping){
+void Utilities3Parties::permute(vector<byte*> & input, vector<int> & sizes, int numElements, vector<int> & mapping){
 
 //    cout<<"mappingIds:"<<endl;
 //    for (int i=0; i<numElements; i++){
@@ -241,7 +241,7 @@ void Utilities3Parties::permute(vector<vector<byte>>& input, int numElements, ve
 //    cout<<endl;
     //permute each vector of src/dest/val/bit shares using the mappingIds mapping vector
     for (int i=0; i<input.size(); i++) {
-        permuteVector(input[i], numElements, input[i].size() / numElements, mapping);
+        permuteVector(input[i], numElements, sizes[i] / numElements, mapping);
 //        permuteVector(srcShares.second, numElements, elementSize, mapping);
 //        permuteVector(destShares.first, numElements, elementSize, mapping);
 //        permuteVector(destShares.second, numElements, elementSize, mapping);
@@ -253,7 +253,7 @@ void Utilities3Parties::permute(vector<vector<byte>>& input, int numElements, ve
 
 }
 
-void Utilities3Parties::permuteVector(vector<byte> & vToPermute, int numElements, int elementSize, vector<int> & mapping){
+void Utilities3Parties::permuteVector(byte* vToPermute, int numElements, int elementSize, vector<int> & mapping){
 
     //copy the original vector because the swap will override the data
     vector<byte> tmp(numElements*elementSize);
@@ -261,34 +261,35 @@ void Utilities3Parties::permuteVector(vector<byte> & vToPermute, int numElements
     //copy each share to the right location according to the mappingIds mapping vector
     for (int i=0; i<numElements; i++) {
 
-        memcpy(tmp.data() + i * elementSize, vToPermute.data() + mapping[i] * elementSize, elementSize);
+        memcpy(tmp.data() + i * elementSize, vToPermute + mapping[i] * elementSize, elementSize);
     }
 
-    vToPermute = move(tmp);
+//    vToPermute = move(tmp.data());
+    memcpy(vToPermute, tmp.data(), tmp.size());
 }
 
-void Utilities3Parties::workers_permute(vector<vector<byte>>& input, int numElements, vector<int> & mapping){
+void Utilities3Parties::workers_permute(vector<byte*> & input, vector<int> & sizes, int numElements, vector<int> & mapping){
     cout<<"in workers permute"<<endl;
-    workers_shufflePermutation(mapping, input);
+    workers_shufflePermutation(mapping, input, sizes);
 
 }
 
-int Utilities3Parties::shuffle(vector<vector<byte>>& input, int numElements) {
+int Utilities3Parties::shuffle(vector<byte*> & input, vector<int> & sizes, int numElements) {
     //The shuffle algorithm contains 3 phases.
     //In each phase there is a role for each one of the parties - upstream, downstream and passive.
     switch (partyID) {
         case 0:
             //Party 0 executes the downstream, then the passive and in the end the upstream role.
-            if (0 != share_shuffle_downstream(input, numElements, false)) {
+            if (0 != share_shuffle_downstream(input, sizes, numElements, false)) {
                 cout<<"share_shuffle_downstream error"<<endl;
                 return -1;
             }
 
-            if (0 != share_shuffle_passive(input, numElements)) {
+            if (0 != share_shuffle_passive(input, sizes, numElements)) {
                 cout<<"share_shuffle_passive error"<<endl;
                 return -1;
             }
-            if (0 != share_shuffle_upstream(input, numElements, false)) {
+            if (0 != share_shuffle_upstream(input, sizes, numElements, false)) {
                 cout<<"share_shuffle_upstream error"<<endl;
                 return -1;
             }
@@ -296,17 +297,17 @@ int Utilities3Parties::shuffle(vector<vector<byte>>& input, int numElements) {
             break;
         case 1:
             //Party 1 executes the upstream, then the downstream and in the end the passive role.
-            if (0 != share_shuffle_upstream(input, numElements, false)) {
+            if (0 != share_shuffle_upstream(input, sizes, numElements, false)) {
                 cout<<"share_shuffle_upstream error"<<endl;
                 return -1;
             }
 
-            if (0 != share_shuffle_downstream(input, numElements, false)) {
+            if (0 != share_shuffle_downstream(input, sizes, numElements, false)) {
                 cout<<"share_shuffle_downstream error"<<endl;
                 return -1;
             }
 
-            if (0 != share_shuffle_passive(input, numElements)) {
+            if (0 != share_shuffle_passive(input, sizes, numElements)) {
                 cout<<"share_shuffle_passive error"<<endl;
                 return -1;
             }
@@ -314,17 +315,17 @@ int Utilities3Parties::shuffle(vector<vector<byte>>& input, int numElements) {
             break;
         case 2:
             //Party 2 executes the passive, then the upstream and in the end the downstream role.
-            if (0 != share_shuffle_passive(input, numElements)) {
+            if (0 != share_shuffle_passive(input, sizes, numElements)) {
                 cout<<"share_shuffle_passive error"<<endl;
                 return -1;
             }
 
-            if (0 != share_shuffle_upstream(input, numElements, false)) {
+            if (0 != share_shuffle_upstream(input, sizes, numElements, false)) {
                 cout<<"share_shuffle_upstream error"<<endl;
                 return -1;
             }
 
-            if (0 != share_shuffle_downstream(input, numElements, false)) {
+            if (0 != share_shuffle_downstream(input, sizes, numElements, false)) {
                 cout<<"share_shuffle_downstream error"<<endl;
                 return -1;
             }
@@ -336,11 +337,15 @@ int Utilities3Parties::shuffle(vector<vector<byte>>& input, int numElements) {
     return 0;
 }
 
-int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>>& input, int numElements, bool reverse) {
+int Utilities3Parties::share_shuffle_upstream(vector<byte*> & input, vector<int> & sizes, int numElements, bool reverse) {
     //Nomenclature per upstream party as P1 (S2)
     vector<vector<byte>> inputTag(input.size());
-    for (int i=0 ;i<input.size(); i++){
-        inputTag[i] = input[i];
+    vector<byte*> temp(input.size());
+    for (int i=0; i<input.size(); i++){
+        inputTag[i].resize(sizes[i]);
+        memcpy(inputTag[i].data(), input[i], sizes[i]);
+//        inputTag[i] = input[i];
+        temp[i] = inputTag[i].data();
     }
 //    vector<byte> srcBtag(srcShares.first), srcCtag(srcShares.second);
 //    vector<byte> dstBtag(destShares.first), dstCtag(destShares.second);
@@ -352,15 +357,15 @@ int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>>& input, int n
 
     if (!reverse){
         if (workers_.size() == 0) {
-            computeShufflePermutation(prevFinalPermutation, inputTag);
+            computeShufflePermutation(prevFinalPermutation, temp, sizes);
         } else {
-            workers_shufflePermutation(prevFinalPermutation, inputTag);
+            workers_shufflePermutation(prevFinalPermutation, temp, sizes);
         }
     } else {
         if (workers_.size() == 0) {
-            computeShufflePermutation(prevFinalReversePermutation, inputTag);
+            computeShufflePermutation(prevFinalReversePermutation, temp, sizes);
         } else {
-            workers_shufflePermutation(prevFinalReversePermutation, inputTag);
+            workers_shufflePermutation(prevFinalReversePermutation, temp, sizes);
         }
     }
 
@@ -376,7 +381,7 @@ int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>>& input, int n
 
     //Get new random shares from the common PRG
     for (int i=1; i<input.size(); i+=2){
-        nextPrg->getPRGBytes(input[i], 0, input[i].size());
+        nextPrg->getPRGBytes(input[i], sizes[i]);
     }
 //    nextPrg->getPRGBytes(srcShares.second, 0, count);
 //    nextPrg->getPRGBytes(destShares.second, 0, count);
@@ -390,14 +395,14 @@ int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>>& input, int n
 //    vector<byte> bitCtag_xor_bitC(numElements), bitAtag_xor_bitA(numElements);
 
     for (int j=0; j<input.size(); j++) {
-        inputTagXorInput[j].resize(input[j].size());
+        inputTagXorInput[j].resize(sizes[j]);
     }
 
     for (int j=0; j<input.size(); j+=2) {
         //Xor the random shares with the permuted shares
 #pragma GCC ivdep
-        for (size_t i = 0; i < input[j].size(); ++i) {
-            inputTagXorInput[j][i] = inputTag[j+1][i] ^ input[j + 1][i];
+        for (size_t i = 0; i < sizes[j]; ++i) {
+            inputTagXorInput[j][i] = inputTag[j+1][i] ^ *(input[j + 1] + i);
 
         }
     }
@@ -455,8 +460,8 @@ int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>>& input, int n
     for (int j=0; j<input.size(); j+=2) {
 
 #pragma GCC ivdep
-        for (size_t i = 0; i < input[j].size(); ++i) {
-            input[j][i] = inputTag[j][i] ^ inputTagXorInput[j + 1][i] ^ inputTagXorInput[j][i];
+        for (size_t i = 0; i < sizes[j]; ++i) {
+            *(input[j] + i) = inputTag[j][i] ^ inputTagXorInput[j + 1][i] ^ inputTagXorInput[j][i];
 //        srcShares.first[i] = srcBtag[i] ^ srcAtag_xor_srcA[i] ^ srcCtag_xor_srcC[i];
 //        destShares.first[i] = dstBtag[i] ^ dstAtag_xor_dstA[i] ^ dstCtag_xor_dstC[i];
 //        valShares.first[i] = valBtag[i] ^ valAtag_xor_valA[i] ^ valCtag_xor_valC[i];
@@ -473,6 +478,7 @@ int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>>& input, int n
         cout << "time in milliseconds for shuffle upstream rest: " << duration << endl;
         outputFile << "time in milliseconds for shuffle upstream rest: " << duration << endl;
     }
+
     return 0;
 }
 void Utilities3Parties::computeShuffleFinalPermutation(vector<int> & shufflePermutation,
@@ -520,12 +526,14 @@ void Utilities3Parties::computeShuffleFinalPermutation(vector<int> & shufflePerm
         }
     }
 }
-void Utilities3Parties::computeShufflePermutation(vector<int> & shuffleFinalPermutation, vector<vector<byte>> & input) {
+void Utilities3Parties::computeShufflePermutation(vector<int> & shuffleFinalPermutation, vector<byte*> & input, vector<int> & sizes) {
 
     vector<vector<byte>> inputTemp(input.size());
     for (int j = 0; j<input.size(); j++) {
-        inputTemp[j] = input[j];
-        int elementSize = input[j].size()/numElements;
+        inputTemp[j].resize(sizes[j]);
+        memcpy(inputTemp[j].data(), input[j], sizes[j]);
+//        inputTemp[j] = input[j];
+        int elementSize = sizes[j]/numElements;
 
 //    vector<byte> srcBtagTemp(srcBtag.size());
 //    vector<byte> srcCtagTemp(srcCtag.size());
@@ -540,7 +548,7 @@ void Utilities3Parties::computeShufflePermutation(vector<int> & shuffleFinalPerm
         //go over the permutation and get the relevan alue accordingly
         for (size_t i = 0; i < numElements; ++i) {
             //Save the element in the left index in a temp array
-            memcpy(inputTemp[j].data() + i * elementSize, input[j].data() + shuffleFinalPermutation[i] * elementSize, elementSize);
+            memcpy(inputTemp[j].data() + i * elementSize, input[j] + shuffleFinalPermutation[i] * elementSize, elementSize);
 //            memcpy(srcBtagTemp.data() + i * elementSize, srcBtag.data() + shuffleFinalPermutation[i] * elementSize,
 //                   elementSize);
 //            memcpy(srcCtagTemp.data() + i * elementSize, srcCtag.data() + shuffleFinalPermutation[i] * elementSize,
@@ -560,8 +568,8 @@ void Utilities3Parties::computeShufflePermutation(vector<int> & shuffleFinalPerm
         }
 
         //move back from the temp arrays to the original arrays
-        input[j] = move(inputTemp[j]);
-
+        input[j] = move(inputTemp[j].data());
+//            memcpy(input[j], inputTemp[j].data(), sizes[j]);
     }
 
 
@@ -579,7 +587,7 @@ void Utilities3Parties::computeShufflePermutation(vector<int> & shuffleFinalPerm
 
 }
 
-int Utilities3Parties::workers_shufflePermutation(vector<int> & shuffleFinalPermutation, vector<vector<byte>> & input) {
+int Utilities3Parties::workers_shufflePermutation(vector<int> & shuffleFinalPermutation, vector<byte*> & input, vector<int> & sizes) {
 //    auto t1 = high_resolution_clock::now();
 //    circuit_thread::ct_task_t task;
 //    size_t cid = 0;
@@ -688,12 +696,15 @@ int Utilities3Parties::workers_shufflePermutation(vector<int> & shuffleFinalPerm
 //    return 0;
 }
 
-int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>> & input, int numElements, bool reverse) {
+int Utilities3Parties::share_shuffle_downstream(vector<byte*> & input, vector<int> & sizes, int numElements, bool reverse) {
     //Nomenclature per downstream party = P0 (S1)
 //    int count = numElements * elementSize;
     vector<vector<byte>> inputTag(input.size());
-    for (int i=0 ;i<input.size(); i++){
-        inputTag[i] = input[i];
+    vector<byte*> temp(input.size());
+    for (int i=0; i<input.size(); i++){
+        inputTag[i].resize(sizes[i]);
+        memcpy(inputTag[i].data(), input[i], sizes[i]);
+        temp[i] = inputTag[i].data();
     }
 //    std::vector<byte> srcAtag(srcShares.first), srcBtag(srcShares.second);
 //    std::vector<byte> dstAtag(destShares.first), dstBtag(destShares.second);
@@ -704,15 +715,15 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>> & input, in
 
     if (!reverse){
         if (workers_.size() == 0) {
-            computeShufflePermutation(nextFinalPermutation, inputTag);
+            computeShufflePermutation(nextFinalPermutation, temp, sizes);
         } else {
-            workers_shufflePermutation(nextFinalPermutation, inputTag);
+            workers_shufflePermutation(nextFinalPermutation, temp, sizes);
         }
     } else {
         if (workers_.size() == 0) {
-            computeShufflePermutation(nextFinalReversePermutation, inputTag);
+            computeShufflePermutation(nextFinalReversePermutation, temp, sizes);
         } else {
-            workers_shufflePermutation(nextFinalReversePermutation, inputTag);
+            workers_shufflePermutation(nextFinalReversePermutation, temp, sizes);
         }
     }
 
@@ -727,7 +738,7 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>> & input, in
 
 
     for (int i=0; i<input.size(); i+=2){
-        prevPrg->getPRGBytes(input[i], 0, input[i].size());
+        prevPrg->getPRGBytes(input[i], sizes[i]);
     }
     //Get new random shares from the common PRG
 //    prevPrg->getPRGBytes(srcShares.first, 0, count);
@@ -737,7 +748,7 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>> & input, in
 
     vector<vector<byte>> inputTagXorInput(input.size());
     for (int j=0; j<input.size(); j++) {
-        inputTagXorInput[j].resize(input[j].size());
+        inputTagXorInput[j].resize(sizes[j]);
     }
 //    std::vector<byte> srcAtag_xor_srcA(count), srcCtag_xor_srcC(count);
 //    std::vector<byte> dstAtag_xor_dstA(count), dstCtag_xor_dstC(count);
@@ -748,8 +759,8 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>> & input, in
     for (int j=0; j<input.size(); j+=2) {
         //Xor the random shares with the permuted shares
 #pragma GCC ivdep
-        for (size_t i = 0; i < input[j].size(); ++i) {
-            inputTagXorInput[j][i] = inputTag[j][i] ^ input[j][i];
+        for (size_t i = 0; i < sizes[j]; ++i) {
+            inputTagXorInput[j][i] = inputTag[j][i] ^ *(input[j]+ i);
 
         }
     }
@@ -803,8 +814,8 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>> & input, in
     for (int j=0; j<input.size(); j+=2) {
 
 #pragma GCC ivdep
-        for (size_t i = 0; i < input[j].size(); ++i) {
-            input[j + 1][i] = inputTag[j+1][i] ^ inputTagXorInput[j + 1][i] ^ inputTagXorInput[j][i];
+        for (size_t i = 0; i < sizes[j]; ++i) {
+            *(input[j + 1] + i) = inputTag[j+1][i] ^ inputTagXorInput[j + 1][i] ^ inputTagXorInput[j][i];
         }
     }
 //#pragma GCC ivdep
@@ -829,11 +840,11 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>> & input, in
     return 0;
 }
 
-int Utilities3Parties::share_shuffle_passive(vector<vector<byte>> & input, int numElements) {
+int Utilities3Parties::share_shuffle_passive(vector<byte*> & input, vector<int> & sizes, int numElements) {
     //Nomenclature per passive party = P2 (S3)
     for (int i=0; i<input.size(); i+=2){
-        prevPrg->getPRGBytes(input[i], 0, input[i].size());
-        nextPrg->getPRGBytes(input[i+1], 0, input[i+1].size());
+        prevPrg->getPRGBytes(input[i], sizes[i]);
+        nextPrg->getPRGBytes(input[i+1], sizes[i+1]);
     }
     //Use the common Prgs to get a random shares
 //    int count = numElements * elementSize;
@@ -852,24 +863,24 @@ int Utilities3Parties::share_shuffle_passive(vector<vector<byte>> & input, int n
     return 0;
 }
 
-int Utilities3Parties::shuffleBack(vector<vector<byte>> & input, int numElements) {
+int Utilities3Parties::shuffleBack(vector<byte*> & input, vector<int> & sizes, int numElements) {
     //The reverse shuffle algorithm contains 3 phases.
     //In each phase there is a role for each one of the parties - upstream, downstream and passive.
     //In order to reverse the shuffle, the order of the phases is the opposite of the shuffle algorithm.
     switch (partyID) {
         case 0:
             //Party 0 executes the upstream, then the passive and in the end the downstream role.
-            if (0 != share_shuffle_upstream(input, numElements, true)) {
+            if (0 != share_shuffle_upstream(input, sizes, numElements, true)) {
                 cout<<"share_shuffle_upstream error"<<endl;
                 return -1;
             }
 
-            if (0 != share_shuffle_passive(input, numElements)) {
+            if (0 != share_shuffle_passive(input, sizes, numElements)) {
                 cout<<"share_shuffle_passive error"<<endl;
                 return -1;
             }
 
-            if (0 != share_shuffle_downstream(input, numElements, true)) {
+            if (0 != share_shuffle_downstream(input, sizes, numElements, true)) {
                 cout<<"share_shuffle_downstream error"<<endl;
                 return -1;
             }
@@ -877,30 +888,30 @@ int Utilities3Parties::shuffleBack(vector<vector<byte>> & input, int numElements
             break;
         case 1:
             //Party 1 executes the passive, then the downstream, and in the end the upstream role.
-            if (0 != share_shuffle_passive(input, numElements)) {
+            if (0 != share_shuffle_passive(input, sizes, numElements)) {
                 cout<<"share_shuffle_passive error"<<endl;
                 return -1;
             }
-            if (0 != share_shuffle_downstream(input, numElements,  true)) {
+            if (0 != share_shuffle_downstream(input, sizes, numElements,  true)) {
                 cout<<"share_shuffle_downstream error"<<endl;
                 return -1;
             }
-            if (0 != share_shuffle_upstream(input, numElements, true)) {
+            if (0 != share_shuffle_upstream(input, sizes, numElements, true)) {
                 cout<<"share_shuffle_upstream error"<<endl;
                 return -1;
             }
             break;
         case 2:
             //Party 2 executes the downstream, then the upstream, and in the end the passive role.
-            if (0 != share_shuffle_downstream(input, numElements, true)) {
+            if (0 != share_shuffle_downstream(input, sizes, numElements, true)) {
                 cout<<"share_shuffle_downstream error"<<endl;
                 return -1;
             }
-            if (0 != share_shuffle_upstream(input, numElements, true)) {
+            if (0 != share_shuffle_upstream(input, sizes, numElements, true)) {
                 cout<<"share_shuffle_upstream error"<<endl;
                 return -1;
             }
-            if (0 != share_shuffle_passive(input, numElements)) {
+            if (0 != share_shuffle_passive(input, sizes, numElements)) {
                 cout<<"share_shuffle_passive error"<<endl;
                 return -1;
             }
