@@ -25,21 +25,21 @@ endif
 
 ifeq ($(uname_arch), x86_64)
 	OUT_DIR        = obj obj/primitives obj/interactive_mid_protocols obj/mid_layer obj/comm obj/infra obj/cryptoInfra \
-	obj/circuits obj/circuits_c obj/tools/scapiNecConverter obj/tools/scapiBristolConverter
+	obj/cryptoInfra/protocolUtilities obj/cryptoInfra/protocolUtilities/MPCCircuit obj/circuits obj/circuits_c obj/tools/scapiNecConverter obj/tools/scapiBristolConverter
 	CPP_OPTIONS   := -g -std=$(GCC_STANDARD) $(INC) -mavx -maes -msse4.1 -mpclmul -Wall \
 	-Wno-uninitialized -Wno-unused-but-set-variable -Wno-unused-function -Wno-unused-variable -Wno-unused-result \
 	-Wno-sign-compare -Wno-parentheses -Wno-ignored-attributes -O3 -fPIC
 endif
 ifeq ($(uname_arch), armv7l)
 	OUT_DIR        = obj obj/primitives obj/interactive_mid_protocols obj/mid_layer obj/comm obj/infra obj/cryptoInfra \
-	obj/tools/scapiNecConverter obj/tools/scapiBristolConverter
+	obj/cryptoInfra/protocolUtilities obj/cryptoInfra/protocolUtilities/MPCCircuit obj/tools/scapiNecConverter obj/tools/scapiBristolConverter
 	CPP_OPTIONS   := -g -std=$(GCC_STANDARD) $(INC) -mfpu=neon -Wall -Wno-narrowing -Wno-uninitialized \
 	-Wno-unused-but-set-variable -Wno-unused-function -Wno-unused-variable -Wno-unused-result \
 	-Wno-sign-compare -Wno-parentheses -Wno-ignored-attributes -O3 -fPIC
 endif
 ifeq ($(uname_arch), aarch64)
 	OUT_DIR        = obj obj/primitives obj/interactive_mid_protocols obj/mid_layer obj/comm obj/infra obj/cryptoInfra \
-	obj/circuits obj/tools/scapiNecConverter obj/tools/scapiBristolConverter
+	obj/cryptoInfra/protocolUtilities obj/cryptoInfra/protocolUtilities/MPCCircuit obj/circuits obj/tools/scapiNecConverter obj/tools/scapiBristolConverter
 	CPP_OPTIONS   := -g -std=$(GCC_STANDARD) $(INC) -Wall -Wno-narrowing -Wno-uninitialized \
 	-Wno-unused-but-set-variable -Wno-unused-function -Wno-unused-variable -Wno-unused-result \
 	-Wno-sign-compare -Wno-parentheses -Wno-ignored-attributes -Wno-return-type \

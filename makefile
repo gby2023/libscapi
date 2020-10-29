@@ -26,6 +26,8 @@ CPP_FILES     := $(wildcard src/*/*.cpp)
 CPP_FILES     += $(wildcard tools/circuits/scapiBristolConverter/*.cpp)
 CPP_FILES     += $(wildcard tools/circuits/scapiNecConverter/*.cpp)
 CPP_FILES     += $(wildcard src/*/*.cpp)
+CPP_FILES     += $(wildcard src/*/*/*.cpp)
+CPP_FILES     += $(wildcard src/*/*/*/*.cpp)
 C_FILES       := $(wildcard src/*/*.c)
 OBJ_FILES     := $(patsubst src/%.cpp,obj/%.o,$(CPP_FILES))
 OBJ_FILES     += $(patsubst src/%.c,obj/%.o,$(C_FILES))
@@ -47,19 +49,22 @@ ifeq ($(uname_os), Darwin)
 endif
 
 ifeq ($(uname_arch), x86_64)
-	OUT_DIR        = obj obj/primitives obj/interactive_mid_protocols obj/mid_layer obj/comm obj/infra obj/cryptoInfra \
+	OUT_DIR        = obj obj/primitives obj/interactive_mid_protocols obj/mid_layer obj/comm obj/infra \
+	obj/cryptoInfra/protocolUtilities/MPCCircuit obj/cryptoInfra/protocolUtilities obj/cryptoInfra \
 	obj/circuits obj/circuits_c obj/tools/scapiNecConverter obj/tools/scapiBristolConverter
-	CPP_OPTIONS   := -g -std=$(GCC_STANDARD) $(INC) -mavx -maes -msse4.1 -mpclmul -Wall -Wno-ignored-attributes \
+	CPP_OPTIONS   := -g -std=$(GCC_STANDARD) $(INC) -mavx -mavx2 -maes -msse4.1 -mpclmul -Wall -Wno-ignored-attributes \
 	-Wno-maybe-uninitialized -O3 -fPIC
 endif
 ifeq ($(uname_arch), armv7l)
-	OUT_DIR        = obj obj/primitives obj/interactive_mid_protocols obj/mid_layer obj/comm obj/infra obj/cryptoInfra \
-	obj/tools/scapiNecConverter obj/tools/scapiBristolConverter
+	OUT_DIR        = obj obj/primitives obj/interactive_mid_protocols obj/mid_layer obj/comm obj/infra \
+	obj/cryptoInfra/protocolUtilities/MPCCircuit obj/cryptoInfra/protocolUtilities obj/cryptoInfra \
+	obj/tools/scapiNecConverter  obj/tools/scapiBristolConverter
 	CPP_OPTIONS   := -g -std=$(GCC_STANDARD) $(INC) -mfpu=neon -Wall -Wno-ignored-attributes \
 	-Wno-maybe-uninitialized -O3 -fPIC
 endif
 ifeq ($(uname_arch), aarch64)
-	OUT_DIR        = obj obj/primitives obj/interactive_mid_protocols obj/mid_layer obj/comm obj/infra obj/cryptoInfra \
+	OUT_DIR        = obj obj/primitives obj/interactive_mid_protocols obj/mid_layer obj/comm obj/infra \
+	obj/cryptoInfra/protocolUtilities/MPCCircuit obj/cryptoInfra/protocolUtilities obj/cryptoInfra \
 	obj/circuits obj/tools/scapiNecConverter obj/tools/scapiBristolConverter
 	CPP_OPTIONS   := -g -std=$(GCC_STANDARD) $(INC) -Wall -Wall -Wno-ignored-attributes \
 	-Wno-maybe-uninitialized -O3 -fPIC
@@ -136,6 +141,10 @@ obj/interactive_mid_protocols/%.o: src/interactive_mid_protocols/%.cpp
 obj/primitives/%.o: src/primitives/%.cpp
 	g++ -c $(CPP_OPTIONS) -o $@ $< 	 
 obj/mid_layer/%.o: src/mid_layer/%.cpp
+	g++ -c $(CPP_OPTIONS) -o $@ $<
+obj/cryptoInfra/protocolUtilities/MPCCircuit/%.o: src/cryptoInfra/protocolUtilities/MPCCircuit/%.cpp
+	g++ -c $(CPP_OPTIONS) -o $@ $<
+obj/cryptoInfra/protocolUtilities/%.o: src/cryptoInfra/protocolUtilities/%.cpp
 	g++ -c $(CPP_OPTIONS) -o $@ $<
 obj/cryptoInfra/%.o: src/cryptoInfra/%.cpp
 	g++ -c $(CPP_OPTIONS) -o $@ $<
