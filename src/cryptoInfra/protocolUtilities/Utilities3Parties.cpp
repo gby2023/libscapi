@@ -650,7 +650,7 @@ int Utilities3Parties::shuffleBack(vector<vector<byte>*> & input, int numElement
     return 0;
 }
 
-int Utilities3Parties::sort(vector<vector<byte>*> & input, size_t numElements, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, bool malicious, bool sortWithID){
+int Utilities3Parties::sort(vector<vector<byte>*> & input, size_t numElements, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, bool malicious){
 
     //The sort computes the quick sort algorithm.
     std::vector<quicksort_part> sort_parts, sort_n_parts;
@@ -676,7 +676,7 @@ int Utilities3Parties::sort(vector<vector<byte>*> & input, size_t numElements, v
 
     //Continue while there are parts to sort
     while (0 != sort_parts.size()) {
-        if (!partition(input, sortParamFirst, sortParamSecond, sort_parts, sort_n_parts, partition_input, partition_output, partition_compRes, malicious, sortWithID, elementSize)) {
+        if (!partition(input, sortParamFirst, sortParamSecond, sort_parts, sort_n_parts, partition_input, partition_output, partition_compRes, malicious, elementSize)) {
             cout<<"partition failure"<<endl;
             return -1;
 
@@ -695,7 +695,7 @@ int Utilities3Parties::sort(vector<vector<byte>*> & input, size_t numElements, v
 
 bool Utilities3Parties::partition(vector<vector<byte>*> & input, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, vector<quicksort_part> &parts, vector<quicksort_part> &nparts,
                               pair<vector<byte>, vector<byte>> &part_input, pair<vector<byte>, vector<byte>> &part_output,
-                              vector<byte> &part_compRes, bool malicious, bool sortWithID, int elementSize) {
+                              vector<byte> &part_compRes, bool malicious, int elementSize) {
     //TODO pivot selection!!
     // Prepare data for circuit
 //    cout<<parts.size()<<" parts partition start."<<endl;
@@ -741,15 +741,15 @@ bool Utilities3Parties::partition(vector<vector<byte>*> & input, vector<byte> & 
 
     //Swap the shares according to the circuit results
     if (0 < workers_.size() && 1 < parts.size()) {
-        workers_swap(input, parts, nparts, part_compRes, sortWithID);
+        workers_swap(input, parts, nparts, part_compRes);
     } else {
-        inline_swap(input, parts, nparts, part_compRes, sortWithID, elementSize);
+        inline_swap(input, parts, nparts, part_compRes, elementSize);
     }
 
     return true;
 }
 
-void Utilities3Parties::workers_swap(vector<vector<byte>*> & input, vector<quicksort_part> &parts, vector<quicksort_part> &nparts, vector<byte> &compRes, bool sortWithID) {
+void Utilities3Parties::workers_swap(vector<vector<byte>*> & input, vector<quicksort_part> &parts, vector<quicksort_part> &nparts, vector<byte> &compRes) {
 
     nparts.clear();
     nparts.reserve(parts.size() * 2);
@@ -791,7 +791,7 @@ void Utilities3Parties::workers_swap(vector<vector<byte>*> & input, vector<quick
     parts.swap(nparts);
 }
 
-void Utilities3Parties::inline_swap(vector<vector<byte>*> & input, vector<quicksort_part> &parts, vector<quicksort_part> &nparts, vector<byte> &compRes, bool sortWithID, int elementSize) {
+void Utilities3Parties::inline_swap(vector<vector<byte>*> & input, vector<quicksort_part> &parts, vector<quicksort_part> &nparts, vector<byte> &compRes, int elementSize) {
     nparts.clear();
     nparts.reserve(parts.size() * 2);
 
@@ -819,13 +819,13 @@ void Utilities3Parties::inline_swap(vector<vector<byte>*> & input, vector<quicks
 
             //Swap the elements in indices i1 and i0
 //            cout<<"swap "<<i1<<" with "<<i0<<endl;
-            sharesSwap(input, i1, i0, sortWithID);
+            sharesSwap(input, i1, i0);
             swap(compRes[(i1 - qpart->low + compres_base)*elementSize], compRes[(i0 - qpart->low + compres_base)*elementSize]);
         }
 
         if (0 != compRes[(i1 - qpart->low + compres_base)*elementSize]) { //The pivot is less than i1 so swap them
 //            cout<<"swap "<<i1<<" with (pivot) "<<pivot<<endl;
-            sharesSwap(input, i1, pivot, sortWithID);
+            sharesSwap(input, i1, pivot);
             swap(compRes[(i1 - qpart->low + compres_base)*elementSize], compRes[(pivot - qpart->low + compres_base)*elementSize]);
             pivot = i1;
         }
@@ -844,7 +844,7 @@ void Utilities3Parties::inline_swap(vector<vector<byte>*> & input, vector<quicks
     parts.swap(nparts);
 }
 
-void Utilities3Parties::sharesSwap(vector<vector<byte>*> & input, int lIndex, int rIndex, bool sortWithID) {
+void Utilities3Parties::sharesSwap(vector<vector<byte>*> & input, int lIndex, int rIndex) {
 
     for (int i=0; i<input.size(); i++){
         //Swap each shares vector according to the given indices

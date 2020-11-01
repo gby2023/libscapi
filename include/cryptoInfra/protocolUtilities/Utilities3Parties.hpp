@@ -82,7 +82,7 @@ private:
     //Gets parts of the vector and sort each part separately
     bool partition(vector<vector<byte>*> & input, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, vector<quicksort_part> &parts, vector<quicksort_part> &nparts,
                    pair<vector<byte>, vector<byte>> &part_input, pair<vector<byte>, vector<byte>> &part_output,
-                   vector<byte> &part_compRes, bool malicious, bool sortWithID, int elementSize);
+                   vector<byte> &part_compRes, bool malicious, int elementSize);
     //Use the compare circuit in order to sort the input vector
     int inline_circuit(int count, int inputSize, int outputSize, pair<vector<byte>, vector<byte>> &input, pair<vector<byte>,
     vector<byte>> &output, vector<byte> &compRes, bool malicious, CircMap & cSpec, bool toOpen);
@@ -95,10 +95,10 @@ private:
     void select_cdc(size_t count, size_t & chunks, size_t & vf);
     // After the compare circuit is called and there are results, this function swaps the elements in all the shares
     // vectors according to the compare results.
-    void inline_swap(vector<vector<byte>*> & input, vector<quicksort_part> & parts, vector<quicksort_part> & nparts, vector<byte> & compRes, bool sortWithID, int elementSize);
-    void workers_swap(vector<vector<byte>*> & input, vector<quicksort_part> &parts, vector<quicksort_part> &nparts, vector<byte> &compRes, bool sortWithID);
+    void inline_swap(vector<vector<byte>*> & input, vector<quicksort_part> & parts, vector<quicksort_part> & nparts, vector<byte> & compRes, int elementSize);
+    void workers_swap(vector<vector<byte>*> & input, vector<quicksort_part> &parts, vector<quicksort_part> &nparts, vector<byte> &compRes);
     //Swap two shares in the shares vectors.
-    void sharesSwap(vector<vector<byte>*> & input, int lIndex, int rIndex, bool sortWithID);
+    void sharesSwap(vector<vector<byte>*> & input, int lIndex, int rIndex);
     //Gets a specific shares and swap the elements
     void swapElement(vector<byte> & v, int lIndex, int rIndex, int elementSize);
 
@@ -136,7 +136,7 @@ public:
 //    void openMersenne(ZpMersenneIntElement* sendBufs, ZpMersenneIntElement* recBufs, int numElements);
 
     //Compute the sort algorithm
-    int sort(vector<vector<byte>*> & input, size_t numElements, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, bool malicious, bool sortWithID);
+    int sort(vector<vector<byte>*> & input, size_t numElements, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, bool malicious);
 
     void permute(vector<vector<byte>*> & input, int numElements, vector<int> & mapping);
     void workers_permute(vector<vector<byte>*> & input, int numElements, vector<int> & mapping);
