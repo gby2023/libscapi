@@ -11,9 +11,10 @@ Utilities3Parties::Utilities3Parties(int partyID, shared_ptr<CommParty> & nextCh
                                      int numThreads, int numElements, PrgFromOpenSSLAES* prg,
                                      PrgFromOpenSSLAES* nextPrg, PrgFromOpenSSLAES* prevPrg, bool malicious,
                                      string partiesFile, vector<shared_ptr<CommParty>> & threadsNextChannels,
-                                     vector<shared_ptr<CommParty>> & threadsPrevChannels)
+                                     vector<shared_ptr<CommParty>> & threadsPrevChannels, vector<circuit_thread*> & workers)
                  : partyID(partyID), nextChannel(nextChannel), prevChannel(prevChannel), numThreads(numThreads), numElements(numElements),
-                 prg(prg), nextPrg(nextPrg), prevPrg(prevPrg), malicious(malicious), threadsNextChannels(threadsNextChannels), threadsPrevChannels(threadsPrevChannels){
+                 prg(prg), nextPrg(nextPrg), prevPrg(prevPrg), malicious(malicious), threadsNextChannels(threadsNextChannels),
+                 threadsPrevChannels(threadsPrevChannels), workers_(workers) {
 
 
     cout<<" in ctor" <<endl;
@@ -81,9 +82,9 @@ Utilities3Parties::Utilities3Parties(int partyID, shared_ptr<CommParty> & nextCh
 //        cout<<"workers start failure."<<endl;
 //    }
 
-//    if (0 < numThreads && 0 != init_scale()) {
-//        cout<<"division scale initialization failure."<<endl;
-//    }
+    if (workers_.size() > 0 && 0 != init_scale()) {
+        cout<<"division scale initialization failure."<<endl;
+    }
 
     string tmp = "init times";
     //cout<<"before sending any data"<<endl;
@@ -232,7 +233,7 @@ bool Utilities3Parties::checkSort(byte* recBufs, int numBytes, int elementSize){
     return sorted;
 }
 
-void Utilities3Parties::permute(vector<vector<byte>>& input, int numElements, vector<int> & mapping){
+void Utilities3Parties::permute(vector<vector<byte>*>& input, int numElements, vector<int> & mapping){
 
 //    cout<<"mappingIds:"<<endl;
 //    for (int i=0; i<numElements; i++){
@@ -241,7 +242,7 @@ void Utilities3Parties::permute(vector<vector<byte>>& input, int numElements, ve
 //    cout<<endl;
     //permute each vector of src/dest/val/bit shares using the mappingIds mapping vector
     for (int i=0; i<input.size(); i++) {
-        permuteVector(input[i], numElements, input[i].size() / numElements, mapping);
+        permuteVector(*input[i], numElements, input[i]->size() / numElements, mapping);
 //        permuteVector(srcShares.second, numElements, elementSize, mapping);
 //        permuteVector(destShares.first, numElements, elementSize, mapping);
 //        permuteVector(destShares.second, numElements, elementSize, mapping);
@@ -267,13 +268,13 @@ void Utilities3Parties::permuteVector(vector<byte> & vToPermute, int numElements
     vToPermute = move(tmp);
 }
 
-void Utilities3Parties::workers_permute(vector<vector<byte>>& input, int numElements, vector<int> & mapping){
-    cout<<"in workers permute"<<endl;
+void Utilities3Parties::workers_permute(vector<vector<byte>*>& input, int numElements, vector<int> & mapping){
+
     workers_shufflePermutation(mapping, input);
 
 }
 
-int Utilities3Parties::shuffle(vector<vector<byte>>& input, int numElements) {
+int Utilities3Parties::shuffle(vector<vector<byte>*>& input, int numElements) {
     //The shuffle algorithm contains 3 phases.
     //In each phase there is a role for each one of the parties - upstream, downstream and passive.
     switch (partyID) {
@@ -336,12 +337,15 @@ int Utilities3Parties::shuffle(vector<vector<byte>>& input, int numElements) {
     return 0;
 }
 
-int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>>& input, int numElements, bool reverse) {
+int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>*>& input, int numElements, bool reverse) {
     //Nomenclature per upstream party as P1 (S2)
     vector<vector<byte>> inputTag(input.size());
+    vector<vector<byte>*> inputTagP(input.size());
     for (int i=0 ;i<input.size(); i++){
-        inputTag[i] = input[i];
+        inputTag[i] = *input[i];
+        inputTagP[i] = &inputTag[i];
     }
+
 //    vector<byte> srcBtag(srcShares.first), srcCtag(srcShares.second);
 //    vector<byte> dstBtag(destShares.first), dstCtag(destShares.second);
 //    vector<byte> valBtag(valShares.first), valCtag(valShares.second);
@@ -354,13 +358,13 @@ int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>>& input, int n
         if (workers_.size() == 0) {
             computeShufflePermutation(prevFinalPermutation, inputTag);
         } else {
-            workers_shufflePermutation(prevFinalPermutation, inputTag);
+            workers_shufflePermutation(prevFinalPermutation, inputTagP);
         }
     } else {
         if (workers_.size() == 0) {
             computeShufflePermutation(prevFinalReversePermutation, inputTag);
         } else {
-            workers_shufflePermutation(prevFinalReversePermutation, inputTag);
+            workers_shufflePermutation(prevFinalReversePermutation, inputTagP);
         }
     }
 
@@ -376,7 +380,7 @@ int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>>& input, int n
 
     //Get new random shares from the common PRG
     for (int i=1; i<input.size(); i+=2){
-        nextPrg->getPRGBytes(input[i], 0, input[i].size());
+        nextPrg->getPRGBytes(*input[i], 0, input[i]->size());
     }
 //    nextPrg->getPRGBytes(srcShares.second, 0, count);
 //    nextPrg->getPRGBytes(destShares.second, 0, count);
@@ -390,14 +394,14 @@ int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>>& input, int n
 //    vector<byte> bitCtag_xor_bitC(numElements), bitAtag_xor_bitA(numElements);
 
     for (int j=0; j<input.size(); j++) {
-        inputTagXorInput[j].resize(input[j].size());
+        inputTagXorInput[j].resize(input[j]->size());
     }
 
     for (int j=0; j<input.size(); j+=2) {
         //Xor the random shares with the permuted shares
 #pragma GCC ivdep
-        for (size_t i = 0; i < input[j].size(); ++i) {
-            inputTagXorInput[j][i] = inputTag[j+1][i] ^ input[j + 1][i];
+        for (size_t i = 0; i < input[j]->size(); ++i) {
+            inputTagXorInput[j][i] = inputTag[j+1][i] ^ (*input[j + 1])[i];
 
         }
     }
@@ -455,8 +459,8 @@ int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>>& input, int n
     for (int j=0; j<input.size(); j+=2) {
 
 #pragma GCC ivdep
-        for (size_t i = 0; i < input[j].size(); ++i) {
-            input[j][i] = inputTag[j][i] ^ inputTagXorInput[j + 1][i] ^ inputTagXorInput[j][i];
+        for (size_t i = 0; i < input[j]->size(); ++i) {
+            (*input[j])[i] = inputTag[j][i] ^ inputTagXorInput[j + 1][i] ^ inputTagXorInput[j][i];
 //        srcShares.first[i] = srcBtag[i] ^ srcAtag_xor_srcA[i] ^ srcCtag_xor_srcC[i];
 //        destShares.first[i] = dstBtag[i] ^ dstAtag_xor_dstA[i] ^ dstCtag_xor_dstC[i];
 //        valShares.first[i] = valBtag[i] ^ valAtag_xor_valA[i] ^ valCtag_xor_valC[i];
@@ -524,7 +528,7 @@ void Utilities3Parties::computeShufflePermutation(vector<int> & shuffleFinalPerm
 
     vector<vector<byte>> inputTemp(input.size());
     for (int j = 0; j<input.size(); j++) {
-        inputTemp[j] = input[j];
+        inputTemp[j].resize(input[j].size());
         int elementSize = input[j].size()/numElements;
 
 //    vector<byte> srcBtagTemp(srcBtag.size());
@@ -579,86 +583,72 @@ void Utilities3Parties::computeShufflePermutation(vector<int> & shuffleFinalPerm
 
 }
 
-int Utilities3Parties::workers_shufflePermutation(vector<int> & shuffleFinalPermutation, vector<vector<byte>> & input) {
-//    auto t1 = high_resolution_clock::now();
-//    circuit_thread::ct_task_t task;
-//    size_t cid = 0;
-//
-//    vector<byte> srcBtagTemp(srcBtag.size());
-//    vector<byte> srcCtagTemp(srcCtag.size());
-//    vector<byte> dstBtagTemp(dstBtag.size());
-//    vector<byte> dstCtagTemp(dstCtag.size());
-//    vector<byte> valBtagTemp(valBtag.size());
-//    vector<byte> valCtagTemp(valCtag.size());
-//    vector<byte> bitBtagTemp(bitBtag.size());
-//    vector<byte> bitCtagTemp(bitCtag.size());
-//
-//    int sizeForEachThread;
-//    if (numElements <= numThreads){
-//        numThreads = numElements;
-//        sizeForEachThread = 1;
-//    } else{
-//        sizeForEachThread = (numElements + numThreads - 1)/ numThreads;
-//    }
-//
-//    cout<<"sizeForEachThread = "<<sizeForEachThread << endl;
-//    for (size_t c = 0; c < numThreads; c++) {
-//
-//        task.tid = c;
-//        task.ct_type = circuit_thread::ct_task_t::ct_shuffle;
-//        task.u.shuffle.srcBtag = srcBtag.data();
-//        task.u.shuffle.srcBtagTemp = srcBtagTemp.data();
-//        task.u.shuffle.srcCtag = srcCtag.data();
-//        task.u.shuffle.srcCtagTemp = srcCtagTemp.data();
-//        task.u.shuffle.dstBtag = dstBtag.data();
-//        task.u.shuffle.dstBtagTemp = dstBtagTemp.data();
-//        task.u.shuffle.dstCtag = dstCtag.data();
-//        task.u.shuffle.dstCtagTemp = dstCtagTemp.data();
-//        task.u.shuffle.valBtag = valBtag.data();
-//        task.u.shuffle.valBtagTemp = valBtagTemp.data();
-//        task.u.shuffle.valCtag = valCtag.data();
-//        task.u.shuffle.valCtagTemp = valCtagTemp.data();
-//        task.u.shuffle.bitBtag = bitBtag.data();
-//        task.u.shuffle.bitBtagTemp = bitBtagTemp.data();
-//        task.u.shuffle.bitCtag = bitCtag.data();
-//        task.u.shuffle.bitCtagTemp = bitCtagTemp.data();
-//        task.u.shuffle.shuffleFinalPermutation = shuffleFinalPermutation.data();
-//        task.u.shuffle.start = c*sizeForEachThread;
-//        if ((c + 1) * sizeForEachThread <= numElements) {
-//            task.u.shuffle.end = (c + 1) * sizeForEachThread;
-//        } else {
-//            task.u.shuffle.end = numElements;
-//        }
-//        task.u.shuffle.elementSize = elementSize;
-//
-//        cid = c % workers_.size();
-//        if (0 != workers_[cid]->iq_.push(task)) {
-//            cout<<"circuiter["<<cid<<"].iq_.push() failure."<<endl;
-//            return -1;
-//        }
-//    }
-//    auto t2 = high_resolution_clock::now();
-//    auto duration = duration_cast<milliseconds>(t2-t1).count();
-//    if(flag_print_timings) {
-//        cout << "time in milliseconds for prepare threads: " << duration << endl;
-//    }
-//
-//    t1 = high_resolution_clock::now();
-//    for (size_t c = 0; c < numThreads; c++) {
-//        cid = c % workers_.size();
-//        if (0 != workers_[cid]->oq_.pop(task)) {
-//            cout<<"circuiter["<<cid<<"].oq_.pop() failure."<<endl;
-//            return -1;
-//        }
-//    }
-//
-//    t2 = high_resolution_clock::now();
-//    duration = duration_cast<milliseconds>(t2-t1).count();
-//    if(flag_print_timings) {
-//        cout << "time in milliseconds for finish threads: " << duration << endl;
-//    }
-//
-//    t1 = high_resolution_clock::now();
+int Utilities3Parties::workers_shufflePermutation(vector<int> & shuffleFinalPermutation, vector<vector<byte>*> & input) {
+
+    auto t1 = high_resolution_clock::now();
+    circuit_thread::ct_task_t task;
+    size_t cid = 0;
+
+    vector<vector<byte>> sharesTemp(input.size());
+    for (int i=0; i<input.size(); i++){
+        sharesTemp[i].resize(input[i]->size());
+    }
+
+    int sizeForEachThread;
+    if (numElements <= numThreads){
+        numThreads = numElements;
+        sizeForEachThread = 1;
+    } else{
+        sizeForEachThread = (numElements + numThreads - 1)/ numThreads;
+    }
+
+    cout<<"sizeForEachThread = "<<sizeForEachThread << endl;
+    for (size_t c = 0; c < numThreads; c++) {
+
+        task.tid = c;
+        task.ct_type = circuit_thread::ct_task_t::ct_shuffle;
+        task.u.shuffle.sharesPointers = &input;
+        task.u.shuffle.sharesTemp = &sharesTemp;
+        task.u.shuffle.shuffleFinalPermutation = shuffleFinalPermutation.data();
+        task.u.shuffle.start = c*sizeForEachThread;
+        if ((c + 1) * sizeForEachThread <= numElements) {
+            task.u.shuffle.end = (c + 1) * sizeForEachThread;
+        } else {
+            task.u.shuffle.end = numElements;
+        }
+        task.u.shuffle.numElements = numElements;
+
+        cid = c % workers_.size();
+        if (0 != workers_[cid]->iq_.push(task)) {
+            cout<<"circuiter["<<cid<<"].iq_.push() failure."<<endl;
+            return -1;
+        }
+    }
+    auto t2 = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(t2-t1).count();
+    if(flag_print_timings) {
+        cout << "time in milliseconds for prepare threads: " << duration << endl;
+    }
+
+    t1 = high_resolution_clock::now();
+    for (size_t c = 0; c < numThreads; c++) {
+        cid = c % workers_.size();
+        if (0 != workers_[cid]->oq_.pop(task)) {
+            cout<<"circuiter["<<cid<<"].oq_.pop() failure."<<endl;
+            return -1;
+        }
+    }
+
+    t2 = high_resolution_clock::now();
+    duration = duration_cast<milliseconds>(t2-t1).count();
+    if(flag_print_timings) {
+        cout << "time in milliseconds for finish threads: " << duration << endl;
+    }
+
+    t1 = high_resolution_clock::now();
+    for (int i=0; i<input.size(); i++){
+        *input[i] = move(sharesTemp[i]);
+    }
 //    srcBtag = move(srcBtagTemp);
 //    srcCtag = move(srcCtagTemp);
 //    dstBtag = move(dstBtagTemp);
@@ -667,21 +657,23 @@ int Utilities3Parties::workers_shufflePermutation(vector<int> & shuffleFinalPerm
 //    valCtag = move(valCtagTemp);
 //    bitBtag = move(bitBtagTemp);
 //    bitCtag = move(bitCtagTemp);
-//
-//    t2 = high_resolution_clock::now();
-//    duration = duration_cast<milliseconds>(t2-t1).count();
-//    if(flag_print_timings) {
-//        cout << "time in milliseconds for move: " << duration << endl;
-//    }
-//    return 0;
+
+    t2 = high_resolution_clock::now();
+    duration = duration_cast<milliseconds>(t2-t1).count();
+    if(flag_print_timings) {
+        cout << "time in milliseconds for move: " << duration << endl;
+    }
+    return 0;
 }
 
-int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>> & input, int numElements, bool reverse) {
+int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>*> & input, int numElements, bool reverse) {
     //Nomenclature per downstream party = P0 (S1)
 //    int count = numElements * elementSize;
     vector<vector<byte>> inputTag(input.size());
+    vector<vector<byte>*> inputTagP(input.size());
     for (int i=0 ;i<input.size(); i++){
-        inputTag[i] = input[i];
+        inputTag[i] = *input[i];
+        inputTagP[i] = &inputTag[i];
     }
 //    std::vector<byte> srcAtag(srcShares.first), srcBtag(srcShares.second);
 //    std::vector<byte> dstAtag(destShares.first), dstBtag(destShares.second);
@@ -694,13 +686,13 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>> & input, in
         if (workers_.size() == 0) {
             computeShufflePermutation(nextFinalPermutation, inputTag);
         } else {
-            workers_shufflePermutation(nextFinalPermutation, inputTag);
+            workers_shufflePermutation(nextFinalPermutation, inputTagP);
         }
     } else {
         if (workers_.size() == 0) {
             computeShufflePermutation(nextFinalReversePermutation, inputTag);
         } else {
-            workers_shufflePermutation(nextFinalReversePermutation, inputTag);
+            workers_shufflePermutation(nextFinalReversePermutation, inputTagP);
         }
     }
 
@@ -715,7 +707,7 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>> & input, in
 
 
     for (int i=0; i<input.size(); i+=2){
-        prevPrg->getPRGBytes(input[i], 0, input[i].size());
+        prevPrg->getPRGBytes(*input[i], 0, input[i]->size());
     }
     //Get new random shares from the common PRG
 //    prevPrg->getPRGBytes(srcShares.first, 0, count);
@@ -725,7 +717,7 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>> & input, in
 
     vector<vector<byte>> inputTagXorInput(input.size());
     for (int j=0; j<input.size(); j++) {
-        inputTagXorInput[j].resize(input[j].size());
+        inputTagXorInput[j].resize(input[j]->size());
     }
 //    std::vector<byte> srcAtag_xor_srcA(count), srcCtag_xor_srcC(count);
 //    std::vector<byte> dstAtag_xor_dstA(count), dstCtag_xor_dstC(count);
@@ -736,8 +728,8 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>> & input, in
     for (int j=0; j<input.size(); j+=2) {
         //Xor the random shares with the permuted shares
 #pragma GCC ivdep
-        for (size_t i = 0; i < input[j].size(); ++i) {
-            inputTagXorInput[j][i] = inputTag[j][i] ^ input[j][i];
+        for (size_t i = 0; i < input[j]->size(); ++i) {
+            inputTagXorInput[j][i] = inputTag[j][i] ^ (*input[j])[i];
 
         }
     }
@@ -791,8 +783,8 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>> & input, in
     for (int j=0; j<input.size(); j+=2) {
 
 #pragma GCC ivdep
-        for (size_t i = 0; i < input[j].size(); ++i) {
-            input[j + 1][i] = inputTag[j+1][i] ^ inputTagXorInput[j + 1][i] ^ inputTagXorInput[j][i];
+        for (size_t i = 0; i < input[j]->size(); ++i) {
+            (*input[j + 1])[i] = inputTag[j+1][i] ^ inputTagXorInput[j + 1][i] ^ inputTagXorInput[j][i];
         }
     }
 //#pragma GCC ivdep
@@ -817,11 +809,11 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>> & input, in
     return 0;
 }
 
-int Utilities3Parties::share_shuffle_passive(vector<vector<byte>> & input, int numElements) {
+int Utilities3Parties::share_shuffle_passive(vector<vector<byte>*> & input, int numElements) {
     //Nomenclature per passive party = P2 (S3)
     for (int i=0; i<input.size(); i+=2){
-        prevPrg->getPRGBytes(input[i], 0, input[i].size());
-        nextPrg->getPRGBytes(input[i+1], 0, input[i+1].size());
+        prevPrg->getPRGBytes(*input[i], 0, input[i]->size());
+        nextPrg->getPRGBytes(*input[i+1], 0, input[i+1]->size());
     }
     //Use the common Prgs to get a random shares
 //    int count = numElements * elementSize;
@@ -840,7 +832,7 @@ int Utilities3Parties::share_shuffle_passive(vector<vector<byte>> & input, int n
     return 0;
 }
 
-int Utilities3Parties::shuffleBack(vector<vector<byte>> & input, int numElements) {
+int Utilities3Parties::shuffleBack(vector<vector<byte>*> & input, int numElements) {
     //The reverse shuffle algorithm contains 3 phases.
     //In each phase there is a role for each one of the parties - upstream, downstream and passive.
     //In order to reverse the shuffle, the order of the phases is the opposite of the shuffle algorithm.
@@ -900,7 +892,7 @@ int Utilities3Parties::shuffleBack(vector<vector<byte>> & input, int numElements
     return 0;
 }
 
-int Utilities3Parties::sort(vector<vector<byte>> & input, size_t numElements, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, bool malicious, bool sortWithID){
+int Utilities3Parties::sort(vector<vector<byte>*> & input, size_t numElements, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, bool malicious, bool sortWithID){
 
     //The sort computes the quick sort algorithm.
     std::vector<quicksort_part> sort_parts, sort_n_parts;
@@ -943,7 +935,7 @@ int Utilities3Parties::sort(vector<vector<byte>> & input, size_t numElements, ve
     return 0;
 }
 
-bool Utilities3Parties::partition(vector<vector<byte>> & input, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, vector<quicksort_part> &parts, vector<quicksort_part> &nparts,
+bool Utilities3Parties::partition(vector<vector<byte>*> & input, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, vector<quicksort_part> &parts, vector<quicksort_part> &nparts,
                               pair<vector<byte>, vector<byte>> &part_input, pair<vector<byte>, vector<byte>> &part_output,
                               vector<byte> &part_compRes, bool malicious, bool sortWithID, int elementSize) {
     //TODO pivot selection!!
@@ -990,7 +982,7 @@ bool Utilities3Parties::partition(vector<vector<byte>> & input, vector<byte> & s
     }
 
     //Swap the shares according to the circuit results
-    if (1 < workers_.size() && 1 < parts.size()) {
+    if (0 < workers_.size() && 1 < parts.size()) {
         workers_swap(input, parts, nparts, part_compRes, sortWithID);
     } else {
         inline_swap(input, parts, nparts, part_compRes, sortWithID, elementSize);
@@ -999,56 +991,49 @@ bool Utilities3Parties::partition(vector<vector<byte>> & input, vector<byte> & s
     return true;
 }
 
-void Utilities3Parties::workers_swap(vector<vector<byte>> & input, vector<quicksort_part> &parts, vector<quicksort_part> &nparts, vector<byte> &compRes, bool sortWithID) {
-//    nparts.clear();
-//    nparts.reserve(parts.size() * 2);
-//
-//    size_t compres_base = 0, countparts = 0, countworks = workers_.size();
-//
-//    for (std::vector<quicksort_part>::const_iterator qpart = parts.begin(); qpart != parts.end(); ++qpart) {
-//
-//        circuit_thread::ct_task_t task;
-//        task.tid = countparts;
-//        task.ct_type = circuit_thread::ct_task_t::ct_swap;
-//        task.u.swap.src0 = (vu_t*)srcShares.first.data();
-//        task.u.swap.src1 = (vu_t*)srcShares.second.data();
-//        task.u.swap.dest0 = (vu_t*)destShares.first.data();
-//        task.u.swap.dest1 = (vu_t*)destShares.second.data();
-//        task.u.swap.cr = (vu_t*)compRes.data();
-//        task.u.swap.val0 = (vu_t*)valShares.first.data();
-//        task.u.swap.val1 = (vu_t*)valShares.second.data();
-//        task.u.swap.bit0 = bitShares.first.data();
-//        task.u.swap.bit1 = bitShares.second.data();
-//        task.u.swap.ids = mappingIds.data();
-//        task.u.swap.sortWithID = sortWithID;
-//        task.u.swap.crbase = compres_base;
-//        task.u.swap.low = qpart->low;
-//        task.u.swap.high = qpart->high;
-//
-//        workers_[countparts % countworks]->iq_.push(task);
-//        compres_base += task.u.swap.high - task.u.swap.low;
-//        countparts++;
-//
-//        if (countparts >= (countworks * g_qsize)
-//            || parts.end() == std::next(qpart)) {
-//            for (size_t i = 0; i < countparts; ++i) {
-//                workers_[i % countworks]->oq_.pop(task);
-//                if (1 < task.u.swap.pivot - task.u.swap.low) {
-//                    nparts.emplace_back( quicksort_part { task.u.swap.low, task.u.swap.pivot });
-//                }
-//                if (1 < task.u.swap.high - (task.u.swap.pivot + 1)) {
-//                    nparts.emplace_back(quicksort_part { task.u.swap.pivot + 1,
-//                                                         task.u.swap.high });
-//                }
-//            }
-//            countparts = 0;
-//        }
-//    }
-//
-//    parts.swap(nparts);
+void Utilities3Parties::workers_swap(vector<vector<byte>*> & input, vector<quicksort_part> &parts, vector<quicksort_part> &nparts, vector<byte> &compRes, bool sortWithID) {
+
+    nparts.clear();
+    nparts.reserve(parts.size() * 2);
+
+    size_t compres_base = 0, countparts = 0, countworks = workers_.size();
+
+    for (std::vector<quicksort_part>::const_iterator qpart = parts.begin(); qpart != parts.end(); ++qpart) {
+
+        circuit_thread::ct_task_t task;
+        task.tid = countparts;
+        task.ct_type = circuit_thread::ct_task_t::ct_swap;
+        task.u.swap.cr = (vu_t*)compRes.data();
+        task.u.swap.sharesPointers = &input;
+        task.u.swap.crbase = compres_base;
+        task.u.swap.numElements = numElements;
+        task.u.swap.low = qpart->low;
+        task.u.swap.high = qpart->high;
+
+        workers_[countparts % countworks]->iq_.push(task);
+        compres_base += task.u.swap.high - task.u.swap.low;
+        countparts++;
+
+        if (countparts >= (countworks * g_qsize)
+            || parts.end() == std::next(qpart)) {
+            for (size_t i = 0; i < countparts; ++i) {
+                workers_[i % countworks]->oq_.pop(task);
+                if (1 < task.u.swap.pivot - task.u.swap.low) {
+                    nparts.emplace_back( quicksort_part { task.u.swap.low, task.u.swap.pivot });
+                }
+                if (1 < task.u.swap.high - (task.u.swap.pivot + 1)) {
+                    nparts.emplace_back(quicksort_part { task.u.swap.pivot + 1,
+                                                         task.u.swap.high });
+                }
+            }
+            countparts = 0;
+        }
+    }
+
+    parts.swap(nparts);
 }
 
-void Utilities3Parties::inline_swap(vector<vector<byte>> & input, vector<quicksort_part> &parts, vector<quicksort_part> &nparts, vector<byte> &compRes, bool sortWithID, int elementSize) {
+void Utilities3Parties::inline_swap(vector<vector<byte>*> & input, vector<quicksort_part> &parts, vector<quicksort_part> &nparts, vector<byte> &compRes, bool sortWithID, int elementSize) {
     nparts.clear();
     nparts.reserve(parts.size() * 2);
 
@@ -1101,11 +1086,11 @@ void Utilities3Parties::inline_swap(vector<vector<byte>> & input, vector<quickso
     parts.swap(nparts);
 }
 
-void Utilities3Parties::sharesSwap(vector<vector<byte>> & input, int lIndex, int rIndex, bool sortWithID) {
+void Utilities3Parties::sharesSwap(vector<vector<byte>*> & input, int lIndex, int rIndex, bool sortWithID) {
 
     for (int i=0; i<input.size(); i++){
         //Swap each shares vector according to the given indices
-        swapElement(input[i], lIndex, rIndex, input[i].size() / numElements);
+        swapElement(*input[i], lIndex, rIndex, input[i]->size() / numElements);
     }
     //Swap each shares vector according to the given indices
 //    swapElement(srcShares.first, lIndex, rIndex, elementSize);
@@ -1341,56 +1326,6 @@ bool Utilities3Parties::load_circuits_helper(const char * circuit, size_t vf_sta
     }
 
     return true;
-}
-
-int Utilities3Parties::workers_circuit(int count, int inputBytes, int outputBytes, pair<vector<byte>, vector<byte>> &input,
-                                   pair<vector<byte>, vector<byte>> &output, bool malicious, CircMap & circuit) {
-
-    circuit_thread::ct_task_t task;
-    size_t vf = 8*sizeof(vu_t);
-    size_t chunks = count / vf;
-//    cout<<"number of chunks = "<< chunks<<endl;
-    size_t cid = 0;
-
-    // Execute circuit
-    CircMap::iterator vc = circuit.begin();
-
-    input.first.resize(inputBytes * count, 0);
-    input.second.resize(inputBytes * count, 0);
-
-    output.first.resize(outputBytes*count);
-    output.second.resize(outputBytes*count);
-
-    for (size_t c = 0; c < chunks; c++) {
-
-        task.tid = c;
-        task.ct_type = circuit_thread::ct_task_t::ct_circuit;
-        task.u.circuit.malicious = malicious;
-        task.u.circuit.ccm_ = &circuit;
-        task.u.circuit.inputSize = inputBytes * 8;
-        task.u.circuit.outputSize = outputBytes * 8;
-        task.u.circuit.i1 = (vu_t*)(input.first.data() + c * vf * inputBytes);
-        task.u.circuit.i2 = (vu_t*)(input.second.data() + c * vf * inputBytes);
-        task.u.circuit.o1 = (vu_t*)(output.first.data() + c * vf * outputBytes);
-        task.u.circuit.o2 = (vu_t*)(output.second.data() + c * vf * outputBytes);
-
-//        cout<<"compare task "<<task.tid<<"; size="<<task.u.comp.size<<"; input offset = "<<(c * 2 * vf)<<"; output offset = "<<(c * vf)<<";"<<endl;
-
-        cid = c % workers_.size();
-        if (0 != workers_[cid]->iq_.push(task)) {
-            cout<<"circuiter["<<cid<<"].iq_.push() failure."<<endl;
-            return -1;
-        }
-    }
-
-    for (size_t c = 0; c < chunks; c++) {
-        cid = c % workers_.size();
-        if (0 != workers_[cid]->oq_.pop(task)) {
-            cout<<"circuiter["<<cid<<"].oq_.pop() failure."<<endl;
-            return -1;
-        }
-    }
-    return 0;
 }
 
 

@@ -61,9 +61,9 @@ private:
     //The roles are implemented in the three follow functions:
     //The reverse parameter indicates whether to compute the regular shuffle or the reverse shuffle.
     // The code is very similar so we implement that in the same function.
-    int share_shuffle_upstream(vector<vector<byte>> & input, int numElements, bool reverse);
-    int share_shuffle_downstream(vector<vector<byte>> & input, int numElements, bool reverse);
-    int share_shuffle_passive(vector<vector<byte>> & input, int numElements);
+    int share_shuffle_upstream(vector<vector<byte>*> & input, int numElements, bool reverse);
+    int share_shuffle_downstream(vector<vector<byte>*> & input, int numElements, bool reverse);
+    int share_shuffle_passive(vector<vector<byte>*> & input, int numElements);
 
     void computeShuffleFinalPermutation(vector<int> & shufflePermutation,
                                         vector<int> & shuffleFinalPermutation,
@@ -72,7 +72,7 @@ private:
 
     //Swap the elements in the vector according to the given shuffle permutation
     void computeShufflePermutation(vector<int> & shuffleFinalPermutation,vector<vector<byte>> & input);
-    int workers_shufflePermutation(vector<int> & shuffleFinalPermutation, vector<vector<byte>> & input);
+    int workers_shufflePermutation(vector<int> & shuffleFinalPermutation, vector<vector<byte>*> & input);
 
     bool checkSort(byte* recBufs, int numBytes, int elementSize);
     void printOpenedSharesArr(byte* recBufs, int numBytes, int elementSize, ofstream* output);
@@ -80,7 +80,7 @@ private:
     //The follow functions are part of the sort algorithm:
 
     //Gets parts of the vector and sort each part separately
-    bool partition(vector<vector<byte>> & input, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, vector<quicksort_part> &parts, vector<quicksort_part> &nparts,
+    bool partition(vector<vector<byte>*> & input, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, vector<quicksort_part> &parts, vector<quicksort_part> &nparts,
                    pair<vector<byte>, vector<byte>> &part_input, pair<vector<byte>, vector<byte>> &part_output,
                    vector<byte> &part_compRes, bool malicious, bool sortWithID, int elementSize);
     //Use the compare circuit in order to sort the input vector
@@ -95,10 +95,10 @@ private:
     void select_cdc(size_t count, size_t & chunks, size_t & vf);
     // After the compare circuit is called and there are results, this function swaps the elements in all the shares
     // vectors according to the compare results.
-    void inline_swap(vector<vector<byte>> & input, vector<quicksort_part> & parts, vector<quicksort_part> & nparts, vector<byte> & compRes, bool sortWithID, int elementSize);
-    void workers_swap(vector<vector<byte>> & input, vector<quicksort_part> &parts, vector<quicksort_part> &nparts, vector<byte> &compRes, bool sortWithID);
+    void inline_swap(vector<vector<byte>*> & input, vector<quicksort_part> & parts, vector<quicksort_part> & nparts, vector<byte> & compRes, bool sortWithID, int elementSize);
+    void workers_swap(vector<vector<byte>*> & input, vector<quicksort_part> &parts, vector<quicksort_part> &nparts, vector<byte> &compRes, bool sortWithID);
     //Swap two shares in the shares vectors.
-    void sharesSwap(vector<vector<byte>> & input, int lIndex, int rIndex, bool sortWithID);
+    void sharesSwap(vector<vector<byte>*> & input, int lIndex, int rIndex, bool sortWithID);
     //Gets a specific shares and swap the elements
     void swapElement(vector<byte> & v, int lIndex, int rIndex, int elementSize);
 
@@ -123,13 +123,13 @@ public:
                       int numThreads, int numElements, PrgFromOpenSSLAES* prg,
                       PrgFromOpenSSLAES* nextPrg, PrgFromOpenSSLAES* prevPrg, bool malicious, string partiesFile,
                       vector<shared_ptr<CommParty>> & threadsNextChannels,
-                      vector<shared_ptr<CommParty>> & threadsPrevChannels);
+                      vector<shared_ptr<CommParty>> & threadsPrevChannels, vector<circuit_thread*> & workers);
     ~Utilities3Parties();
 
     //Compute the shuffle algorithm
-    int shuffle(vector<vector<byte>> & input, int numElements);
+    int shuffle(vector<vector<byte>*> & input, int numElements);
     //Compute the reverse shuffle algorithm
-    int shuffleBack(vector<vector<byte>> & input, int numElements);
+    int shuffleBack(vector<vector<byte>*> & input, int numElements);
 
     //Open the shares.
     //Each party send the first share to both other parties and does xor between his value and the other two values.
@@ -140,11 +140,11 @@ public:
 //    void openMersenne(ZpMersenneIntElement* sendBufs, ZpMersenneIntElement* recBufs, int numElements);
 
     //Compute the sort algorithm
-    int sort(vector<vector<byte>> & input, size_t numElements, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, bool malicious, bool sortWithID);
+    int sort(vector<vector<byte>*> & input, size_t numElements, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, bool malicious, bool sortWithID);
 
-    void permute(vector<vector<byte>> & input, int numElements, vector<int> & mapping);
+    void permute(vector<vector<byte>*> & input, int numElements, vector<int> & mapping);
     //The next functions are the protocol flow:
-    void workers_permute(vector<vector<byte>> & input, int numElements, vector<int> & mapping);
+    void workers_permute(vector<vector<byte>*> & input, int numElements, vector<int> & mapping);
 };
 
 #endif //SCAPI_UTILITIES3PARTIES_H

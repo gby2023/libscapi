@@ -27,21 +27,20 @@ public:
 	} circuit_task_t;
 
 	typedef struct {
-		key_type *src0, *src1, *dest0, *dest1, *val0, *val1, *cr;
-		byte* bit0, *bit1;
+		key_type *cr;
+        vector<vector<byte> *> * sharesPointers;
 		size_t low, high, crbase;
 		size_t pivot;
-        int * ids;
+		int numElements;
         bool sortWithID;
 	} swap_task_t;
 
 	typedef struct {
-		byte *srcBtagTemp, *srcCtagTemp, *dstBtagTemp, *dstCtagTemp, *valBtagTemp, *valCtagTemp;
-		byte *srcBtag, *srcCtag, *dstBtag, *dstCtag, *valBtag, *valCtag;
+		vector<vector<byte> *> * sharesPointers;
+		vector<vector<byte>> * sharesTemp;
 		int* shuffleFinalPermutation;
-		byte* bitBtagTemp, *bitCtagTemp, *bitBtag, *bitCtag;
 		size_t start, end;
-		int elementSize;
+		int numElements;
 	} shuffle_task_t;
 
 	typedef struct {
@@ -60,6 +59,7 @@ public:
 			circuit_task_t circuit;
 		} u;
 	} ct_task_t;
+
 
 public:
 	circuit_thread(unsigned int cid, int bufferSize, const int pid,shared_ptr<CommParty> nextChannel, shared_ptr<CommParty> prevChannel, const size_t qsize);
@@ -93,6 +93,7 @@ private:
 	void perform_circuit_task(const size_t tid, const circuit_task_t & comp);
 	void perform_swap_task(const size_t tid, swap_task_t & swap);
 	void perform_shuffle_task(const size_t tid, shuffle_task_t & shuffle);
+    void swapElement(vector<byte> & v, int lIndex, int rIndex, int elementSize);
 
 	int init_prgs();
 

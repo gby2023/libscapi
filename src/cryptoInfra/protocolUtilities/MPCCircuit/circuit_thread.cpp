@@ -179,6 +179,7 @@ void circuit_thread::perform_circuit_task(const size_t tid, const circuit_task_t
 
 void circuit_thread::perform_swap_task(const size_t tid, swap_task_t & swap) {
 	size_t i1 = swap.low, i0 = swap.high - 2;
+    int elementSize;
 	while (i1 < i0) {
 		if (0 == swap.cr[(i1 - swap.low + swap.crbase)]) {
 			++i1;
@@ -189,34 +190,43 @@ void circuit_thread::perform_swap_task(const size_t tid, swap_task_t & swap) {
 			continue;
 		}
 
-		std::swap(swap.src0[i1], swap.src0[i0]);
-		std::swap(swap.src1[i1], swap.src1[i0]);
-		std::swap(swap.dest0[i1], swap.dest0[i0]);
-		std::swap(swap.dest1[i1], swap.dest1[i0]);
-		std::swap(swap.val0[i1], swap.val0[i0]);
-		std::swap(swap.val1[i1], swap.val1[i0]);
-		std::swap(swap.bit0[i1], swap.bit0[i0]);
-		std::swap(swap.bit1[i1], swap.bit1[i0]);
-		if (swap.sortWithID){
-			std::swap(swap.ids[i1], swap.ids[i0]);
+
+		for (int i=0; i<swap.sharesPointers->size(); i++){
+            elementSize = (*swap.sharesPointers)[i]->size() / swap.numElements;
+            swapElement(*(*swap.sharesPointers)[i], i1, i0, elementSize);
 		}
+//		std::swap(swap.src0[i1], swap.src0[i0]);
+//		std::swap(swap.src1[i1], swap.src1[i0]);
+//		std::swap(swap.dest0[i1], swap.dest0[i0]);
+//		std::swap(swap.dest1[i1], swap.dest1[i0]);
+//		std::swap(swap.val0[i1], swap.val0[i0]);
+//		std::swap(swap.val1[i1], swap.val1[i0]);
+//		std::swap(swap.bit0[i1], swap.bit0[i0]);
+//		std::swap(swap.bit1[i1], swap.bit1[i0]);
+//		if (swap.sortWithID){
+//			std::swap(swap.ids[i1], swap.ids[i0]);
+//		}
 		std::swap(swap.cr[i1 - swap.low + swap.crbase], swap.cr[i0 - swap.low + swap.crbase]);
 	}
 
 	int pivot = swap.high - 1;
 	if (0 != swap.cr[i1 - swap.low + swap.crbase]) {
 
-		std::swap(swap.src0[i1], swap.src0[pivot]);
-		std::swap(swap.src1[i1], swap.src1[pivot]);
-		std::swap(swap.dest0[i1], swap.dest0[pivot]);
-		std::swap(swap.dest1[i1], swap.dest1[pivot]);
-		std::swap(swap.val0[i1], swap.val0[pivot]);
-		std::swap(swap.val1[i1], swap.val1[pivot]);
-		std::swap(swap.bit0[i1], swap.bit0[pivot]);
-		std::swap(swap.bit1[i1], swap.bit1[pivot]);
-		if (swap.sortWithID){
-			std::swap(swap.ids[i1], swap.ids[pivot]);
-		}
+        for (int i=0; i<swap.sharesPointers->size(); i++){
+            elementSize = (*swap.sharesPointers)[i]->size() / swap.numElements;
+            swapElement(*(*swap.sharesPointers)[i], i1, pivot, elementSize);
+        }
+//		std::swap(swap.src0[i1], swap.src0[pivot]);
+//		std::swap(swap.src1[i1], swap.src1[pivot]);
+//		std::swap(swap.dest0[i1], swap.dest0[pivot]);
+//		std::swap(swap.dest1[i1], swap.dest1[pivot]);
+//		std::swap(swap.val0[i1], swap.val0[pivot]);
+//		std::swap(swap.val1[i1], swap.val1[pivot]);
+//		std::swap(swap.bit0[i1], swap.bit0[pivot]);
+//		std::swap(swap.bit1[i1], swap.bit1[pivot]);
+//		if (swap.sortWithID){
+//			std::swap(swap.ids[i1], swap.ids[pivot]);
+//		}
 		std::swap(swap.cr[i1 - swap.low + swap.crbase], swap.cr[pivot - swap.low + swap.crbase]);
 		swap.pivot = i1;
 	} else {
@@ -224,98 +234,27 @@ void circuit_thread::perform_swap_task(const size_t tid, swap_task_t & swap) {
 	}
 }
 
+void circuit_thread::swapElement(vector<byte> & v, int lIndex, int rIndex, int elementSize){
+    vector<byte> tmp(elementSize);
+
+    //Save the element in the left index in a temp array
+    memcpy(tmp.data(), v.data() + lIndex * elementSize, elementSize);
+    //Copy the element from the right index to the left index
+    memcpy(v.data() + lIndex * elementSize, v.data() + rIndex * elementSize, elementSize);
+    //Copy the left element to the right index
+    memcpy(v.data() + rIndex * elementSize, tmp.data(), elementSize);
+}
+
 void circuit_thread::perform_shuffle_task(const size_t tid, shuffle_task_t & shuffle) {
 //    cout<<"in shuffle thread. start = "<<shuffle.start<<" end = "<<shuffle.end<<endl;
-	int elementSize = shuffle.elementSize;
-	for (size_t i = shuffle.start; i < shuffle.end ; ++i) {
-		//Save the element in the left index in a temp array
-		memcpy(shuffle.srcBtagTemp + i * elementSize, shuffle.srcBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.srcCtagTemp + i * elementSize, shuffle.srcCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.dstBtagTemp + i * elementSize, shuffle.dstBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.dstCtagTemp + i * elementSize, shuffle.dstCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.valBtagTemp + i * elementSize, shuffle.valBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.valCtagTemp + i * elementSize, shuffle.valCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		shuffle.bitBtagTemp[i] = shuffle.bitBtag[shuffle.shuffleFinalPermutation[i]];
-//		shuffle.bitCtagTemp[i] = shuffle.bitCtag[shuffle.shuffleFinalPermutation[i]];
-	}
-
-	for (size_t i = shuffle.start; i < shuffle.end ; ++i) {
-		//Save the element in the left index in a temp array
-//		memcpy(shuffle.srcBtagTemp + i * elementSize, shuffle.srcBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-		memcpy(shuffle.srcCtagTemp + i * elementSize, shuffle.srcCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.dstBtagTemp + i * elementSize, shuffle.dstBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.dstCtagTemp + i * elementSize, shuffle.dstCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.valBtagTemp + i * elementSize, shuffle.valBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.valCtagTemp + i * elementSize, shuffle.valCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		shuffle.bitBtagTemp[i] = shuffle.bitBtag[shuffle.shuffleFinalPermutation[i]];
-//		shuffle.bitCtagTemp[i] = shuffle.bitCtag[shuffle.shuffleFinalPermutation[i]];
-	}
-	for (size_t i = shuffle.start; i < shuffle.end ; ++i) {
-		//Save the element in the left index in a temp array
-//		memcpy(shuffle.srcBtagTemp + i * elementSize, shuffle.srcBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.srcCtagTemp + i * elementSize, shuffle.srcCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-		memcpy(shuffle.dstBtagTemp + i * elementSize, shuffle.dstBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.dstCtagTemp + i * elementSize, shuffle.dstCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.valBtagTemp + i * elementSize, shuffle.valBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.valCtagTemp + i * elementSize, shuffle.valCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		shuffle.bitBtagTemp[i] = shuffle.bitBtag[shuffle.shuffleFinalPermutation[i]];
-//		shuffle.bitCtagTemp[i] = shuffle.bitCtag[shuffle.shuffleFinalPermutation[i]];
-	}
-	for (size_t i = shuffle.start; i < shuffle.end ; ++i) {
-		//Save the element in the left index in a temp array
-//		memcpy(shuffle.srcBtagTemp + i * elementSize, shuffle.srcBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.srcCtagTemp + i * elementSize, shuffle.srcCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.dstBtagTemp + i * elementSize, shuffle.dstBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-		memcpy(shuffle.dstCtagTemp + i * elementSize, shuffle.dstCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.valBtagTemp + i * elementSize, shuffle.valBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.valCtagTemp + i * elementSize, shuffle.valCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		shuffle.bitBtagTemp[i] = shuffle.bitBtag[shuffle.shuffleFinalPermutation[i]];
-//		shuffle.bitCtagTemp[i] = shuffle.bitCtag[shuffle.shuffleFinalPermutation[i]];
-	}
-	for (size_t i = shuffle.start; i < shuffle.end ; ++i) {
-		//Save the element in the left index in a temp array
-//		memcpy(shuffle.srcBtagTemp + i * elementSize, shuffle.srcBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.srcCtagTemp + i * elementSize, shuffle.srcCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.dstBtagTemp + i * elementSize, shuffle.dstBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.dstCtagTemp + i * elementSize, shuffle.dstCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-		memcpy(shuffle.valBtagTemp + i * elementSize, shuffle.valBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.valCtagTemp + i * elementSize, shuffle.valCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		shuffle.bitBtagTemp[i] = shuffle.bitBtag[shuffle.shuffleFinalPermutation[i]];
-//		shuffle.bitCtagTemp[i] = shuffle.bitCtag[shuffle.shuffleFinalPermutation[i]];
-	}
-	for (size_t i = shuffle.start; i < shuffle.end ; ++i) {
-		//Save the element in the left index in a temp array
-//		memcpy(shuffle.srcBtagTemp + i * elementSize, shuffle.srcBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.srcCtagTemp + i * elementSize, shuffle.srcCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.dstBtagTemp + i * elementSize, shuffle.dstBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.dstCtagTemp + i * elementSize, shuffle.dstCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.valBtagTemp + i * elementSize, shuffle.valBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-		memcpy(shuffle.valCtagTemp + i * elementSize, shuffle.valCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		shuffle.bitBtagTemp[i] = shuffle.bitBtag[shuffle.shuffleFinalPermutation[i]];
-//		shuffle.bitCtagTemp[i] = shuffle.bitCtag[shuffle.shuffleFinalPermutation[i]];
-	}
-	for (size_t i = shuffle.start; i < shuffle.end ; ++i) {
-		//Save the element in the left index in a temp array
-//		memcpy(shuffle.srcBtagTemp + i * elementSize, shuffle.srcBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.srcCtagTemp + i * elementSize, shuffle.srcCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.dstBtagTemp + i * elementSize, shuffle.dstBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.dstCtagTemp + i * elementSize, shuffle.dstCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.valBtagTemp + i * elementSize, shuffle.valBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.valCtagTemp + i * elementSize, shuffle.valCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-		shuffle.bitBtagTemp[i] = shuffle.bitBtag[shuffle.shuffleFinalPermutation[i]];
-//		shuffle.bitCtagTemp[i] = shuffle.bitCtag[shuffle.shuffleFinalPermutation[i]];
-	}
-	for (size_t i = shuffle.start; i < shuffle.end ; ++i) {
-		//Save the element in the left index in a temp array
-//		memcpy(shuffle.srcBtagTemp + i * elementSize, shuffle.srcBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.srcCtagTemp + i * elementSize, shuffle.srcCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.dstBtagTemp + i * elementSize, shuffle.dstBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.dstCtagTemp + i * elementSize, shuffle.dstCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.valBtagTemp + i * elementSize, shuffle.valBtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		memcpy(shuffle.valCtagTemp + i * elementSize, shuffle.valCtag + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
-//		shuffle.bitBtagTemp[i] = shuffle.bitBtag[shuffle.shuffleFinalPermutation[i]];
-		shuffle.bitCtagTemp[i] = shuffle.bitCtag[shuffle.shuffleFinalPermutation[i]];
-	}
+    int elementSize;
+	for (int j=0; j < shuffle.sharesPointers->size(); j++) {
+	    elementSize = (*shuffle.sharesPointers)[j]->size() / shuffle.numElements;
+        for (size_t i = shuffle.start; i < shuffle.end; ++i) {
+            //Save the element in the left index in a temp array
+            memcpy((*shuffle.sharesTemp)[j].data() + i * elementSize, (*((*shuffle.sharesPointers)[j])).data() + shuffle.shuffleFinalPermutation[i] * elementSize, elementSize);
+        }
+    }
 }
 
 void circuit_thread::set_abs_timeout(struct timespec & to, u_int64_t ns) {
