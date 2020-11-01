@@ -107,15 +107,11 @@ private:
     bool load_circuits_helper(const char * circuit, size_t vf_start, size_t vf_stop, CircMap & comps);
     bool loadCircuitFromFile(CircuitSpec & csplain, const char * txtName,  const char * binName, bool toSerialize);
 
-//    int start_workers(size_t workers_count, vector<shared_ptr<CommParty>> & threadsNextChannels, vector<shared_ptr<CommParty>> & threadsPrevChannels);
-//    void stop_workers();
     int init_scale();
-
 
     //Copy each share to the right place according to the mapping SH32
     void permuteVector(vector<byte> & vToPermute, int numElements, int elementSize, vector<int> & mapping);
 
-//    void createThreadFiles(string partiesFile);
 
 public:
 
@@ -143,7 +139,6 @@ public:
     int sort(vector<vector<byte>*> & input, size_t numElements, vector<byte> & sortParamFirst, vector<byte> & sortParamSecond, bool malicious, bool sortWithID);
 
     void permute(vector<vector<byte>*> & input, int numElements, vector<int> & mapping);
-    //The next functions are the protocol flow:
     void workers_permute(vector<vector<byte>*> & input, int numElements, vector<int> & mapping);
 };
 

@@ -16,9 +16,6 @@ Utilities3Parties::Utilities3Parties(int partyID, shared_ptr<CommParty> & nextCh
                  prg(prg), nextPrg(nextPrg), prevPrg(prevPrg), malicious(malicious), threadsNextChannels(threadsNextChannels),
                  threadsPrevChannels(threadsPrevChannels), workers_(workers) {
 
-
-    cout<<" in ctor" <<endl;
-
     auto t1 = high_resolution_clock::now();
 
     computeShuffleFinalPermutation(prevPermutation,
@@ -53,35 +50,6 @@ Utilities3Parties::Utilities3Parties(int partyID, shared_ptr<CommParty> & nextCh
         exit(-1);
     }
 
-//    vector<shared_ptr<CommParty>> threadsNextChannels(numThreads);
-//    vector<shared_ptr<CommParty>> threadsPrevChannels(numThreads);
-//    if (numThreads > 0) {
-//        createThreadFiles(partiesFile);
-//        cout << "numThreads = " << numThreads << endl;
-//
-//        for (int i = 0; i < numThreads; i++) {
-//            string threadsPartiesFile = string("ThreadsParties" + to_string(i) + ".txt");
-//            cout << "parties file = " << threadsPartiesFile << endl;
-//            partiesL = comm.setCommunication(io_service, partyID, 3, threadsPartiesFile);
-//
-//            if (partyID == 0) {
-//                threadsNextChannels[i] = partiesL[0]->getChannel();
-//                threadsPrevChannels[i] = partiesL[1]->getChannel();
-//            } else if (partyID == 1) {
-//                threadsNextChannels[i] = partiesL[1]->getChannel();
-//                threadsPrevChannels[i] = partiesL[0]->getChannel();
-//            } else if (partyID == 2) {
-//                threadsNextChannels[i] = partiesL[0]->getChannel();
-//                threadsPrevChannels[i] = partiesL[1]->getChannel();
-//            }
-//        }
-//    }
-
-
-//    if (0 < numThreads && 0!= start_workers(numThreads, threadsNextChannels, threadsPrevChannels)) {
-//        cout<<"workers start failure."<<endl;
-//    }
-
     if (workers_.size() > 0 && 0 != init_scale()) {
         cout<<"division scale initialization failure."<<endl;
     }
@@ -95,53 +63,6 @@ Utilities3Parties::Utilities3Parties(int partyID, shared_ptr<CommParty> & nextCh
     prevChannel->read(tmpBytes.data(), tmp.size());
 
 }
-//
-//void Utilities3Parties::createThreadFiles(string partiesFile){
-//    //open file
-//    ConfigFile cf(partiesFile);
-//
-//
-//    string portString, ipString;
-//    vector<int> ports(numParties);
-//    vector<string> ips(numParties);
-//
-//    int counter = 0;
-//    for (int i = 0; i < numParties; i++) {
-//        portString = "party_" + to_string(i) + "_port";
-//        ipString = "party_" + to_string(i) + "_ip";
-//
-//        //get partys IPs and ports data
-//        ports[i] = stoi(cf.Value("", portString));
-//        ips[i] = cf.Value("", ipString);
-//    }
-//
-//    for (int i = 0; i < numThreads; i++) {
-//        ofstream outputFile;
-//        outputFile.open(string("ThreadsParties" + to_string(i) + ".txt"), ios::out);
-//
-//        for (int j = 0; j < numParties; j++) {
-//
-//            ipString = "party_" + to_string(j) + "_ip";
-//            outputFile << ipString << " = " << ips[j] << endl;
-//        }
-//        for (int j = 0; j < numParties; j++) {
-//
-//            portString = "party_" + to_string(j) + "_port";
-//            outputFile << portString << " = " << ports[j] + (i+1)*10 << endl;
-//        }
-//        outputFile.close();
-//    }
-//
-//
-//}
-
-//
-//void Utilities3Parties::sendNext(byte* sendBufs,  byte* recBufs, int size) {
-//
-//    nextChannel->write(sendBufs, size); // write to party 2
-//    prevChannel->read(recBufs, size); // read from party 3
-//
-//}
 
 int Utilities3Parties::open(pair<vector<byte>,vector<byte>> sendBufs, byte* recBufs, int numBytes){
 
@@ -206,8 +127,7 @@ void Utilities3Parties::printOpenedSharesArr(byte* recBufs, int numBytes, int el
 }
 
 Utilities3Parties::~Utilities3Parties(){
-    cout<<"in dtor"<<endl;
-//    stop_workers();
+
 }
 
 
@@ -235,21 +155,9 @@ bool Utilities3Parties::checkSort(byte* recBufs, int numBytes, int elementSize){
 
 void Utilities3Parties::permute(vector<vector<byte>*>& input, int numElements, vector<int> & mapping){
 
-//    cout<<"mappingIds:"<<endl;
-//    for (int i=0; i<numElements; i++){
-//        cout<<mappingIds[i]<<" ";
-//    }
-//    cout<<endl;
     //permute each vector of src/dest/val/bit shares using the mappingIds mapping vector
     for (int i=0; i<input.size(); i++) {
         permuteVector(*input[i], numElements, input[i]->size() / numElements, mapping);
-//        permuteVector(srcShares.second, numElements, elementSize, mapping);
-//        permuteVector(destShares.first, numElements, elementSize, mapping);
-//        permuteVector(destShares.second, numElements, elementSize, mapping);
-//        permuteVector(valShares.first, numElements, elementSize, mapping);
-//        permuteVector(valShares.second, numElements, elementSize, mapping);
-//        permuteVector(bitShares.first, numElements, 1, mapping);
-//        permuteVector(bitShares.second, numElements, 1, mapping);
     }
 
 }
@@ -346,12 +254,6 @@ int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>*>& input, int 
         inputTagP[i] = &inputTag[i];
     }
 
-//    vector<byte> srcBtag(srcShares.first), srcCtag(srcShares.second);
-//    vector<byte> dstBtag(destShares.first), dstCtag(destShares.second);
-//    vector<byte> valBtag(valShares.first), valCtag(valShares.second);
-//    vector<byte> bitBtag(bitShares.first), bitCtag(bitShares.second);
-
-
     auto t1 = high_resolution_clock::now();
 
     if (!reverse){
@@ -382,17 +284,7 @@ int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>*>& input, int 
     for (int i=1; i<input.size(); i+=2){
         nextPrg->getPRGBytes(*input[i], 0, input[i]->size());
     }
-//    nextPrg->getPRGBytes(srcShares.second, 0, count);
-//    nextPrg->getPRGBytes(destShares.second, 0, count);
-//    nextPrg->getPRGBytes(valShares.second, 0, count);
-//    nextPrg->getPRGBytes(bitShares.second, 0, numElements);
-
     vector<vector<byte>> inputTagXorInput(input.size());
-//    vector<byte> srcCtag_xor_srcC(count), srcAtag_xor_srcA(count);
-//    vector<byte> dstCtag_xor_dstC(count), dstAtag_xor_dstA(count);
-//    vector<byte> valCtag_xor_valC(count), valAtag_xor_valA(count);
-//    vector<byte> bitCtag_xor_bitC(numElements), bitAtag_xor_bitA(numElements);
-
     for (int j=0; j<input.size(); j++) {
         inputTagXorInput[j].resize(input[j]->size());
     }
@@ -405,29 +297,6 @@ int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>*>& input, int 
 
         }
     }
-
-
-//    for (size_t i = 0; i < count; ++i) {
-//        srcCtag_xor_srcC[i] = srcCtag[i] ^ srcShares.second[i];
-//        dstCtag_xor_dstC[i] = dstCtag[i] ^ destShares.second[i];
-//        valCtag_xor_valC[i] = valCtag[i] ^ valShares.second[i];
-//    }
-//
-//    for (size_t i = 0; i < numElements; ++i) {
-//        bitCtag_xor_bitC[i] = bitCtag[i] ^ bitShares.second[i];
-//    }
-
-
-    //send the Xor result to the other party
-    //And get his xor result
-//    const byte * srcwhead = (const byte *) srcCtag_xor_srcC.data();
-//    byte * srcrhead = srcAtag_xor_srcA.data();
-//    const byte * dstwhead = (const byte *) dstCtag_xor_dstC.data();
-//    byte * dstrhead = dstAtag_xor_dstA.data();
-//    const byte * valwhead = (const byte *) valCtag_xor_valC.data();
-//    byte * valrhead = valAtag_xor_valA.data();
-//    const byte * bitwhead = (const byte *) bitCtag_xor_bitC.data();
-//    byte * bitrhead = bitAtag_xor_bitA.data();
 
     size_t due, done, inc;
 
@@ -461,15 +330,8 @@ int Utilities3Parties::share_shuffle_upstream(vector<vector<byte>*>& input, int 
 #pragma GCC ivdep
         for (size_t i = 0; i < input[j]->size(); ++i) {
             (*input[j])[i] = inputTag[j][i] ^ inputTagXorInput[j + 1][i] ^ inputTagXorInput[j][i];
-//        srcShares.first[i] = srcBtag[i] ^ srcAtag_xor_srcA[i] ^ srcCtag_xor_srcC[i];
-//        destShares.first[i] = dstBtag[i] ^ dstAtag_xor_dstA[i] ^ dstCtag_xor_dstC[i];
-//        valShares.first[i] = valBtag[i] ^ valAtag_xor_valA[i] ^ valCtag_xor_valC[i];
         }
     }
-
-//    for (size_t i = 0; i < numElements; ++i) {
-//        bitShares.first[i] = bitBtag[i] ^ bitAtag_xor_bitA[i] ^ bitCtag_xor_bitC[i];
-//    }
 
     t2 = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(t2-t1).count();
@@ -531,55 +393,16 @@ void Utilities3Parties::computeShufflePermutation(vector<int> & shuffleFinalPerm
         inputTemp[j].resize(input[j].size());
         int elementSize = input[j].size()/numElements;
 
-//    vector<byte> srcBtagTemp(srcBtag.size());
-//    vector<byte> srcCtagTemp(srcCtag.size());
-//    vector<byte> dstBtagTemp(dstBtag.size());
-//    vector<byte> dstCtagTemp(dstCtag.size());
-//    vector<byte> valBtagTemp(valBtag.size());
-//    vector<byte> valCtagTemp(valCtag.size());
-//    vector<byte> bitBtagTemp(bitBtag.size());
-//    vector<byte> bitCtagTemp(bitCtag.size());
-
-
         //go over the permutation and get the relevan alue accordingly
         for (size_t i = 0; i < numElements; ++i) {
             //Save the element in the left index in a temp array
             memcpy(inputTemp[j].data() + i * elementSize, input[j].data() + shuffleFinalPermutation[i] * elementSize, elementSize);
-//            memcpy(srcBtagTemp.data() + i * elementSize, srcBtag.data() + shuffleFinalPermutation[i] * elementSize,
-//                   elementSize);
-//            memcpy(srcCtagTemp.data() + i * elementSize, srcCtag.data() + shuffleFinalPermutation[i] * elementSize,
-//                   elementSize);
-//            memcpy(dstBtagTemp.data() + i * elementSize, dstBtag.data() + shuffleFinalPermutation[i] * elementSize,
-//                   elementSize);
-//            memcpy(dstCtagTemp.data() + i * elementSize, dstCtag.data() + shuffleFinalPermutation[i] * elementSize,
-//                   elementSize);
-//            memcpy(valBtagTemp.data() + i * elementSize, valBtag.data() + shuffleFinalPermutation[i] * elementSize,
-//                   elementSize);
-//            memcpy(valCtagTemp.data() + i * elementSize, valCtag.data() + shuffleFinalPermutation[i] * elementSize,
-//                   elementSize);
-//
-//
-//            bitBtagTemp[i] = bitBtag[shuffleFinalPermutation[i]];
-//            bitCtagTemp[i] = bitCtag[shuffleFinalPermutation[i]];
         }
 
         //move back from the temp arrays to the original arrays
         input[j] = move(inputTemp[j]);
 
     }
-
-
-
-    //testing
-
-//    srcBtag = move(srcBtagTemp);
-//    srcCtag = move(srcCtagTemp);
-//    dstBtag = move(dstBtagTemp);
-//    dstCtag = move(dstCtagTemp);
-//    valBtag = move(valBtagTemp);
-//    valCtag = move(valCtagTemp);
-//    bitBtag = move(bitBtagTemp);
-//    bitCtag = move(bitCtagTemp);
 
 }
 
@@ -602,7 +425,6 @@ int Utilities3Parties::workers_shufflePermutation(vector<int> & shuffleFinalPerm
         sizeForEachThread = (numElements + numThreads - 1)/ numThreads;
     }
 
-    cout<<"sizeForEachThread = "<<sizeForEachThread << endl;
     for (size_t c = 0; c < numThreads; c++) {
 
         task.tid = c;
@@ -649,14 +471,6 @@ int Utilities3Parties::workers_shufflePermutation(vector<int> & shuffleFinalPerm
     for (int i=0; i<input.size(); i++){
         *input[i] = move(sharesTemp[i]);
     }
-//    srcBtag = move(srcBtagTemp);
-//    srcCtag = move(srcCtagTemp);
-//    dstBtag = move(dstBtagTemp);
-//    dstCtag = move(dstCtagTemp);
-//    valBtag = move(valBtagTemp);
-//    valCtag = move(valCtagTemp);
-//    bitBtag = move(bitBtagTemp);
-//    bitCtag = move(bitCtagTemp);
 
     t2 = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(t2-t1).count();
@@ -668,17 +482,12 @@ int Utilities3Parties::workers_shufflePermutation(vector<int> & shuffleFinalPerm
 
 int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>*> & input, int numElements, bool reverse) {
     //Nomenclature per downstream party = P0 (S1)
-//    int count = numElements * elementSize;
     vector<vector<byte>> inputTag(input.size());
     vector<vector<byte>*> inputTagP(input.size());
     for (int i=0 ;i<input.size(); i++){
         inputTag[i] = *input[i];
         inputTagP[i] = &inputTag[i];
     }
-//    std::vector<byte> srcAtag(srcShares.first), srcBtag(srcShares.second);
-//    std::vector<byte> dstAtag(destShares.first), dstBtag(destShares.second);
-//    std::vector<byte> valAtag(valShares.first), valBtag(valShares.second);
-//    std::vector<byte> bitAtag(bitShares.first), bitBtag(bitShares.second);
 
     auto t1 = high_resolution_clock::now();
 
@@ -705,24 +514,15 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>*> & input, i
 
     t1 = high_resolution_clock::now();
 
-
+    //Get new random shares from the common PRG
     for (int i=0; i<input.size(); i+=2){
         prevPrg->getPRGBytes(*input[i], 0, input[i]->size());
     }
-    //Get new random shares from the common PRG
-//    prevPrg->getPRGBytes(srcShares.first, 0, count);
-//    prevPrg->getPRGBytes(destShares.first, 0, count);
-//    prevPrg->getPRGBytes(valShares.first, 0, count);
-//    prevPrg->getPRGBytes(bitShares.first, 0, numElements);
 
     vector<vector<byte>> inputTagXorInput(input.size());
     for (int j=0; j<input.size(); j++) {
         inputTagXorInput[j].resize(input[j]->size());
     }
-//    std::vector<byte> srcAtag_xor_srcA(count), srcCtag_xor_srcC(count);
-//    std::vector<byte> dstAtag_xor_dstA(count), dstCtag_xor_dstC(count);
-//    std::vector<byte> valAtag_xor_valA(count), valCtag_xor_valC(count);
-//    std::vector<byte> bitAtag_xor_bitA(numElements), bitCtag_xor_bitC(numElements);
 
     //Xor the random shares with the permuted shares
     for (int j=0; j<input.size(); j+=2) {
@@ -733,24 +533,6 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>*> & input, i
 
         }
     }
-//#pragma GCC ivdep
-//    for (size_t i = 0; i < count; ++i) {
-//        srcAtag_xor_srcA[i] = srcAtag[i] ^ srcShares.first[i];
-//        dstAtag_xor_dstA[i] = dstAtag[i] ^ destShares.first[i];
-//        valAtag_xor_valA[i] = valAtag[i] ^ valShares.first[i];
-//    }
-//    for (size_t i = 0; i < numElements; ++i) {
-//        bitAtag_xor_bitA[i] = bitAtag[i] ^ bitShares.first[i];
-//    }
-
-//    const byte * srcwhead = (const byte *) srcAtag_xor_srcA.data();
-//    byte * srcrhead = srcCtag_xor_srcC.data();
-//    const byte * dstwhead = (const byte *) dstAtag_xor_dstA.data();
-//    byte * dstrhead = dstCtag_xor_dstC.data();
-//    const byte * valwhead = (const byte *) valAtag_xor_valA.data();
-//    byte * valrhead = valCtag_xor_valC.data();
-//    const byte * bitwhead = (const byte *) bitAtag_xor_bitA.data();
-//    byte * bitrhead = bitCtag_xor_bitC.data();
 
     size_t due, done, inc;
 
@@ -787,17 +569,6 @@ int Utilities3Parties::share_shuffle_downstream(vector<vector<byte>*> & input, i
             (*input[j + 1])[i] = inputTag[j+1][i] ^ inputTagXorInput[j + 1][i] ^ inputTagXorInput[j][i];
         }
     }
-//#pragma GCC ivdep
-//    for (size_t i = 0; i < count; ++i) {
-//        srcShares.second[i] = srcBtag[i] ^ srcAtag_xor_srcA[i] ^ srcCtag_xor_srcC[i];
-//        destShares.second[i] = dstBtag[i] ^ dstAtag_xor_dstA[i] ^ dstCtag_xor_dstC[i];
-//        valShares.second[i] = valBtag[i] ^ valAtag_xor_valA[i] ^ valCtag_xor_valC[i];
-//    }
-//    for (size_t i = 0; i < numElements; ++i) {
-//        bitShares.second[i] = bitBtag[i] ^ bitAtag_xor_bitA[i] ^ bitCtag_xor_bitC[i];
-//    }
-
-
 
     t2 = high_resolution_clock::now();
     duration = duration_cast<milliseconds>(t2-t1).count();
@@ -815,19 +586,6 @@ int Utilities3Parties::share_shuffle_passive(vector<vector<byte>*> & input, int 
         prevPrg->getPRGBytes(*input[i], 0, input[i]->size());
         nextPrg->getPRGBytes(*input[i+1], 0, input[i+1]->size());
     }
-    //Use the common Prgs to get a random shares
-//    int count = numElements * elementSize;
-//    prevPrg->getPRGBytes(srcShares.first, 0, count);
-//    nextPrg->getPRGBytes(srcShares.second, 0, count);
-//
-//    prevPrg->getPRGBytes(destShares.first, 0, count);
-//    nextPrg->getPRGBytes(destShares.second, 0, count);
-//
-//    prevPrg->getPRGBytes(valShares.first, 0, count);
-//    nextPrg->getPRGBytes(valShares.second, 0, count);
-//
-//    prevPrg->getPRGBytes(bitShares.first, 0, numElements);
-//    nextPrg->getPRGBytes(bitShares.second, 0, numElements);
 
     return 0;
 }
@@ -1092,19 +850,7 @@ void Utilities3Parties::sharesSwap(vector<vector<byte>*> & input, int lIndex, in
         //Swap each shares vector according to the given indices
         swapElement(*input[i], lIndex, rIndex, input[i]->size() / numElements);
     }
-    //Swap each shares vector according to the given indices
-//    swapElement(srcShares.first, lIndex, rIndex, elementSize);
-//    swapElement(srcShares.second, lIndex, rIndex, elementSize);
-//    swapElement(destShares.first, lIndex, rIndex, elementSize);
-//    swapElement(destShares.second, lIndex, rIndex, elementSize);
-//    swapElement(valShares.first, lIndex, rIndex, elementSize);
-//    swapElement(valShares.second, lIndex, rIndex, elementSize);
-//    swapElement(bitShares.first, lIndex, rIndex, 1);
-//    swapElement(bitShares.second, lIndex, rIndex, 1);
-//TODO delete it!!!!
-//    if (sortWithID){
-//        swap(mappingIds[lIndex], mappingIds[rIndex]);
-//    }
+
 }
 
 void Utilities3Parties::swapElement(vector<byte> & v, int lIndex, int rIndex, int elementSize){
@@ -1327,39 +1073,6 @@ bool Utilities3Parties::load_circuits_helper(const char * circuit, size_t vf_sta
 
     return true;
 }
-
-
-//int Utilities3Parties::start_workers(size_t workers_count, vector<shared_ptr<CommParty>> & threadsNextChannels,
-//                                 vector<shared_ptr<CommParty>> & threadsPrevChannels) {
-//    workers_.resize(workers_count, NULL);
-//    size_t cid = 0;
-//    int bufferSize = numElements*elementSize;
-//    for (std::vector<circuit_thread*>::iterator i = workers_.begin(); i != workers_.end(); ++i) {
-//        *i = new circuit_thread(cid++, bufferSize, partyID, threadsNextChannels[cid-1], threadsPrevChannels[cid-1], g_qsize);
-//        if (0 != (*i)->start()) {
-//            cout<<"circuiter "<<--cid<<" start failure."<<endl;
-//            delete (*i);
-//            *i = NULL;
-//            stop_workers();
-//            return -1;
-//        }
-//    }
-//
-//    return 0;
-//}
-//
-//void Utilities3Parties::stop_workers() {
-//    for (std::vector<circuit_thread*>::iterator i = workers_.begin(); i != workers_.end(); ++i) {
-//        cout<<"in delete thread"<<endl;
-//        if (NULL != *i) {
-//            (*i)->stop();
-////            delete *i;
-//            *i = NULL;
-//        }
-//    }
-//    workers_.clear();
-//}
-
 
 int Utilities3Parties::init_scale() {
     for (size_t chunks = workers_.size(); chunks >= 1; --chunks) {
