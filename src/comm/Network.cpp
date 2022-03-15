@@ -5,9 +5,12 @@
 #ifdef __x86_64__
 #ifndef __APPLE__
 
+#include "../../include/comm/Network.h"
+
 #include <assert.h>
 #include <errno.h>
 #include <unistd.h>
+
 #include <atomic>
 #include <chrono>
 #include <cstring>
@@ -15,25 +18,26 @@
 #include <functional>
 #include <iostream>
 
-#include "../../include/comm/Network.h"
 #include "../../include/comm/utils.h"
 
 #define NUM_MESSAGES 100
 
 int udp_output(const char *buf, int len, ikcpcb *kcp, void *user) {
   const PeerInfo *peer = static_cast<const PeerInfo *>(user);
-  const struct sockaddr *addr = reinterpret_cast<const struct sockaddr *>(peer->addr());
+  const struct sockaddr *addr =
+      reinterpret_cast<const struct sockaddr *>(peer->addr());
   const int &fd = peer->fd();
 
   int ret;
 
-  if ((ret = sendto(fd, buf, len, 0, addr, sizeof(*addr))) < 0) { // TODO: use return value, mb a loop is needed
-    log4cpp::Category::getInstance(((const PeerInfo *)user)->cat()).errorStream()
+  if ((ret = sendto(fd, buf, len, 0, addr, sizeof(*addr))) <
+      0) {  // TODO: use return value, mb a loop is needed
+    log4cpp::Category::getInstance(((const PeerInfo *)user)->cat())
+            .errorStream()
         << "sendto failed, errno: " << errno << "[" << strerror(errno)
         << "] (file: " << __FILE__ << ", line: " << __LINE__ << ")";
-    std::cerr
-        << "sendto failed, errno: " << errno << "[" << strerror(errno)
-        << "] (file: " << __FILE__ << ", line: " << __LINE__ << ")";
+    std::cerr << "sendto failed, errno: " << errno << "[" << strerror(errno)
+              << "] (file: " << __FILE__ << ", line: " << __LINE__ << ")";
 
     return -1;
   }
@@ -45,9 +49,17 @@ void writelog(const char *log, struct IKCPCB *kcp, void *user) {
   log4cpp::Category::getInstance((((const PeerInfo *)user)->cat())).debug(log);
 }
 
-Network::Network(int pid, int numPeers, const std::string &config_file, int numProtocols, std::string cat)
-    : mPid(pid), mNumPeers(numPeers), mNumProtocols(numProtocols), mFd(-1), mCat(cat),
-      mDone(false), mKill(false), mThreadUpdateConnections(nullptr), mThreadReadSocket(nullptr) {
+Network::Network(int pid, int numPeers, const std::string &config_file,
+                 int numProtocols, std::string cat)
+    : mPid(pid),
+      mNumPeers(numPeers),
+      mNumProtocols(numProtocols),
+      mFd(-1),
+      mCat(cat),
+      mDone(false),
+      mKill(false),
+      mThreadUpdateConnections(nullptr),
+      mThreadReadSocket(nullptr) {
   assert(0 < numProtocols && numProtocols <= (1 << 4));
 
   log4cpp::Category::getInstance(mCat + ".ctor").info("network started");
@@ -62,7 +74,8 @@ Network::Network(int pid, int numPeers, const std::string &config_file, int numP
     mMutex[i * numProtocols] = new std::mutex;
   }
 
-  log4cpp::Category::getInstance(mCat + ".ctor").info("parsing peers information");
+  log4cpp::Category::getInstance(mCat + ".ctor")
+      .info("parsing peers information");
 
   std::ifstream config(config_file);
 
@@ -70,14 +83,15 @@ Network::Network(int pid, int numPeers, const std::string &config_file, int numP
     std::string ip, port;
     config >> ip >> port;
 
-    mPeers.push_back(PeerInfo {i, ip, std::stoi(port), mCat});
+    mPeers.push_back(PeerInfo{i, ip, std::stoi(port), mCat});
 
     const struct sockaddr_in *addr = mPeers.back().addr();
 
-    mConnMap.insert(std::make_pair(std::make_pair(addr->sin_addr.s_addr, addr->sin_port), i));
+    mConnMap.insert(std::make_pair(
+        std::make_pair(addr->sin_addr.s_addr, addr->sin_port), i));
   }
 
-  initNetwork(); // Bind UDP port
+  initNetwork();  // Bind UDP port
 
   for (int i = 0; i < numPeers; i++) {
     mPeers[i].fd() = mFd;
@@ -91,7 +105,8 @@ Network::Network(int pid, int numPeers, const std::string &config_file, int numP
     }
 
     for (int j = 0; j < mNumProtocols; j++) {
-      // Calculate "conv" number (14 bits - smaller pid, 14 bits - bigger pid, 2 bits - protocol number)
+      // Calculate "conv" number (14 bits - smaller pid, 14 bits - bigger pid, 2
+      // bits - protocol number)
       IUINT32 conv = 0;
 
       conv |= std::min(mPid, i);
@@ -101,7 +116,8 @@ Network::Network(int pid, int numPeers, const std::string &config_file, int numP
       conv |= j;
 
       // Create ikcp objects
-      mConnections[i * numProtocols + j] = ikcp_create(conv, (void *)&mPeers[i]);
+      mConnections[i * numProtocols + j] =
+          ikcp_create(conv, (void *)&mPeers[i]);
       ikcp_setoutput(mConnections[i * numProtocols + j], udp_output);
 
       if (log4cpp::Category::getInstance(mCat).isDebugEnabled()) {
@@ -118,8 +134,7 @@ Network::~Network() {
   log4cpp::Category::getInstance(mCat + ".dtor").info("releasing ikcp objects");
 
   for (int i = 0; i < mNumPeers; i++) {
-    if (mPid == i)
-      continue;
+    if (mPid == i) continue;
 
     for (int j = 0; j < mNumProtocols; j++) {
       // Release ikcp objects
@@ -140,10 +155,11 @@ int Network::send(int peer, int protocol, const char *buffer, int len) {
   assert(0 <= protocol && protocol < mNumProtocols);
 
   mMutex[peer * mNumProtocols + protocol]->lock();
-  int ret = ikcp_send(mConnections[peer * mNumProtocols + protocol], buffer, len);
+  int ret =
+      ikcp_send(mConnections[peer * mNumProtocols + protocol], buffer, len);
   mConnDirty[peer * mNumProtocols + protocol] = true;
   mMutex[peer * mNumProtocols + protocol]->unlock();
-//  ikcp_update(mConnections[peer * mNumProtocols + protocol], iclock());
+  //  ikcp_update(mConnections[peer * mNumProtocols + protocol], iclock());
 
   return ret;
 }
@@ -161,10 +177,12 @@ void Network::update(int peer, int protocol) {
 
   IUINT32 current = iclock();
 
-  if (mConnDirty[peer * mNumProtocols + protocol] || mUpdateTimes[peer * mNumProtocols + protocol] < current) {
+  if (mConnDirty[peer * mNumProtocols + protocol] ||
+      mUpdateTimes[peer * mNumProtocols + protocol] < current) {
     mMutex[peer * mNumProtocols + protocol]->lock();
     ikcp_update(mConnections[peer * mNumProtocols + protocol], current);
-    mUpdateTimes[peer * mNumProtocols + protocol] = ikcp_check(mConnections[peer * mNumProtocols + protocol], current);
+    mUpdateTimes[peer * mNumProtocols + protocol] =
+        ikcp_check(mConnections[peer * mNumProtocols + protocol], current);
     mConnDirty[peer * mNumProtocols + protocol] = false;
     mMutex[peer * mNumProtocols + protocol]->unlock();
   }
@@ -190,26 +208,27 @@ bool Network::sync(bool first) {
     timeval read_timeout;
     read_timeout.tv_sec = 0;
     read_timeout.tv_usec = 500000;
-//
-    if (setsockopt(mFd, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof(read_timeout)) < 0) {
+    //
+    if (setsockopt(mFd, SOL_SOCKET, SO_RCVTIMEO, &read_timeout,
+                   sizeof(read_timeout)) < 0) {
       log4cpp::Category::getInstance(mCat + ".dtor").warnStream()
           << "setsockopt failed, errno: " << errno << "[" << strerror(errno)
           << "] (file: " << __FILE__ << ", line: " << __LINE__ << ")";
     }
 
     mThreadReadSocket = new std::thread(&Network::readSocket, this);
-    mThreadUpdateConnections = new std::thread(&Network::updateConnections, this);
+    mThreadUpdateConnections =
+        new std::thread(&Network::updateConnections, this);
   }
 
   for (int i = 0; i < mNumPeers; i++) {
-    if (mPid == i)
-      continue;
+    if (mPid == i) continue;
 
-    ret = send(i, 0, "0", 1); // Send byte for sync
+    ret = send(i, 0, "0", 1);  // Send byte for sync
     KCP_CHECK(ret, mCat + ".sync")
   }
 
-  std::atomic<int> cnt; // For future multi-threading
+  std::atomic<int> cnt;  // For future multi-threading
   std::vector<bool> syncs(mNumPeers);
 
   cnt = 0;
@@ -217,30 +236,28 @@ bool Network::sync(bool first) {
     char byte;
 
     for (int i = 0; i < mNumPeers; i++) {
-      if (mPid == i)
-        continue;
+      if (mPid == i) continue;
 
-      if (syncs[i])
-        continue;
+      if (syncs[i]) continue;
 
       ret = recv(i, 0, &byte, 1);
       if (ret < 0) {
         continue;
-      }
-      else if (ret == 1) {
+      } else if (ret == 1) {
         if (byte == '0') {
-          log4cpp::Category::getInstance(mCat + ".sync").infoStream() << "got sync from " << i;
+          log4cpp::Category::getInstance(mCat + ".sync").infoStream()
+              << "got sync from " << i;
           syncs[i] = true;
           ++cnt;
-        }
-        else {
+        } else {
           log4cpp::Category::getInstance(mCat + ".sync").warnStream()
-              << "and un recoginzed message (" << byte << ") was received from " << i;
+              << "and un recoginzed message (" << byte << ") was received from "
+              << i;
         }
-      }
-      else { // Should never happen
+      } else {  // Should never happen
         log4cpp::Category::getInstance(mCat + ".sync").warnStream()
-            << "got from " << i << " " << ret  << " bytes (expected: " << (ssize_t)(1) << ")";
+            << "got from " << i << " " << ret
+            << " bytes (expected: " << (ssize_t)(1) << ")";
       }
     }
 
@@ -262,65 +279,66 @@ bool Network::round(int rid, int data_size) {
     txData[i] = i;
   }
   for (int i = 0; i < mNumPeers; i++) {
-    if (mPid == i)
-      continue;
+    if (mPid == i) continue;
 
     rxData[i].resize(data_size);
   }
 
-  log4cpp::Category::getInstance(mCat + ".r" + std::to_string(rid)).infoStream() << "initialized data for round " << rid;
+  log4cpp::Category::getInstance(mCat + ".r" + std::to_string(rid)).infoStream()
+      << "initialized data for round " << rid;
 
   // Transmit data
   for (int i = 0; i < mNumPeers; i++) {
-    if (mPid == i)
-      continue;
+    if (mPid == i) continue;
 
     ret = send(i, 0, reinterpret_cast<const char *>(txData.data()),
-        txData.size() * sizeof(int)); // Send data
+               txData.size() * sizeof(int));  // Send data
   }
 
-  log4cpp::Category::getInstance(mCat + ".r" + std::to_string(rid)).infoStream() << "transmitted round data";
+  log4cpp::Category::getInstance(mCat + ".r" + std::to_string(rid)).infoStream()
+      << "transmitted round data";
 
   // Receive data
   int cnt = 0;
   while (cnt < mNumPeers - 1) {
     for (int i = 0; i < mNumPeers; i++) {
-      if (mPid == i)
-        continue;
+      if (mPid == i) continue;
 
-      if (rxflags[i]) // Already received data
+      if (rxflags[i])  // Already received data
         continue;
 
       ret = recv(i, 0, reinterpret_cast<char *>(rxData[i].data()),
-          rxData[i].size() * sizeof(int)); // Receive data
+                 rxData[i].size() * sizeof(int));  // Receive data
 
       if (ret < 0) {
         continue;
-      }
-      else if (ret == (ssize_t)(rxData[i].size() * sizeof(int))) {
-        log4cpp::Category::getInstance(mCat + ".r" + std::to_string(rid)).debugStream() << "got round data from " << i;
+      } else if (ret == (ssize_t)(rxData[i].size() * sizeof(int))) {
+        log4cpp::Category::getInstance(mCat + ".r" + std::to_string(rid))
+                .debugStream()
+            << "got round data from " << i;
         rxflags[i] = true;
         ++cnt;
-      }
-      else {
-        log4cpp::Category::getInstance(mCat + ".r" + std::to_string(rid)).warnStream()
-            << "got from " << i << " only " << ret << " (expected: " << (ssize_t)(rxData[i].size() * sizeof(int)) << ")";
+      } else {
+        log4cpp::Category::getInstance(mCat + ".r" + std::to_string(rid))
+                .warnStream()
+            << "got from " << i << " only " << ret
+            << " (expected: " << (ssize_t)(rxData[i].size() * sizeof(int))
+            << ")";
       }
     }
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
   }
 
-  log4cpp::Category::getInstance(mCat + ".r" + std::to_string(rid)).infoStream() << "received round data";
+  log4cpp::Category::getInstance(mCat + ".r" + std::to_string(rid)).infoStream()
+      << "received round data";
 
   // Validate data
   for (int i = 0; i < mNumPeers; i++) {
-    if (mPid == i)
-      continue;
+    if (mPid == i) continue;
 
     for (int d = 0; d < data_size; d++) {
-      if (rxData[i][d] != d)
-        return false;
+      if (rxData[i][d] != d) return false;
     }
   }
 
@@ -328,12 +346,13 @@ bool Network::round(int rid, int data_size) {
 }
 
 bool Network::initNetwork() {
-  struct sockaddr_in myaddr;      /* our address */
+  struct sockaddr_in myaddr; /* our address */
 
   /* create a UDP socket */
   if ((mFd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     log4cpp::Category::getInstance(mCat + ".initNetwork").errorStream()
-        << "cannot create socket (file: " << __FILE__ << ", line: " << __LINE__ << ")";
+        << "cannot create socket (file: " << __FILE__ << ", line: " << __LINE__
+        << ")";
 
     return false;
   }
@@ -352,7 +371,8 @@ bool Network::initNetwork() {
   }
 
   log4cpp::Category::getInstance(mCat + ".initNetwork").debugStream()
-      << "listening on port " << mPeers[mPid].port() << " UDP (fd: " << mFd << ")";
+      << "listening on port " << mPeers[mPid].port() << " UDP (fd: " << mFd
+      << ")";
 
   return true;
 }
@@ -365,10 +385,10 @@ void Network::cleanUp() {
 }
 
 void Network::readSocket() {
-	int counter = 0;
-	mmsghdr msgvec[NUM_MESSAGES];
-	iovec iovec[NUM_MESSAGES];
-	char bufs[NUM_MESSAGES][4096]; // TODO: fix size
+  int counter = 0;
+  mmsghdr msgvec[NUM_MESSAGES];
+  iovec iovec[NUM_MESSAGES];
+  char bufs[NUM_MESSAGES][4096];  // TODO: fix size
 
   for (int i = 0; i < NUM_MESSAGES; i++) {
     msgvec[i].msg_hdr.msg_name = new sockaddr_in;
@@ -380,89 +400,96 @@ void Network::readSocket() {
     msgvec[i].msg_hdr.msg_iov = iovec + i;
     msgvec[i].msg_hdr.msg_iovlen = 1;
 
-//    msgvec[i].msg_hdr.msg_control = nullptr; // TODO: fix
-//    msgvec[i].msg_hdr.msg_controllen = 0;
-//
+    //    msgvec[i].msg_hdr.msg_control = nullptr; // TODO: fix
+    //    msgvec[i].msg_hdr.msg_controllen = 0;
+    //
     msgvec[i].msg_hdr.msg_flags = 0;
   }
 
-//  timespec read_timeout;
-//  read_timeout.tv_sec = 1;
-//  read_timeout.tv_nsec = 500000000;
+  //  timespec read_timeout;
+  //  read_timeout.tv_sec = 1;
+  //  read_timeout.tv_nsec = 500000000;
 
-	while (!mKill) {
-//		sockaddr_in remaddr; /* our address */
-		int recvlen;
-//		socklen_t addrlen = sizeof(remaddr); /* # bytes received */
-//		char buf[4096];
+  while (!mKill) {
+    //		sockaddr_in remaddr; /* our address */
+    int recvlen;
+    //		socklen_t addrlen = sizeof(remaddr); /* # bytes received */
+    //		char buf[4096];
 
-		recvlen = recvmmsg(mFd, msgvec, NUM_MESSAGES, 0, NULL);
+    recvlen = recvmmsg(mFd, msgvec, NUM_MESSAGES, 0, NULL);
 
+    //		recvlen = recvfrom(mFd, buf, 4096, 0, (struct sockaddr *)
+    //&remaddr, 				&addrlen);
 
-//		recvlen = recvfrom(mFd, buf, 4096, 0, (struct sockaddr *) &remaddr,
-//				&addrlen);
+    if (recvlen == -1) {
+      if (mDone)
+        log4cpp::Category::getInstance(mCat + ".initNetwork").debugStream()
+            << "update counter " << counter;
+      if (mDone && (++counter >= 15)) {
+        mKill = true;
+        break;
+      }
 
-		if (recvlen == -1) {
-		  if (mDone)
-        log4cpp::Category::getInstance(mCat + ".initNetwork").debugStream() << "update counter " << counter;
-			if (mDone && (++counter >= 15)) {
-				mKill = true;
-				break;
-			}
+      continue;
+    }
 
-			continue;
-		}
+    counter = 0;
 
-		counter = 0;
-
-		for (int i = 0; i < recvlen; i++) {
+    for (int i = 0; i < recvlen; i++) {
       std::map<std::pair<in_addr_t, in_port_t>, int>::iterator conn =
-          mConnMap.find( { static_cast<sockaddr_in *>(msgvec[i].msg_hdr.msg_name)->sin_addr.s_addr,
-                           static_cast<sockaddr_in *>(msgvec[i].msg_hdr.msg_name)->sin_port });
+          mConnMap.find({static_cast<sockaddr_in *>(msgvec[i].msg_hdr.msg_name)
+                             ->sin_addr.s_addr,
+                         static_cast<sockaddr_in *>(msgvec[i].msg_hdr.msg_name)
+                             ->sin_port});
       if (mConnMap.end() != conn) {
         mMutex[conn->second]->lock();
-        int ret = ikcp_input(mConnections[conn->second], reinterpret_cast<char *>(iovec[i].iov_base), msgvec[i].msg_len);
+        int ret = ikcp_input(mConnections[conn->second],
+                             reinterpret_cast<char *>(iovec[i].iov_base),
+                             msgvec[i].msg_len);
         IUINT32 current = iclock();
         ikcp_update(mConnections[conn->second], current);
-        mUpdateTimes[conn->second] = ikcp_check(mConnections[conn->second], current);
+        mUpdateTimes[conn->second] =
+            ikcp_check(mConnections[conn->second], current);
         mMutex[conn->second]->unlock();
         KCP_CHECK(ret, mCat + ".readSocket");
       }
-		}
+    }
 
     if (recvlen != NUM_MESSAGES) {
       std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
-	}
+  }
 
   for (int i = 0; i < NUM_MESSAGES; i++) {
     delete reinterpret_cast<sockaddr_in *>(msgvec[i].msg_hdr.msg_name);
-	}
+  }
 }
 
 void Network::updateConnections() {
   while (!mKill) {
-    IUINT32 current = iclock(), min_check = 10000 + current; // 10 miliseconds
+    IUINT32 current = iclock(), min_check = 10000 + current;  // 10 miliseconds
 
     for (int i = 0; i < mNumPeers; i++) {
-      if (mPid == i)
-        continue;
+      if (mPid == i) continue;
 
-      if (mConnDirty[i * mNumProtocols] ||  mUpdateTimes[i * mNumProtocols] < current) {
+      if (mConnDirty[i * mNumProtocols] ||
+          mUpdateTimes[i * mNumProtocols] < current) {
         mMutex[i * mNumProtocols]->lock();
         current = iclock();
         ikcp_update(mConnections[i * mNumProtocols], current);
-        mUpdateTimes[i * mNumProtocols] = ikcp_check(mConnections[i * mNumProtocols], current);
+        mUpdateTimes[i * mNumProtocols] =
+            ikcp_check(mConnections[i * mNumProtocols], current);
         mConnDirty[i * mNumProtocols] = false;
         mMutex[i * mNumProtocols]->unlock();
       }
 
-      if(mUpdateTimes[i * mNumProtocols] < min_check)
-    	  min_check = mUpdateTimes[i * mNumProtocols];
+      if (mUpdateTimes[i * mNumProtocols] < min_check)
+        min_check = mUpdateTimes[i * mNumProtocols];
     }
 
-    if(min_check > current) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(min_check - current));
+    if (min_check > current) {
+      std::this_thread::sleep_for(
+          std::chrono::milliseconds(min_check - current));
     }
   }
 }

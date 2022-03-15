@@ -8,8 +8,7 @@
 
 #include <sys/time.h>
 
-void
-itimeofday(long *sec, long *usec) {
+void itimeofday(long *sec, long *usec) {
   struct timeval time;
   gettimeofday(&time, NULL);
   if (sec) *sec = time.tv_sec;
@@ -20,14 +19,12 @@ IUINT64 iclock64(void) {
   long s, u;
   IUINT64 value;
   itimeofday(&s, &u);
-  value = ((IUINT64) s) * 1000 + (u / 1000);
+  value = ((IUINT64)s) * 1000 + (u / 1000);
 
   return value;
 }
 
-IUINT32 iclock() {
-  return (IUINT32) (iclock64() & 0xfffffffful);
-}
+IUINT32 iclock() { return (IUINT32)(iclock64() & 0xfffffffful); }
 
 #endif
 #endif
