@@ -415,9 +415,14 @@ string ECF2mKoblitz::toString() {
 
 bool ECElement::operator==(const GroupElement &other) const {
     if (typeid(*this) != typeid(other)) return false;
-    if (((ECElement *)this)->getX() != ((ECElement *)&other)->getX())
+    if (
+        (const_cast<ECElement *>(this))->getX() !=
+        (const_cast<ECElement *>(
+            reinterpret_cast<ECElement const *>(&other)))->getX())
         return false;
-    return ((ECElement *)this)->getY() == ((ECElement *)&other)->getY();
+    return (const_cast<ECElement *>(this))->getY() ==(
+        const_cast<ECElement *>(
+            reinterpret_cast<ECElement const *>(&other)))->getY();
 }
 
 bool ECElement::operator!=(const GroupElement &other) const {
