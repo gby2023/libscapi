@@ -34,17 +34,22 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <memory>
 #include "../../include/primitives/Prf.hpp"
+
+using std::make_shared, std::dynamic_pointer_cast;
+using std::out_of_range, std::invalid_argument;
 
 void PrpFromPrfFixed::computeBlock(const vector<byte>& inBytes, int inOff,
                                    int inLen, vector<byte>& outBytes,
                                    int outOff, int outLen) {
   if (!isKeySet()) throw IllegalStateException("secret key isn't set");
-  if ((inOff > (int)inBytes.size()) || (inOff + inLen > (int)inBytes.size()))
+  if ((inOff > static_cast<int>(inBytes.size())) ||
+      (inOff + inLen > static_cast<int>(inBytes.size())))
     throw out_of_range("wrong offset for the given input buffer");
-  if ((outOff > (int)outBytes.size()) ||
-      (outOff + outLen > (int)outBytes.size()))
+  if ((outOff > static_cast<int>(outBytes.size())) ||
+      (outOff + outLen > static_cast<int>(outBytes.size())))
     throw out_of_range("wrong offset for the given output buffer");
 
   // If the input and output length are equal to the blockSize, call the
@@ -60,10 +65,11 @@ void PrpFromPrfFixed::computeBlock(const vector<byte>& inBytes, int inOff,
                                    int inLen, vector<byte>& outBytes,
                                    int outOff) {
   if (!isKeySet()) throw IllegalStateException("secret key isn't set");
-  if ((inOff > (int)inBytes.size()) || (inOff + inLen > (int)inBytes.size()))
+  if ((inOff > static_cast<int>(inBytes.size())) ||
+      (inOff + inLen > static_cast<int>(inBytes.size())))
     throw out_of_range("wrong offset for the given input buffer");
-  if ((outOff > (int)outBytes.size()) ||
-      (outOff + getBlockSize() > (int)outBytes.size()))
+  if ((outOff > static_cast<int>(outBytes.size())) ||
+      (outOff + getBlockSize() > static_cast<int>(outBytes.size())))
     throw out_of_range("wrong offset for the given output buffer");
 
   // if the input and output length are equal to the blockSize, call the
@@ -79,9 +85,11 @@ void PrpFromPrfFixed::invertBlock(const vector<byte>& inBytes, int inOff,
                                   vector<byte>& outBytes, int outOff, int len) {
   if (!isKeySet()) throw IllegalStateException("secret key isn't set");
   // Checks that the offset and length are correct
-  if ((inOff > (int)inBytes.size()) || (inOff + len > (int)inBytes.size()))
+  if ((inOff > static_cast<int>(inBytes.size())) ||
+      (inOff + len > static_cast<int>(inBytes.size())))
     throw out_of_range("wrong offset for the given input buffer");
-  if ((outOff > (int)outBytes.size()) || (outOff + len > (int)outBytes.size()))
+  if ((outOff > static_cast<int>(outBytes.size())) |
+      (outOff + len > static_cast<int>(outBytes.size())))
     throw out_of_range("wrong offset for the given output buffer");
   if (len == getBlockSize())  // the length is correct
     // Call the derived class implementation of invertBlock ignoring len
@@ -96,19 +104,21 @@ void IteratedPrfVarying::computeBlock(const vector<byte>& inBytes, int inOff,
   if (!isKeySet()) throw invalid_argument("secret key isn't set");
 
   // Checks that the offset and length are correct
-  if ((inOff > (int)inBytes.size()) || (inOff + inLen > (int)inBytes.size()))
+  if ((inOff > static_cast<int>(inBytes.size())) ||
+      (inOff + inLen > static_cast<int>(inBytes.size())))
     throw out_of_range("wrong offset for the given input buffer");
-  if ((outOff > (int)outBytes.size()) ||
-      (outOff + outLen > (int)outBytes.size()))
+  if ((outOff > static_cast<int>(outBytes.size())) ||
+      (outOff + outLen > static_cast<int>(outBytes.size())))
     throw out_of_range("wrong offset for the given output buffer");
 
   int prfLength =
       prfVaryingInputLength
           ->getBlockSize();  // The output size of the prfVaryingInputLength.
-  int rounds = (int)ceil((float)outLen /
-                         (float)prfLength);  // The smallest integer for which
-                                             // rounds * prfLength > outlen.
-  vector<byte> intermediateOutBytes(prfLength);  // Round result
+  // The smallest integer for which rounds * prfLength > outlen.
+  int rounds = static_cast<int>(ceil(static_cast<float>(outLen) /
+                 static_cast<float>(prfLength)));
+
+  vector<byte> intermediateOutBytes(prfLength);   // Round result
   vector<byte> currentInBytes(
       inBytes.begin() + inOff,
       inBytes.begin() + inOff + inLen);  // Copy the x (inBytes) to the input of
@@ -162,10 +172,11 @@ void LubyRackoffPrpFromPrfVarying::computeBlock(const vector<byte>& inBytes,
                                                 vector<byte>& outBytes,
                                                 int outOff) {
   if (!isKeySet()) throw IllegalStateException("secret key isn't set");
-  if ((inOff > (int)inBytes.size()) || (inOff + inLen > (int)inBytes.size()))
+  if ((inOff > static_cast<int>(inBytes.size())) ||
+      (inOff + inLen > static_cast<int>(inBytes.size())))
     throw out_of_range("wrong offset for the given input buffer");
-  if ((outOff > (int)outBytes.size()) ||
-      (outOff + inLen > (int)outBytes.size()))
+  if ((outOff > static_cast<int>(outBytes.size())) ||
+      (outOff + inLen > static_cast<int>(outBytes.size())))
     throw out_of_range("wrong offset for the given output buffer");
   if (inLen % 2 != 0)  // checks that the input is of even length.
     throw invalid_argument("Length of input must be even");
@@ -209,8 +220,9 @@ void LubyRackoffPrpFromPrfVarying::computeBlock(const vector<byte>& inBytes,
     // Switch between the current and the next for the next round.
     // Note that it is much more readable and straightforward to copy the next
     // arrays into the current arrays. However why copy if we can switch between
-    // them and avoid the performance increase by copying. We can not just use
-    // assignment Since both current and next will point to the same memory block
+    // them and avoid the performance increase by copying.
+    // We can not just use assignment Since both current and next
+    // will point to the same memory block
     // and thus changing one will change the other.
     tmpReference = leftCurrent;
     leftCurrent = leftNext;
@@ -233,9 +245,11 @@ void LubyRackoffPrpFromPrfVarying::invertBlock(const vector<byte>& inBytes,
                                                vector<byte>& outBytes,
                                                int outOff, int len) {
   if (!isKeySet()) throw IllegalStateException("secret key isn't set");
-  if ((inOff > (int)inBytes.size()) || (inOff + len > (int)inBytes.size()))
+  if ((inOff > static_cast<int>(inBytes.size())) ||
+      (inOff + len > static_cast<int>(inBytes.size())))
     throw out_of_range("wrong offset for the given input buffer");
-  if ((outOff > (int)outBytes.size()) || (outOff + len > (int)outBytes.size()))
+  if ((outOff > static_cast<int>(outBytes.size())) ||
+      (outOff + len > static_cast<int>(outBytes.size())))
     throw out_of_range("wrong offset for the given output buffer");
   if (len % 2 != 0)  // Check that the input is of even length.
     throw invalid_argument("Length of input must be even");
@@ -306,10 +320,11 @@ void PrpFromPrfVarying::computeBlock(const vector<byte>& inBytes, int inOff,
                                      int outOff, int outLen) {
   if (!isKeySet()) throw new IllegalStateException("secret key isn't set");
   // Check that the offsets and lengths are correct.
-  if ((inOff > (int)inBytes.size()) || (inOff + inLen > (int)inBytes.size()))
+  if ((inOff > static_cast<int>(inBytes.size())) ||
+      (inOff + inLen > static_cast<int>(inBytes.size())))
     throw out_of_range("wrong offset for the given input buffer");
-  if ((outOff > (int)outBytes.size()) ||
-      (outOff + outLen > (int)outBytes.size()))
+  if ((outOff > static_cast<int>(outBytes.size())) ||
+      (outOff + outLen > static_cast<int>(outBytes.size())))
     throw out_of_range("wrong offset for the given output buffer");
 
   // If the input and output lengths are equal, call the computeBlock which

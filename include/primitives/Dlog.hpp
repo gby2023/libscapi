@@ -46,7 +46,7 @@
 #include "../infra/Common.hpp"
 #include "../infra/MathAlgorithms.hpp"
 
-using std::unordered_map;
+using std::unordered_map, std::to_string;
 
 /**
  * This exception is thrown in case A given Dlog group cannot be acceptted by

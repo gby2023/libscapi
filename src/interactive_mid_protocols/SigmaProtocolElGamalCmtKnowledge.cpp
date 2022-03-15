@@ -34,8 +34,11 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <memory>
 #include "../../include/interactive_mid_protocols/SigmaProtocolElGamalCmtKnowledge.hpp"
+
+using std::dynamic_pointer_cast, std::invalid_argument;
 
 shared_ptr<SigmaDlogCommonInput>
 SigmaElGamalCmtKnowledgeSimulator::convertInput(SigmaCommonInput* input) {

@@ -34,8 +34,12 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <memory>
 #include "../../include/interactive_mid_protocols/SigmaProtocolPedersenCommittedValue.hpp"
+
+using std::dynamic_pointer_cast;
+using std::invalid_argument;
 
 string SigmaPedersenCommittedValueCommonInput::toString() {
   string output = x.str();

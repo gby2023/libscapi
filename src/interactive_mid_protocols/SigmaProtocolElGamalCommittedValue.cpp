@@ -34,8 +34,10 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
 #include "../../include/interactive_mid_protocols/SigmaProtocolElGamalCommittedValue.hpp"
+
+using std::invalid_argument;
 
 string SigmaElGamalCommittedValueCommonInput::toString() {
   string output = publicKey->generateSendableData()->toString();

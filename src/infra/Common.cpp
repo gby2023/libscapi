@@ -34,12 +34,12 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
+#include <chrono> // NOLINT [build/c++11]
 
 #include "../../include/infra/Common.hpp"
 
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/multiprecision/miller_rabin.hpp>
-#include <chrono>
 
 #include "../../include/primitives/Prg.hpp"
 
@@ -86,7 +86,7 @@ void copy_byte_vector_to_byte_array(const vector<byte>& source_vector,
 void copy_byte_array_to_byte_vector(const byte* src, int src_len,
                                     vector<byte>& target_vector,
                                     int beginIndex) {
-  if ((int)target_vector.size() < beginIndex + src_len)
+  if (static_cast<int>(target_vector.size()) < beginIndex + src_len)
     target_vector.resize(beginIndex + src_len);
   memcpy(target_vector.data() + beginIndex, src, src_len);
   // target_vector.insert(target_vector.begin() + beginIndex, src,
@@ -123,14 +123,14 @@ void encodeBigInteger(const biginteger& raw_value, byte* output,
   auto value = raw_value.convert_to<mp::cpp_int>();
 #endif
 
-  if (value.is_zero())
+  if (value.is_zero()) {
     *output = 0;
-  else if (value.sign() > 0)
+  } else if (value.sign() > 0) {
     while (length-- > 0) {
       *(output++) = value.convert_to<byte>();
       value >>= 8;
     }
-  else {
+  } else {
     value = ~value;
     while (length-- > 0) {
       *(output++) = ~value.convert_to<byte>();
@@ -141,7 +141,8 @@ void encodeBigInteger(const biginteger& raw_value, byte* output,
 
 void fastEncodeBigInteger(const biginteger& value, byte* output,
                           size_t length) {
-  mpz_export((void*)output, NULL, -1, length, 0, 0, value.backend().data());
+  mpz_export(reinterpret_cast<void*>(output), NULL, -1,
+  length, 0, 0, value.backend().data());
 }
 
 const vector<string> explode(const string& s, const char& c) {
@@ -149,9 +150,9 @@ const vector<string> explode(const string& s, const char& c) {
   vector<string> v;
 
   for (auto n : s) {
-    if (n != c)
+    if (n != c) {
       buff += n;
-    else if (n == c && buff != "") {
+    } else if (n == c && buff != "") {
       v.push_back(buff);
       buff = "";
     }
@@ -180,7 +181,8 @@ biginteger decodeBigInteger(const byte* input, size_t length) {
 
 biginteger fastDecodeBigInteger(const byte* input, size_t length) {
   biginteger output;
-  mpz_import(output.backend().data(), 1, -1, length, 0, 0, (void*)input);
+  mpz_import(output.backend().data(), 1, -1, length, 0, 0,
+  reinterpret_cast<void*>(input));
 
   return output;
 }
@@ -260,7 +262,7 @@ biginteger getRandomPrime(int numBytes, int certainty,
 
 void print_byte_array(byte* arr, int len, string message) {
   cout << message << endl;
-  for (int i = 0; i < len; i++) cout << (int)arr[i] << ",";
+  for (int i = 0; i < len; i++) cout << static_cast<int>(arr[i]) << ",";
   cout << endl;
 }
 

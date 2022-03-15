@@ -36,10 +36,15 @@
  */
 
 #pragma once
+#include <utility>
+#include <string>
+#include <memory>
+#include <vector>
 #include "../cryptoInfra/Key.hpp"
 #include "../cryptoInfra/PlainText.hpp"
 #include "../cryptoInfra/SecurityLevel.hpp"
 
+using std::pair;
 /**
  * Abstract class for asymmetric encryption. Each class of this family must
  * derive rhis class.

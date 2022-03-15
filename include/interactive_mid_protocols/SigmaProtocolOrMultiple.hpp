@@ -44,10 +44,14 @@
 #include <NTL/vec_GF2E.h>
 
 #include <map>
+#include <string>
+#include <vector>
+#include<memory>
 
 #include "../primitives/Prg.hpp"
-#include "SigmaProtocol.hpp"
+#include "./SigmaProtocol.hpp"
 
+using std::map;
 /**
  * Concrete implementation of SigmaProtocol input, used by the
  * SigmaProtocolORMultiple verifier and simulator.<p> In
@@ -65,18 +69,18 @@ class SigmaOrMultipleCommonInput : public SigmaCommonInput {
                              int k) {
     sigmaInputs = input;
     this->k = k;
-  };
+  }
 
   /**
    * Returns the input array contains inputs for all the underlying sigma
    * protocol.
    */
-  vector<shared_ptr<SigmaCommonInput>> getInputs() { return sigmaInputs; };
+  vector<shared_ptr<SigmaCommonInput>> getInputs() { return sigmaInputs; }
 
   /**
    * Returns the number of statements that have a witness.
    */
-  int getK() { return k; };
+  int getK() { return k; }
 
   string toString() override;
 
@@ -119,7 +123,7 @@ class SigmaOrMultipleProverInput : public SigmaProverInput {
    */
   map<int, shared_ptr<SigmaProverInput>> getProversInput() {
     return proverInputs;
-  };
+  }
 
   /**
    * Returns an array holds the inputs for the underlying simulators.
@@ -127,7 +131,7 @@ class SigmaOrMultipleProverInput : public SigmaProverInput {
    */
   map<int, shared_ptr<SigmaCommonInput>> getSimulatorsInput() {
     return simulatorInputs;
-  };
+  }
 
   shared_ptr<SigmaCommonInput> getCommonInput() override;
 };
@@ -151,13 +155,13 @@ class SigmaOrMultipleSecondMsg : public SigmaProtocolMsg {
     this->polynomial = polynomBytes;
     this->z = z;
     this->challenges = challenges;
-  };
+  }
 
-  vector<vector<byte>> getPolynomial() { return polynomial; };
+  vector<vector<byte>> getPolynomial() { return polynomial; }
 
-  vector<shared_ptr<SigmaProtocolMsg>> getMessages() { return z; };
+  vector<shared_ptr<SigmaProtocolMsg>> getMessages() { return z; }
 
-  vector<vector<byte>> getChallenges() { return challenges; };
+  vector<vector<byte>> getChallenges() { return challenges; }
 
   string toString() override;
   void initFromString(const string& raw) override;

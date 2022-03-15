@@ -1,4 +1,5 @@
 #include "util.h"
+#include <thread>
 
 using namespace osuCrypto;
 #include <cryptoTools/Common/Log.h>

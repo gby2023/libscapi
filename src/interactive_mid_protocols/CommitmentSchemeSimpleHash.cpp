@@ -34,9 +34,12 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <ios>
+#include <memory>
 #include "../../include/interactive_mid_protocols/CommitmentSchemeSimpleHash.hpp"
 
+using std::dynamic_pointer_cast, std::static_pointer_cast;
+using std::ios;
 /****************************************/
 /*********** Commitment message *********/
 /****************************************/
@@ -59,7 +62,7 @@ string CmtSimpleHashCommitmentMessage::toString() {
     oa << id;
   }
   return os.str();
-};
+}
 
 /****************************************/
 /*********** Decommitment message *********/
@@ -84,7 +87,7 @@ string CmtSimpleHashDecommitmentMessage::toString() {
   }
 
   return os.str();
-};
+}
 
 /**
  * Constructor that receives a connected channel (to the receiver) and chosses
@@ -112,7 +115,7 @@ CmtSimpleHashCommitter::CmtSimpleHashCommitter(
  *
  */
 shared_ptr<CmtCCommitmentMsg> CmtSimpleHashCommitter::generateCommitmentMsg(
-    const shared_ptr<CmtCommitValue>& input, long id) {
+    const shared_ptr<CmtCommitValue>& input, int64_t id) {
   auto in = dynamic_pointer_cast<CmtByteArrayCommitValue>(input);
   if (in == NULL)
     throw invalid_argument(
@@ -138,7 +141,7 @@ shared_ptr<CmtCCommitmentMsg> CmtSimpleHashCommitter::generateCommitmentMsg(
 }
 
 shared_ptr<CmtCDecommitmentMessage>
-CmtSimpleHashCommitter::generateDecommitmentMsg(long id) {
+CmtSimpleHashCommitter::generateDecommitmentMsg(int64_t id) {
   // fetch the commitment according to the requested ID
   auto x = static_pointer_cast<vector<byte>>(commitmentMap[id]->getX()->getX());
   auto r = static_pointer_cast<ByteArrayRandomValue>(commitmentMap[id]->getR());
@@ -210,7 +213,8 @@ shared_ptr<CmtRCommitPhaseOutput> CmtSimpleHashReceiver::receiveCommitment() {
  *	ELSE
  *	  	OUTPUT ACC and value x".
  */
-shared_ptr<CmtCommitValue> CmtSimpleHashReceiver::receiveDecommitment(long id) {
+shared_ptr<CmtCommitValue>
+  CmtSimpleHashReceiver::receiveDecommitment(int64_t id) {
   // Receive the message from the committer.
   vector<byte> raw_msg;
   channel->readWithSizeIntoVector(raw_msg);
@@ -258,8 +262,8 @@ shared_ptr<CmtCommitValue> CmtSimpleHashReceiver::verifyDecommitment(
     return make_shared<CmtByteArrayCommitValue>(x);
 
   // In the pseudocode it says to return X and ACCEPT if valid commitment else,
-  // REJECT. For now we return null as a mode of reject. If the returned value of
-  // this function is not null then it means ACCEPT
+  // REJECT. For now we return null as a mode of reject.
+  // If the returned value of this function is not null then it means ACCEPT
   return NULL;
 }
 

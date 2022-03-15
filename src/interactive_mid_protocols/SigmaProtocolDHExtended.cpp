@@ -34,19 +34,23 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <memory>
 #include "../../include/interactive_mid_protocols/SigmaProtocolDHExtended.hpp"
+
+using std::dynamic_pointer_cast;
+using std::invalid_argument;
 
 /**************************************************/
 /**************** Input*** ************************/
 /**************************************************/
 string SigmaDHExtendedCommonInput::toString() {
   string output = "";
-  for (int i = 0; i < (int)gArray.size(); i++) {
+  for (int i = 0; i < static_cast<int>(gArray.size()); i++) {
     output += gArray[i]->generateSendableData()->toString();
     output += ":";
   }
-  for (int i = 0; i < (int)hArray.size(); i++) {
+  for (int i = 0; i < static_cast<int>(hArray.size()); i++) {
     output += gArray[i]->generateSendableData()->toString();
     output += ":";
   }
@@ -139,9 +143,9 @@ shared_ptr<SigmaSimulatorOutput> SigmaDHExtendedSimulator::simulate(
   }
 
   // The simulation is:
-  //	SAMPLE a random z <- Zq
-  //	For every i=1,...,m, COMPUTE ai = gi^z*hi^(-e) (where -e here means -e
-  //mod q) 	OUTPUT ((a1,...,am),e,z)
+  // SAMPLE a random z <- Zq
+  // For every i=1,...,m, COMPUTE ai = gi^z*hi^(-e) (where -e here means -e
+  // mod q)  OUTPUT ((a1,...,am),e,z)
 
   // Sample a random z <- Zq
   biginteger qMinusOne = dlog->getOrder() - 1;

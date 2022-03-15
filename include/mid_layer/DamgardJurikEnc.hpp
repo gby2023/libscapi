@@ -36,9 +36,12 @@
  */
 
 #pragma once
+#include <stdexcept>
 #include "../infra/MathAlgorithms.hpp"
 #include "../primitives/TrapdoorPermutation.hpp"
 #include "AsymmetricEnc.hpp"
+
+using std::runtime_error;
 
 /**
  * This class represents a Public Key suitable for the Damgard-Jurik Encryption

@@ -34,15 +34,20 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <mutex>  // NOLINT [build/c++11]
 #include "../../include/primitives/Kdf.hpp"
+
+using std::unique_lock;
+using std::out_of_range;
 
 void HKDF::nextRounds(int outLen, const vector<byte>& iv, int hmacLength,
                       vector<byte>& outBytes,
                       vector<byte>& intermediateOutBytes) {
-  int rounds = (int)ceil((float)outLen /
-                         (float)hmacLength);  // The smallest number so that
-                                              // hmacLength * rounds >= outLen
+  // The smallest number so that hmacLength * rounds >= outLen
+  int rounds = static_cast<int>(ceil(static_cast<float>(outLen) /
+                         static_cast<float>(hmacLength)));
+
   int currentInBytesSize;  // The size of the CTXInfo and also the round.
   if (iv.size() > 0)
     currentInBytesSize = hmacLength + iv.size() +
@@ -116,8 +121,8 @@ void HKDF::firstRound(vector<byte>& outBytes, const vector<byte>& iv,
 SecretKey HKDF::deriveKey(const vector<byte>& entropySource, int inOff,
                           int inLen, int outLen, const vector<byte>& iv) {
   // Check that the offset and length are correct.
-  if ((inOff > (int)entropySource.size()) ||
-      (inOff + inLen > (int)entropySource.size()))
+  if ((inOff > static_cast<int>(entropySource.size())) ||
+      (inOff + inLen > static_cast<int>(entropySource.size())))
     throw out_of_range("wrong offset for the given input buffer");
 
   // In order to be thread safe we have to synchronized this function.
@@ -147,7 +152,8 @@ SecretKey HKDF::deriveKey(const vector<byte>& entropySource, int inOff,
              "08182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0"
              "a1a2a3a4a5a6a7a8a9aaabacadaeaf"));
   char const* c_key = str_key.c_str();
-  SecretKey key((byte*)c_key, strlen(c_key), "");
+  SecretKey key(const_cast<byte*>(reinterpret_cast<byte const*>(c_key)),
+                strlen(c_key), "");
   hmac->setKey(key);
   int hmacLength = hmac->getBlockSize();  // The size of the output of the hmac.
   vector<byte> outBytes;                  // The output key.

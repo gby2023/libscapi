@@ -34,8 +34,11 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <memory>
 #include "../../include/interactive_mid_protocols/SigmaProtocolPedersenCmtKnowledge.hpp"
+
+using std::invalid_argument, std::dynamic_pointer_cast;
 
 string SigmaPedersenCmtKnowledgeCommonInput::toString() {
   string output = h->generateSendableData()->toString();
@@ -83,9 +86,9 @@ bool SigmaPedersenCmtKnowledgeSimulator::checkSoundnessParam() {
 
 shared_ptr<SigmaSimulatorOutput> SigmaPedersenCmtKnowledgeSimulator::simulate(
     SigmaCommonInput* input, const vector<byte>& challenge) {
-  //  SAMPLE random values u, v in Zq
-  //	COMPUTE a = h^u*g^v*c^(-e) (where -e here means -e mod q)
-  //	OUTPUT (a,e,(u,v))
+  // SAMPLE random values u, v in Zq
+  // COMPUTE a = h^u*g^v*c^(-e) (where -e here means -e mod q)
+  // OUTPUT (a,e,(u,v))
   //
 
   // check the challenge validity.

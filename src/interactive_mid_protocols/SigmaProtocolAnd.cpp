@@ -34,8 +34,10 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
 #include "../../include/interactive_mid_protocols/SigmaProtocolAnd.hpp"
+
+using std::invalid_argument;
 
 /***************************************/
 /*   SigmaANDProverComputation         */

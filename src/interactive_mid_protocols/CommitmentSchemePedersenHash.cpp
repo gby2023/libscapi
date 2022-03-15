@@ -34,8 +34,12 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <memory>
 #include "../../include/interactive_mid_protocols/CommitmentSchemePedersenHash.hpp"
+
+using std::static_pointer_cast, std::dynamic_pointer_cast;
+using std::invalid_argument;
 
 void CmtPedersenHashDecommitmentMessage::initFromString(const string& s) {
   auto vec = explode(s, ':');
@@ -51,7 +55,7 @@ string CmtPedersenHashDecommitmentMessage::toString() {
   output += ":";
   output += string(reinterpret_cast<char const*>(xBytes), x->size());
   return output;
-};
+}
 
 /**
  * This constructor receives as arguments an instance of a Dlog Group and an
@@ -79,7 +83,8 @@ CmtPedersenHashCommitter::CmtPedersenHashCommitter(
     const shared_ptr<CryptographicHash>& hash,
     const shared_ptr<PrgFromOpenSSLAES>& random)
     : CmtPedersenCommitterCore(channel, random, dlog) {
-  if (hash->getHashedMsgSize() > (int)bytesCount(dlog->getOrder())) {
+  if (hash->getHashedMsgSize() >
+      static_cast<int>(bytesCount(dlog->getOrder()))) {
     throw invalid_argument(
         "The size in bytes of the resulting hash is bigger than the size in "
         "bytes of the order of the DlogGroup.");
@@ -92,7 +97,7 @@ CmtPedersenHashCommitter::CmtPedersenHashCommitter(
  * @return the created commitment.
  */
 shared_ptr<CmtCCommitmentMsg> CmtPedersenHashCommitter::generateCommitmentMsg(
-    const shared_ptr<CmtCommitValue>& input, long id) {
+    const shared_ptr<CmtCommitValue>& input, int64_t id) {
   auto in = dynamic_pointer_cast<CmtByteArrayCommitValue>(input);
   // Check that the input x is in the end a byte[]
   if (in == NULL)
@@ -121,7 +126,7 @@ shared_ptr<CmtCCommitmentMsg> CmtPedersenHashCommitter::generateCommitmentMsg(
 }
 
 shared_ptr<CmtCDecommitmentMessage>
-CmtPedersenHashCommitter::generateDecommitmentMsg(long id) {
+CmtPedersenHashCommitter::generateDecommitmentMsg(int64_t id) {
   // Fetch the commitment according to the requested ID
   auto tmp =
       dynamic_pointer_cast<CmtByteArrayCommitValue>(commitmentMap[id]->getX());
@@ -180,7 +185,8 @@ CmtPedersenHashReceiver::CmtPedersenHashReceiver(
     const shared_ptr<CryptographicHash>& hash,
     const shared_ptr<PrgFromOpenSSLAES>& random)
     : CmtPedersenReceiverCore(channel, random, dlog) {
-  if (hash->getHashedMsgSize() > (int)bytesCount(dlog->getOrder())) {
+  if (hash->getHashedMsgSize() >
+      static_cast<int>(bytesCount(dlog->getOrder()))) {
     throw invalid_argument(
         "The size in bytes of the resulting hash is bigger than the size in "
         "bytes of the order of the DlogGroup.");
@@ -189,7 +195,7 @@ CmtPedersenHashReceiver::CmtPedersenHashReceiver(
 }
 
 shared_ptr<CmtCommitValue> CmtPedersenHashReceiver::receiveDecommitment(
-    long id) {
+    int64_t id) {
   vector<byte> raw_msg;
   channel->readWithSizeIntoVector(raw_msg);
   shared_ptr<CmtPedersenHashDecommitmentMessage> msg =

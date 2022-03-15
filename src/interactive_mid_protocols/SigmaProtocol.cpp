@@ -34,8 +34,12 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
+#include <memory>
+#include <stdexcept>
 
 #include "../../include/interactive_mid_protocols/SigmaProtocol.hpp"
+
+using std::make_shared, std::invalid_argument;
 
 /***************************/
 /*   SigmaProtocolProver   */
@@ -166,7 +170,7 @@ shared_ptr<SigmaCommonInput> SigmaMultipleProverInput::getCommonInput() {
 
 string SigmaMultipleCommonInput::toString() {
   string output = "";
-  for (int i = 0; i < (int)sigmaInputs.size(); i++) {
+  for (int i = 0; i < static_cast<int>(sigmaInputs.size()); i++) {
     output += sigmaInputs[i]->toString();
     output += ":";
   }

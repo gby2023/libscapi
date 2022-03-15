@@ -34,8 +34,11 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <memory>
 #include "../../include/interactive_mid_protocols/SigmaProtocolDlog.hpp"
+
+using std::invalid_argument, std::dynamic_pointer_cast;
 
 bool check_soundness(int t, const shared_ptr<DlogGroup>& dlog) {
   // if soundness parameter does not satisfy 2^t<q, return false.

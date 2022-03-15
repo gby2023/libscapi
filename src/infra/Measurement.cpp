@@ -119,7 +119,8 @@ void Measurement::startSubTask(const string &taskName,
                                int currentIterationNum) {
   auto now = system_clock::now();
   auto ms =
-      (double)time_point_cast<nanoseconds>(now).time_since_epoch().count() /
+      static_cast<double>(
+        time_point_cast<nanoseconds>(now).time_since_epoch().count()) /
       1000000;
   int taskIdx = getTaskIdx(taskName);
   (*m_cpuStartTimes)[taskIdx][currentIterationNum] = ms;
@@ -129,7 +130,8 @@ void Measurement::endSubTask(const string &taskName, int currentIterationNum) {
   int taskIdx = getTaskIdx(taskName);
   auto now = system_clock::now();
   auto ms =
-      (double)time_point_cast<nanoseconds>(now).time_since_epoch().count() /
+      static_cast<double>(
+        time_point_cast<nanoseconds>(now).time_since_epoch().count()) /
       1000000;
   (*m_cpuEndTimes)[taskIdx][currentIterationNum] =
       ms - (*m_cpuStartTimes)[taskIdx][currentIterationNum];

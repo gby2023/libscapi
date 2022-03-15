@@ -45,9 +45,7 @@
 
 #include "../comm/Comm.hpp"
 #include "../cryptoInfra/SecurityLevel.hpp"
-#include "OTBatch.hpp"
-
-using namespace std;
+#include "./OTBatch.hpp"
 
 /**
  *

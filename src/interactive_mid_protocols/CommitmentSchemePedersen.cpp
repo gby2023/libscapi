@@ -34,12 +34,14 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <memory>
 #include "../../include/interactive_mid_protocols/CommitmentSchemePedersen.hpp"
 
 #include "../../include/interactive_mid_protocols/SigmaProtocolPedersenCmtKnowledge.hpp"
 #include "../../include/interactive_mid_protocols/SigmaProtocolPedersenCommittedValue.hpp"
 #include "../../include/interactive_mid_protocols/ZeroKnowledge.hpp"
+
+using std::static_pointer_cast;
 
 /*********************************/
 /*   CmtPedersenReceiverCore     */
@@ -93,7 +95,7 @@ shared_ptr<CmtRCommitPhaseOutput> CmtPedersenReceiverCore::receiveCommitment() {
 }
 
 shared_ptr<CmtCommitValue> CmtPedersenReceiverCore::receiveDecommitment(
-    long id) {
+    int64_t id) {
   vector<byte> raw_msg;
   channel->readWithSizeIntoVector(raw_msg);
   shared_ptr<CmtPedersenDecommitmentMessage> msg =
@@ -149,7 +151,7 @@ vector<shared_ptr<void>> CmtPedersenReceiverCore::getPreProcessedValues() {
   return values;
 }
 
-shared_ptr<void> CmtPedersenReceiverCore::getCommitmentPhaseValues(long id) {
+shared_ptr<void> CmtPedersenReceiverCore::getCommitmentPhaseValues(int64_t id) {
   auto voidPtr = commitmentMap[id]->getCommitment();
   auto ge = static_pointer_cast<GroupElementSendableData>(voidPtr);
   return dlog->reconstructElement(true, ge.get());
@@ -198,7 +200,7 @@ CmtPedersenCommitterCore::waitForMessageFromReceiver() {
 }
 
 shared_ptr<CmtCCommitmentMsg> CmtPedersenCommitterCore::generateCommitmentMsg(
-    const shared_ptr<CmtCommitValue>& input, biginteger r, long id) {
+    const shared_ptr<CmtCommitValue>& input, biginteger r, int64_t id) {
   auto biCmt = dynamic_pointer_cast<CmtBigIntegerCommitValue>(input);
   if (!biCmt)
     throw invalid_argument(
@@ -230,7 +232,7 @@ shared_ptr<CmtCCommitmentMsg> CmtPedersenCommitterCore::generateCommitmentMsg(
 }
 
 shared_ptr<CmtCCommitmentMsg> CmtPedersenCommitterCore::generateCommitmentMsg(
-    const shared_ptr<CmtCommitValue>& input, long id) {
+    const shared_ptr<CmtCommitValue>& input, int64_t id) {
   // sample a random value r <- Zq
   biginteger r = getRandomInRange(0, qMinusOne, random.get());
 
@@ -238,7 +240,7 @@ shared_ptr<CmtCCommitmentMsg> CmtPedersenCommitterCore::generateCommitmentMsg(
 }
 
 shared_ptr<CmtCDecommitmentMessage>
-CmtPedersenCommitterCore::generateDecommitmentMsg(long id) {
+CmtPedersenCommitterCore::generateDecommitmentMsg(int64_t id) {
   auto cmtValue = commitmentMap[id]->getX();
   auto biCmt = dynamic_pointer_cast<CmtBigIntegerCommitValue>(cmtValue);
   auto x = static_pointer_cast<biginteger>(biCmt->getX());
@@ -257,7 +259,7 @@ vector<shared_ptr<void>> CmtPedersenCommitterCore::getPreProcessValues() {
 /* Helper */
 /**********/
 vector<byte> fromCmtToByteArray(CmtCommitValue* value) {
-  biginteger x = *((biginteger*)value->getX().get());
+  biginteger x = *(reinterpret_cast<biginteger*>(value->getX().get()));
   int size = bytesCount(x);
   vector<byte> byteRes(size);
   encodeBigInteger(x, byteRes.data(), size);
@@ -296,7 +298,7 @@ void CmtPedersenWithProofsCommitter::doConstruct(
       channel, pedersenCommittedValProver, dlog, random);
 }
 
-void CmtPedersenWithProofsCommitter::proveKnowledge(long id) {
+void CmtPedersenWithProofsCommitter::proveKnowledge(int64_t id) {
   auto val = getCommitmentPhaseValues(id);
   auto h = static_pointer_cast<GroupElement>(getPreProcessValues()[0]);
   auto commitment =
@@ -309,7 +311,7 @@ void CmtPedersenWithProofsCommitter::proveKnowledge(long id) {
       make_shared<SigmaPedersenCmtKnowledgeProverInput>(input));
 }
 
-void CmtPedersenWithProofsCommitter::proveCommittedValue(long id) {
+void CmtPedersenWithProofsCommitter::proveCommittedValue(int64_t id) {
   auto val = getCommitmentPhaseValues(id);
   // Send s1 to P2
   channel->writeWithSize(val->getX()->toString());
@@ -341,7 +343,7 @@ void CmtPedersenWithProofsReceiver::doConstruct(
       channel, pedersenCommittedValVerifier, output, dlog, prg);
 }
 
-bool CmtPedersenWithProofsReceiver::verifyKnowledge(long id) {
+bool CmtPedersenWithProofsReceiver::verifyKnowledge(int64_t id) {
   auto commitmentVal = getCommitmentPhaseValues(id);
 
   auto h = static_pointer_cast<GroupElement>(getPreProcessedValues()[0]);
@@ -355,7 +357,7 @@ bool CmtPedersenWithProofsReceiver::verifyKnowledge(long id) {
 }
 
 shared_ptr<CmtCommitValue> CmtPedersenWithProofsReceiver::verifyCommittedValue(
-    long id) {
+    int64_t id) {
   // read biginteger from channel
   vector<byte> raw_msg;  // by the end of the scope - no need to hold it anymore
                          // - already decoded and copied

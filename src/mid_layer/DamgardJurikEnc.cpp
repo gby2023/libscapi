@@ -34,8 +34,11 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <memory>
 #include "../../include/mid_layer/DamgardJurikEnc.hpp"
+
+using std::runtime_error, std::dynamic_pointer_cast;
 
 string DamgardJurikPublicKey::toString() { return modulus.str(); }
 

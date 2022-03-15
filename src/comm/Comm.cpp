@@ -34,11 +34,15 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <iostream>
+#include <chrono> //NOLINT [build/c++11]
+#include <thread> //NOLINT [build/c++11]
 #include "../../include/comm/Comm.hpp"
 
+using std::cerr, std::cout, std::endl;
+
 /*****************************************/
-/* SocketPartyData						 */
+/* SocketPartyData                       */
 /*****************************************/
 int SocketPartyData::compare(const SocketPartyData& other) const {
   string thisString = ipAddress.to_string() + ":" + to_string(port);
@@ -48,7 +52,7 @@ int SocketPartyData::compare(const SocketPartyData& other) const {
 }
 
 /*****************************************/
-/* CommParty			                */
+/* CommParty                             */
 /*****************************************/
 
 void CommParty::writeWithSize(const byte* data, int size) {
@@ -59,14 +63,14 @@ void CommParty::writeWithSize(const byte* data, int size) {
 int CommParty::readSize() {
   byte buf[sizeof(int)];
   read(buf, sizeof(int));
-  int* res = (int*)buf;
+  int* res = reinterpret_cast<int*>(buf);
   return *res;
 }
 
 size_t CommParty::readWithSizeIntoVector(vector<byte>& targetVector) {
   int msgSize = readSize();
   targetVector.resize(msgSize);
-  auto res = read((byte*)&targetVector[0], msgSize);
+  auto res = read(reinterpret_cast<byte*>(&targetVector[0]), msgSize);
   return res;
 }
 
@@ -97,7 +101,8 @@ int CommPartyTCPSynced::join(int sleepBetweenAttempts, int timeout,
       }
       cout << "Failed to connect. sleeping for " << sleepBetweenAttempts
            << " milliseconds, " << ex.what() << endl;
-      this_thread::sleep_for(chrono::milliseconds(sleepBetweenAttempts));
+      std::this_thread::sleep_for(
+        std::chrono::milliseconds(sleepBetweenAttempts));
       totalSleep += sleepBetweenAttempts;
     }
     if (!isAccepted) {

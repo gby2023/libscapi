@@ -34,8 +34,10 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <memory>
 #include "../../include/interactive_mid_protocols/SigmaProtocolDamgardJurikEncryptedZero.hpp"
+
+using std::dynamic_pointer_cast;
 
 string SigmaDJEncryptedZeroCommonInput::toString() {
   string output = publicKey.generateSendableData()->toString();

@@ -36,10 +36,17 @@
  */
 
 #pragma once
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+#include <stdexcept>
+#include <cstdint>
 #include "../comm/Comm.hpp"
 #include "../cryptoInfra/PlainText.hpp"
-#include "RandomValue.hpp"
+#include "./RandomValue.hpp"
 
+using std::map, std::unique_ptr, std::invalid_argument;
 /**
  * Abstract class of the receiver's output of the commit phase.
  * All receivers have output from the commit phase, that at least includes the
@@ -50,7 +57,7 @@ class CmtRCommitPhaseOutput : public NetworkSerialized {
   /**
    * Returns the id of the received commitment message.
    */
-  virtual long getCommitmentId() = 0;
+  virtual int64_t getCommitmentId() = 0;
 };
 
 /**
@@ -59,19 +66,19 @@ class CmtRCommitPhaseOutput : public NetworkSerialized {
  */
 class CmtRBasicCommitPhaseOutput : public CmtRCommitPhaseOutput {
  protected:
-  long commitmentId;
+  int64_t commitmentId;
 
  public:
   /**
    * Constructor that sets the given commitment id.
    */
-  CmtRBasicCommitPhaseOutput(long commitmentId) {
+  explicit CmtRBasicCommitPhaseOutput(int64_t commitmentId) {
     this->commitmentId = commitmentId;
-  };
+  }
   /**
    * Returns the id of the received commitment message.
    */
-  long getCommitmentId() override { return commitmentId; };
+  int64_t getCommitmentId() override { return commitmentId; }
   // network serialization implementation:
   string toString() override { return to_string(commitmentId); }
   void initFromString(const string& s) { commitmentId = stol(s); }
@@ -87,20 +94,21 @@ class CmtRTrapdoorCommitPhaseOutput : public CmtRBasicCommitPhaseOutput {
   biginteger trap;
 
  public:
-  CmtRTrapdoorCommitPhaseOutput() : CmtRTrapdoorCommitPhaseOutput(0, 0){};
+  CmtRTrapdoorCommitPhaseOutput() : CmtRTrapdoorCommitPhaseOutput(0, 0) {}
   /**
    * Constructor that sets the given commitment id.
    * @param trapdoor the receiver's trapdoor for this commitment.
    * @param commitmentId the id of the received commitment message.
    */
-  CmtRTrapdoorCommitPhaseOutput(const biginteger& trapdoor, long commitmentId)
+  CmtRTrapdoorCommitPhaseOutput(const biginteger& trapdoor,
+   int64_t commitmentId)
       : CmtRBasicCommitPhaseOutput(commitmentId) {
     this->trap = trapdoor;
-  };
+  }
   /**
    * Returns the trapdoor of this commitment.
    */
-  biginteger getTrap() { return trap; };
+  biginteger getTrap() { return trap; }
 
   // network serialization implementation:
   string toString() override {
@@ -144,13 +152,14 @@ class CmtCommitValue {
 class CmtGroupElementCommitValue : public CmtCommitValue {
  private:
   shared_ptr<GroupElement> x;  // the committed value
+
  public:
   /**
    * Constructor that sets the commit value.
    */
-  CmtGroupElementCommitValue(const shared_ptr<GroupElement>& x) {
+  explicit CmtGroupElementCommitValue(const shared_ptr<GroupElement>& x) {
     this->x = x;
-  };
+  }
   /**
    * Returns the committed GroupElement. Client needs to cast result to
    * GroupElement*
@@ -227,12 +236,13 @@ class CmtBigIntegerCommitValue : public CmtCommitValue {
    * Constructor that sets the commit value.
    * @param x BigInteger to commit on.
    */
-  CmtBigIntegerCommitValue(const shared_ptr<biginteger>& x) { this->x = x; };
+  explicit CmtBigIntegerCommitValue(const shared_ptr<biginteger>& x) {
+    this->x = x; }
 
   /**
    * Returns the committed BigInteger. Client should cast to biginteger.
    */
-  shared_ptr<void> getX() override { return x; };
+  shared_ptr<void> getX() override { return x; }
 
   /**
    * Converts the committed value to a BigIntegerPlaintaxt.
@@ -262,11 +272,13 @@ class CmtBigIntegerCommitValue : public CmtCommitValue {
 class CmtByteArrayCommitValue : public CmtCommitValue {
  private:
   shared_ptr<vector<byte>> x;  // the committed value.
+
  public:
   /**
    * Constructor that sets the commit value.
    */
-  CmtByteArrayCommitValue(const shared_ptr<vector<byte>>& x) { this->x = x; }
+  explicit CmtByteArrayCommitValue(const shared_ptr<vector<byte>>& x) {
+    this->x = x; }
   /**
    * Returns the committed byte vector. client need to cast to byte vector
    */
@@ -310,7 +322,7 @@ class CmtCCommitmentMsg : public NetworkSerialized {
   /**
    * Returns the unique id of the commitment.
    */
-  virtual long getId() = 0;
+  virtual int64_t getId() = 0;
   /**
    * The commitment objects can vary, therefore returns an void pointer.
    * @return the commitment object.
@@ -354,7 +366,7 @@ class CmtCommitter {
   // cases that the same instances of committer and receiver can be used for
   // performing various commitments utilizing the values calculated during the
   // pre-process stage for the sake of efficiency.
-  map<long, unique_ptr<CmtCommitmentPhaseValues>> commitmentMap;
+  map<int64_t, unique_ptr<CmtCommitmentPhaseValues>> commitmentMap;
 
  public:
   /**
@@ -392,7 +404,7 @@ class CmtCommitter {
    */
 
   virtual shared_ptr<CmtCCommitmentMsg> generateCommitmentMsg(
-      const shared_ptr<CmtCommitValue>& input, biginteger r, long id) = 0;
+      const shared_ptr<CmtCommitValue>& input, biginteger r, int64_t id) = 0;
 
   /*
    * This function returns the previous function with the randomness r randomly
@@ -400,7 +412,7 @@ class CmtCommitter {
    * @return the generated commitment object
    */
   virtual shared_ptr<CmtCCommitmentMsg> generateCommitmentMsg(
-      const shared_ptr<CmtCommitValue>& input, long id) = 0;
+      const shared_ptr<CmtCommitValue>& input, int64_t id) = 0;
 
   /**
    * This function is the heart of the commitment phase from the Committer's
@@ -410,7 +422,7 @@ class CmtCommitter {
    * commitments in the case that many commitments are performed one after the
    * other without decommiting them yet.
    */
-  virtual void commit(const shared_ptr<CmtCommitValue>& input, long id) {
+  virtual void commit(const shared_ptr<CmtCommitValue>& input, int64_t id) {
     auto msg = generateCommitmentMsg(input, id);
     try {
       auto msgStr = msg->toString();
@@ -453,7 +465,7 @@ class CmtCommitter {
    * @return the generated decommitment object.
    */
   virtual shared_ptr<CmtCDecommitmentMessage> generateDecommitmentMsg(
-      long id) = 0;
+      int64_t id) = 0;
 
   /**
    * This function is the heart of the decommitment phase from the Committer's
@@ -461,7 +473,7 @@ class CmtCommitter {
    * @param id Unique value used to identify which previously committed value
    * needs to be decommitted now.
    */
-  virtual void decommit(long id) {
+  virtual void decommit(int64_t id) {
     // fetch the commitment according to the requested ID
     auto msg = generateDecommitmentMsg(id);
     auto bMsg = msg->toString();
@@ -507,7 +519,7 @@ class CmtCommitter {
    * @param id of the specific commitment
    * @return values calculated during the commit phase
    */
-  CmtCommitmentPhaseValues* getCommitmentPhaseValues(long id) {
+  CmtCommitmentPhaseValues* getCommitmentPhaseValues(int64_t id) {
     return commitmentMap[id].get();
   }
 };
@@ -528,7 +540,7 @@ class CmtReceiver {
   // is some unique id known to the application running the committer. The exact
   // same id has to be use later on to decommit the corresponding values,
   // otherwise the receiver will reject the decommitment.
-  map<long, shared_ptr<CmtCCommitmentMsg>> commitmentMap;
+  map<int64_t, shared_ptr<CmtCCommitmentMsg>> commitmentMap;
 
  public:
   /**
@@ -545,7 +557,7 @@ class CmtReceiver {
    * @param id wait for a specific message according to this id
    * @return the commitment
    */
-  virtual shared_ptr<CmtCommitValue> receiveDecommitment(long id) = 0;
+  virtual shared_ptr<CmtCommitValue> receiveDecommitment(int64_t id) = 0;
 
   /**
    * Verifies the given decommitment object according to the given commitment
@@ -598,7 +610,7 @@ class CmtReceiver {
    * @param id get the commitment values according to this id.
    * @return a general void pointer.
    */
-  virtual shared_ptr<void> getCommitmentPhaseValues(long id) {
+  virtual shared_ptr<void> getCommitmentPhaseValues(int64_t id) {
     return commitmentMap[id];
   }
 
@@ -623,13 +635,13 @@ class CmtWithProofsCommitter : public virtual CmtCommitter {
    * Proves that the committer knows the committed value.
    * @param id of the commitment message.
    */
-  virtual void proveKnowledge(long id) = 0;
+  virtual void proveKnowledge(int64_t id) = 0;
 
   /**
    * Proves that the committed value with the given id was x.
    * @param id of the committed value.
    */
-  virtual void proveCommittedValue(long id) = 0;
+  virtual void proveCommittedValue(int64_t id) = 0;
 };
 
 /**
@@ -644,13 +656,13 @@ class CmtWithProofsReceiver : public virtual CmtReceiver {
    * Verifies that the committer knows the committed value.
    * @param id of the commitment message.
    */
-  virtual bool verifyKnowledge(long id) = 0;
+  virtual bool verifyKnowledge(int64_t id) = 0;
 
   /**
    * Verifies that the committed value with the given id was x.
    * @param id of the committed value.
    */
-  virtual shared_ptr<CmtCommitValue> verifyCommittedValue(long id) = 0;
+  virtual shared_ptr<CmtCommitValue> verifyCommittedValue(int64_t id) = 0;
 };
 
 /**

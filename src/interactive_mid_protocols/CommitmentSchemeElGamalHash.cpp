@@ -34,8 +34,10 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <memory>
 #include "../../include/interactive_mid_protocols/CommitmentSchemeElGamalHash.hpp"
+
+using std::static_pointer_cast;
 
 CmtElGamalHashCommitter::CmtElGamalHashCommitter(
     const shared_ptr<CommParty>& channel, const shared_ptr<DlogGroup>& dlog,
@@ -48,7 +50,8 @@ CmtElGamalHashCommitter::CmtElGamalHashCommitter(
           random) {
   // During the construction of this object, the Public Key with which we set
   // the El Gamal object gets sent to the receiver.
-  if (hash->getHashedMsgSize() > (int)bytesCount(dlog->getOrder())) {
+  if (hash->getHashedMsgSize() > static_cast<int>(
+    bytesCount(dlog->getOrder()))) {
     throw invalid_argument(
         "The size in bytes of the resulting hash is bigger than the size in "
         "bytes of the order of the DlogGroup.");
@@ -61,7 +64,7 @@ CmtElGamalHashCommitter::CmtElGamalHashCommitter(
  * @return the created commitment.
  */
 shared_ptr<CmtCCommitmentMsg> CmtElGamalHashCommitter::generateCommitmentMsg(
-    const shared_ptr<CmtCommitValue>& input, long id) {
+    const shared_ptr<CmtCommitValue>& input, int64_t id) {
   vector<byte> hashValArray = getHashOfX(input, id);
 
   // After the input has been manipulated with the Hash call the super's commit
@@ -86,7 +89,7 @@ shared_ptr<CmtCCommitmentMsg> CmtElGamalHashCommitter::generateCommitmentMsg(
  * @return the result of the hash function of the given input.
  */
 vector<byte> CmtElGamalHashCommitter::getHashOfX(
-    const shared_ptr<CmtCommitValue>& input, long id) {
+    const shared_ptr<CmtCommitValue>& input, int64_t id) {
   // Check that the input x is in the end a byte[]
   auto in = dynamic_pointer_cast<CmtByteArrayCommitValue>(input);
   if (in == NULL)
@@ -105,7 +108,7 @@ vector<byte> CmtElGamalHashCommitter::getHashOfX(
 }
 
 shared_ptr<CmtCDecommitmentMessage>
-CmtElGamalHashCommitter::generateDecommitmentMsg(long id) {
+CmtElGamalHashCommitter::generateDecommitmentMsg(int64_t id) {
   // Fetch the commitment according to the requested ID
   auto x = commitmentMap[id]->getX();
   // Get the relevant random value used in the commitment phase
@@ -157,7 +160,8 @@ CmtElGamalHashReceiver::CmtElGamalHashReceiver(
           channel, dlog,
           make_shared<ElGamalOnByteArrayEnc>(
               dlog, make_shared<HKDF>(make_shared<OpenSSLHMAC>()))) {
-  if (hash->getHashedMsgSize() > (int)bytesCount(dlog->getOrder())) {
+  if (hash->getHashedMsgSize() > static_cast<int>(
+    bytesCount(dlog->getOrder()))) {
     throw invalid_argument(
         "The size in bytes of the resulting hash is bigger than the size in "
         "bytes of the order of the DlogGroup.");

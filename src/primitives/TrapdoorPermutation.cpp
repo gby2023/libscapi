@@ -34,8 +34,10 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <algorithm>
 #include "../../include/primitives/TrapdoorPermutation.hpp"
+
+using std::min;
 
 /*************************************************/
 /*TrapdoorPermutationAbs                         */
@@ -76,7 +78,7 @@ vector<byte> TrapdoorPermutation::hardCoreFunction(TPElement* tpEl) {
   // The number of bytes to get the log (N) least significant bits
 
   double logBits = NumberOfBits(modulus) / 2.0;  // log N bits
-  int logBytes = (int)ceil(logBits / 8);         // log N bites in bytes
+  int logBytes = static_cast<int>(ceil(logBits / 8));  // log N bites in bytes
 
   // If the element length is less than log(N), the return byte[] should be all
   // the element bytes
@@ -114,9 +116,9 @@ RSAElement::RSAElement(const biginteger& modN,
 
 RSAElement::RSAElement(const biginteger& modN, const biginteger& x,
                        bool check) {
-  if (!check)
+  if (!check) {
     element = x;
-  else {
+  } else {
     /*
      * Check if the value is valid (between 1 to (mod n) - 1).
      * if valid - sets it to be the element

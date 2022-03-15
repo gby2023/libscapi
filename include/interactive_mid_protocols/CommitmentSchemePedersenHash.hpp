@@ -36,10 +36,14 @@
  */
 
 #pragma once
+#include <stdexcept>
+
 #include "../../include/primitives/HashOpenSSL.hpp"
 #include "../primitives/Prg.hpp"
 #include "CommitmentScheme.hpp"
 #include "CommitmentSchemePedersen.hpp"
+
+using std::invalid_argument;
 
 /**
  * Concrete implementation of decommitment message used by SimpleHash commitment

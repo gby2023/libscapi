@@ -1,3 +1,39 @@
+/**
+ * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ *
+ * Copyright (c) 2016 LIBSCAPI (http://crypto.biu.ac.il/SCAPI)
+ * This file is part of the SCAPI project.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * We request that any publication and/or code referring to and/or based on
+ * SCAPI contain an appropriate citation to SCAPI, including a reference to
+ * http://crypto.biu.ac.il/SCAPI.
+ *
+ * Libscapi uses several open source libraries. Please see these projects for
+ * any further licensing issues. For more information , See
+ * https://github.com/cryptobiu/libscapi/blob/master/LICENSE.MD
+ *
+ * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ *
+ */
 
 #ifdef __x86_64__
 #ifndef __APPLE__
@@ -80,21 +116,26 @@ shared_ptr<OTBatchSOutput> OTExtensionBristolSender::transfer(
     // get the number OTs and element size from the input object.
     // need to cast to the right class according to the type.
     if (input->getType() == OTBatchSInputTypes::OTExtensionGeneralSInput) {
-      nOTsReal = ((OTExtensionGeneralSInput *)input)->getNumOfOts();
+      nOTsReal = (
+        reinterpret_cast<OTExtensionGeneralSInput *>(input))->getNumOfOts();
       elementSize =
-          8 *
-          (((OTExtensionGeneralSInput *)input)->getX0Arr().size() / nOTsReal);
+          8 * ((reinterpret_cast<OTExtensionGeneralSInput *>(input))->
+          getX0Arr().size() / nOTsReal);
 
     } else if (input->getType() ==
                OTBatchSInputTypes::OTExtensionRandomizedSInput) {
-      nOTsReal = ((OTExtensionRandomizedSInput *)input)->getNumOfOts();
-      elementSize = ((OTExtensionRandomizedSInput *)input)->getElementSize();
+      nOTsReal = (
+        reinterpret_cast<OTExtensionRandomizedSInput *>(input))->getNumOfOts();
+      elementSize = (
+        reinterpret_cast<OTExtensionRandomizedSInput *>(input))->
+        getElementSize();
 
     } else {
-      nOTsReal = ((OTExtensionCorrelatedSInput *)input)->getNumOfOts();
-      elementSize =
-          8 * (((OTExtensionCorrelatedSInput *)input)->getDeltaArr().size() /
-               nOTsReal);
+      nOTsReal = (
+        reinterpret_cast<OTExtensionCorrelatedSInput *>(input))->getNumOfOts();
+      elementSize = 8 * (
+        (reinterpret_cast<OTExtensionCorrelatedSInput *>(input))->
+        getDeltaArr().size() / nOTsReal);
     }
 
     // round to the nearest 128 multiplication
@@ -119,19 +160,25 @@ shared_ptr<OTBatchSOutput> OTExtensionBristolSender::transfer(
     // There is no need to change the element size, copy only the required OTs
     if (elementSize == 128) {
       copy_byte_array_to_byte_vector(
-          (byte *)pOtExt->senderOutputMatrices[0].squares.data(), nOTsReal * 16,
+          reinterpret_cast<byte *>(pOtExt->
+          senderOutputMatrices[0].squares.data()),
+          nOTsReal * 16,
           aesX0, 0);
       copy_byte_array_to_byte_vector(
-          (byte *)pOtExt->senderOutputMatrices[1].squares.data(), nOTsReal * 16,
+          reinterpret_cast<byte *>(pOtExt->
+          senderOutputMatrices[1].squares.data()),
+          nOTsReal * 16,
           aesX1, 0);
 
       // The required size is smaller than the output. Shrink x0 and x1.
     } else if (elementSize < 128) {
       shrinkArray(128, elementSize, nOTsReal,
-                  (byte *)pOtExt->senderOutputMatrices[0].squares.data(),
+                  reinterpret_cast<byte *>(pOtExt->
+                  senderOutputMatrices[0].squares.data()),
                   aesX0.data());
       shrinkArray(128, elementSize, nOTsReal,
-                  (byte *)pOtExt->senderOutputMatrices[1].squares.data(),
+                  reinterpret_cast<byte *>(pOtExt->
+                  senderOutputMatrices[1].squares.data()),
                   aesX1.data());
 
       // The required size is bigger than the output. Expand x0 and x1.
@@ -147,17 +194,17 @@ shared_ptr<OTBatchSOutput> OTExtensionBristolSender::transfer(
         // Expand the x0[i] to the required size.
         // Put the result in x0.
         expandOutput(elementSize,
-                     (byte *)&pOtExt->senderOutputMatrices[0]
+                     reinterpret_cast<byte *>(&pOtExt->senderOutputMatrices[0]
                          .squares[i / 128]
-                         .rows[i % 128],
+                         .rows[i % 128]),
                      aesX0, factor, counters, aes, output, i);
 
         // Expand the x0[i] to the required size.
         // Put the result in x0.
         expandOutput(elementSize,
-                     (byte *)&pOtExt->senderOutputMatrices[1]
+                     reinterpret_cast<byte *>(&pOtExt->senderOutputMatrices[1]
                          .squares[i / 128]
-                         .rows[i % 128],
+                         .rows[i % 128]),
                      aesX1, factor, counters, aes, output, i);
       }
       delete[] counters;
@@ -174,8 +221,10 @@ shared_ptr<OTBatchSOutput> OTExtensionBristolSender::transfer(
             "given");
       }
 
-      auto x0Vec = ((OTExtensionGeneralSInput *)input)->getX0Arr();
-      auto x1Vec = ((OTExtensionGeneralSInput *)input)->getX1Arr();
+      auto x0Vec = (
+        reinterpret_cast<OTExtensionGeneralSInput *>(input))->getX0Arr();
+      auto x1Vec = (
+        reinterpret_cast<OTExtensionGeneralSInput *>(input))->getX1Arr();
 
       // Xor the given x0 and x1 with the OT output
       for (int i = 0; i < size; i++) {
@@ -199,7 +248,8 @@ shared_ptr<OTBatchSOutput> OTExtensionBristolSender::transfer(
             "given");
       }
 
-      auto delta = ((OTExtensionCorrelatedSInput *)input)->getDeltaArr();
+      auto delta = (
+        reinterpret_cast<OTExtensionCorrelatedSInput *>(input))->getDeltaArr();
 
       vector<byte> newX1(size);
       byte *newDelta = new byte[size];
@@ -219,10 +269,7 @@ shared_ptr<OTBatchSOutput> OTExtensionBristolSender::transfer(
 
       // the output for the sender is x0 and x0^delta
       return make_shared<OTExtensionCorrelatedSOutput>(aesX0, newX1);
-
-    }
-
-    else {
+    } else {
       // return a shared pointer of the output as it taken from the ot object of
       // the library
       return make_shared<OTExtensionBristolRandomizedSOutput>(aesX0, aesX1);
@@ -241,7 +288,8 @@ void OTExtensionBristolBase::expandOutput(int elementSize, byte *key,
 
   // Compute AES on the counters array
   int outLength;
-  EVP_EncryptUpdate(aes, aesOutput, &outLength, (byte *)counters, factor * 16);
+  EVP_EncryptUpdate(aes, aesOutput, &outLength,
+  reinterpret_cast<byte const*>(counters), factor * 16);
 
   // Copy the result to the given location
   memcpy(output.data() + i * elementSize / 8, aesOutput, elementSize / 8);
@@ -255,10 +303,10 @@ byte *OTExtensionBristolBase::createCountersArray(int factor)
   auto counters = new byte[factor * 16];
   // assign zero to the array of indices which are set as the plaintext.
   memset(counters, 0, 16 * factor);
-  long *countersArray = (long *)counters;
+  int64_t *countersArray = reinterpret_cast<int64_t *>(counters);
   // go over the array and set the 64 list significant bits for evey 128 bit
   // value, we use only half of the 128 bit variables
-  for (long i = 0; i < factor; i++) {
+  for (int64_t i = 0; i < factor; i++) {
     countersArray[i * 2 + 1] = i;
   }
   return counters;
@@ -279,7 +327,8 @@ shared_ptr<OTBatchROutput> OTExtensionBristolReceiver::transfer(
         "input should be instance of OTExtensionGeneralRInput or "
         "OTExtensionRandomizedRInput or OTExtensionCorrelatedRInput.");
   } else {
-    auto sigmaArr = ((OTExtensionRInput *)input)->getSigmaArr();
+    auto sigmaArr = (
+      reinterpret_cast<OTExtensionRInput *>(input))->getSigmaArr();
 
     auto nOTsReal = sigmaArr.size();
 
@@ -298,7 +347,8 @@ shared_ptr<OTBatchROutput> OTExtensionBristolReceiver::transfer(
     // Call the bristol's transfer function
     OTExtensionBristolBase::transfer(nOTs, inputBits);
 
-    auto elementSize = (((OTExtensionRInput *)input)->getElementSize());
+    auto elementSize = (
+      (reinterpret_cast<OTExtensionRInput *>(input))->getElementSize());
 
     /* Convert the result of the transfer function to the required size */
     vector<byte> aesOutput(nOTsReal * elementSize / 8);
@@ -306,13 +356,14 @@ shared_ptr<OTBatchROutput> OTExtensionBristolReceiver::transfer(
     // There is no need to change the element size, copy only the required OTs.
     if (elementSize == 128) {
       copy_byte_array_to_byte_vector(
-          (byte *)pOtExt->receiverOutputMatrix.squares.data(), nOTsReal * 16,
-          aesOutput, 0);
+          reinterpret_cast<byte *>(pOtExt->receiverOutputMatrix.squares.data()),
+          nOTsReal * 16, aesOutput, 0);
 
       // The required size is smaller than the output. Shrink it.
     } else if (elementSize <= 128) {
       shrinkArray(128, elementSize, nOTsReal,
-                  (byte *)pOtExt->receiverOutputMatrix.squares.data(),
+                  reinterpret_cast<byte *>(
+                    pOtExt->receiverOutputMatrix.squares.data()),
                   aesOutput.data());
 
       // The required size is bigger than the output. Expand it.
@@ -329,11 +380,11 @@ shared_ptr<OTBatchROutput> OTExtensionBristolReceiver::transfer(
 #endif
       auto outputArr = new byte[16 * factor];
 
-      for (int i = 0; i < (int)nOTsReal; i++) {
+      for (int i = 0; i < static_cast<int>(nOTsReal); i++) {
         // Expand the output to the required size.
         expandOutput(elementSize,
-                     (byte *)&pOtExt->receiverOutputMatrix.squares[i / 128]
-                         .rows[i % 128],
+                     reinterpret_cast<byte *>(&pOtExt->receiverOutputMatrix.
+                     squares[i / 128].rows[i % 128]),
                      aesOutput, factor, counters, aes, outputArr, i);
       }
       delete[] counters;
@@ -344,8 +395,8 @@ shared_ptr<OTBatchROutput> OTExtensionBristolReceiver::transfer(
     int size = elementSize / 8 * nOTsReal;
 
     // If this if the general case we need another round of communication using
-    // the channel member, since OT bristol only works on random case. we need to
-    // get the xor of the randomized and real data from the sender.
+    // the channel member, since OT bristol only works on random case.
+    // we need to get the xor of the randomized and real data from the sender.
     if (input->getType() == OTBatchRInputTypes::OTExtensionGeneralRInput) {
       if (channel == NULL) {
         throw runtime_error(
@@ -373,11 +424,10 @@ shared_ptr<OTBatchROutput> OTExtensionBristolReceiver::transfer(
       delete[] x1Arr;
 
       return make_shared<OTOnByteArrayROutput>(aesOutput);
-    }
     // If this if the correlated case we need another round of communication
     // using the channel member, since OT bristol only works on random case. we
     // need to get the xor of the randomized and real data from the sender.
-    else if (input->getType() ==
+    } else if (input->getType() ==
              OTBatchRInputTypes::OTExtensionCorrelatedRInput) {
       if (channel == NULL) {
         throw runtime_error(

@@ -34,8 +34,14 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <map>
+#include <stdexcept>
+#include <memory>
 #include "../../include/interactive_mid_protocols/SigmaProtocolOrMultiple.hpp"
+
+using std::dynamic_pointer_cast;
+using std::invalid_argument;
+using std::map;
 
 string SigmaOrMultipleCommonInput::toString() {
   string output = "";
@@ -250,7 +256,7 @@ shared_ptr<SigmaSimulatorOutput> SigmaOrMultipleSimulator::simulate(
 }
 
 vector<vector<byte>> getPolynomialBytes(NTL::GF2EX& polynomial) {
-  long degree = deg(polynomial);
+  int64_t degree = deg(polynomial);
 
   vector<vector<byte>> polynomBytes;
 

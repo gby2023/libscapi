@@ -36,8 +36,11 @@
  */
 
 #pragma once
+#include <memory>
 #include "CommitmentScheme.hpp"
 #include "CommitmentSchemePedersen.hpp"
+
+using std::dynamic_pointer_cast;
 
 /**
  * Concrete implementation of committer that executes the Pedersen trapdoor

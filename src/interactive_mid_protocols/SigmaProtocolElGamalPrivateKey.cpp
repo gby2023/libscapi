@@ -34,9 +34,12 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <memory>
 #include "../../include/interactive_mid_protocols/SigmaProtocolElGamalPrivateKey.hpp"
 
+using std::invalid_argument;
+using std::unique_ptr, std::dynamic_pointer_cast;
 /**
  * Computes the simulator computation with the given challenge.
  * @param input MUST be an instance of SigmaElGamalPrivateKeyCommonInput.

@@ -34,8 +34,10 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <memory>
 #include "../../include/interactive_mid_protocols/SigmaProtocolDamgardJurikProduct.hpp"
+
+using std::dynamic_pointer_cast;
 
 string SigmaDJProductCommonInput::toString() {
   string output = publicKey.generateSendableData()->toString();

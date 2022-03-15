@@ -34,9 +34,12 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <memory>
 #include "../../include/interactive_mid_protocols/SigmaProtocolElGamalEncryptedValue.hpp"
 
+using std::dynamic_pointer_cast;
+using std::invalid_argument;
 /**
  * Sets the given ciphertext, public key and encrypted value.<p>
  * There is also an argument represents if the encryption was done by private
@@ -240,10 +243,9 @@ SigmaElGamalEncryptedValueProverComputation::convertInput(
 
     // get the private key.
     w = keyInput->getPrivateKey().getX();
-  }
   // In case we use knowledge of the randomness used to encrypt:
   // (h,u,v, w) = (h,c1,c2/x, r)
-  else if (randomInput != NULL) {
+  } else if (randomInput != NULL) {
     params = dynamic_pointer_cast<SigmaElGamalEncryptedValueCommonInput>(
         randomInput->getCommonInput());
     // h = h;

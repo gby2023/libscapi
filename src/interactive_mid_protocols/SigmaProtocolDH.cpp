@@ -34,8 +34,11 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <memory>
 #include "../../include/interactive_mid_protocols/SigmaProtocolDH.hpp"
+
+using std::invalid_argument, std::dynamic_pointer_cast;
 
 string SigmaDHCommonInput::toString() {
   string output = h->generateSendableData()->toString();

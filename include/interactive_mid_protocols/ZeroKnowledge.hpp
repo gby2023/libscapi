@@ -35,10 +35,14 @@
  *
  */
 #pragma once
+#include <iostream>
+
 #include "../primitives/Prf.hpp"
 #include "../primitives/RandomOracle.hpp"
 #include "CommitmentSchemePedersenTrapdoor.hpp"
 #include "SigmaProtocol.hpp"
+
+using std::cout, std::endl;
 
 /**
  * A zero-knowledge proof or zero-knowledge protocol is a method by which one

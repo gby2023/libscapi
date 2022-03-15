@@ -34,8 +34,11 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <memory>
 #include "../../include/interactive_mid_protocols/SigmaProtocolOrTwo.hpp"
+
+using std::invalid_argument, std::dynamic_pointer_cast;
 
 void SigmaOrTwoSecondMsg::initFromString(const string& s) {
   auto str_vec = explode(s, ':');

@@ -34,9 +34,12 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <memory>
 #include "../../include/interactive_mid_protocols/SigmaProtocolCramerShoupEncryptedValue.hpp"
 
+using std::dynamic_pointer_cast;
+using std::invalid_argument;
 /**
  * Sets the ciphertext, public key and the encrypted element.
  * @param cipher ciphertext the output of the encryption scheme on the encrypted
@@ -146,7 +149,7 @@ SigmaCramerShoupEncryptedValueSimulator::checkAndCreateUnderlyingInput(
 
   // Converts the given input to the necessary input to the underlying
   // SigmaDHExtendedSimulator. (g1,g2,g3,g4,h1,h2,h3,h4) =
-  //(g1,g2,h,cd^w,u1,u2,e/x,v)
+  // (g1,g2,h,cd^w,u1,u2,e/x,v)
 
   // add the input for the gArray:
   gArray.push_back(publicKey.getGenerator1());  // add g1 = g1.
@@ -284,7 +287,7 @@ SigmaCramerShoupEncryptedValueProverComputation::computeFirstMsg(
 
   // Converts the given input to the necessary input to the underlying
   // SigmaDHExtendedProver. (g1,g2,g3,g4,h1,h2,h3,h4) =
-  //(g1,g2,h,cd^w,u1,u2,e/x,v)
+  // (g1,g2,h,cd^w,u1,u2,e/x,v)
 
   // add the input for the gArray:
   gArray.push_back(publicKey.getGenerator1());  // add g1 = g1.
@@ -402,7 +405,7 @@ bool SigmaCramerShoupEncryptedValueVerifierComputation::verify(
 
   // Converts the given input to the necessary input to the underlying
   // SigmaDHExtendedVerifier. (g1,g2,g3,g4,h1,h2,h3,h4) =
-  //(g1,g2,h,cd^w,u1,u2,e/x,v)
+  // (g1,g2,h,cd^w,u1,u2,e/x,v)
 
   // add the input for the gArray:
   gArray.push_back(publicKey.getGenerator1());  // add g1 = g1.

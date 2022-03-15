@@ -35,10 +35,14 @@
  *
  */
 
+#include <memory>
+
 #include "../../include/interactive_mid_protocols/CommitmentSchemeElGamal.hpp"
 
 #include "../../include/interactive_mid_protocols/SigmaProtocolElGamalCmtKnowledge.hpp"
 #include "../../include/interactive_mid_protocols/SigmaProtocolElGamalCommittedValue.hpp"
+
+using std::static_pointer_cast;
 
 /**
  * Sets the given parameters and execute the preprocess phase of the scheme.
@@ -101,7 +105,7 @@ void CmtElGamalCommitterCore::preProcess() {
  * @return the created commitment.
  */
 shared_ptr<CmtCCommitmentMsg> CmtElGamalCommitterCore::generateCommitmentMsg(
-    const shared_ptr<CmtCommitValue>& input, long id) {
+    const shared_ptr<CmtCommitValue>& input, int64_t id) {
   // Sample random r <-Zq.
   biginteger r = getRandomInRange(0, qMinusOne, random.get());
   // Compute u = g^r and v = h^r * x.
@@ -118,7 +122,7 @@ shared_ptr<CmtCCommitmentMsg> CmtElGamalCommitterCore::generateCommitmentMsg(
 }
 
 shared_ptr<CmtCDecommitmentMessage>
-CmtElGamalCommitterCore::generateDecommitmentMsg(long id) {
+CmtElGamalCommitterCore::generateDecommitmentMsg(int64_t id) {
   // fetch the commitment according to the requested ID
   return make_shared<CmtElGamalDecommitmentMessage>(
       make_shared<string>(commitmentMap[id]->getX()->toString()),
@@ -134,7 +138,7 @@ vector<shared_ptr<void>> CmtElGamalCommitterCore::getPreProcessValues() {
 
 shared_ptr<CmtCCommitmentMsg>
 CmtElGamalOnGroupElementCommitter::generateCommitmentMsg(
-    const shared_ptr<CmtCommitValue>& input, long id) {
+    const shared_ptr<CmtCommitValue>& input, int64_t id) {
   auto in = dynamic_pointer_cast<CmtGroupElementCommitValue>(input);
   if (in == NULL)
     throw invalid_argument(
@@ -239,7 +243,7 @@ shared_ptr<CmtRCommitPhaseOutput> CmtElGamalReceiverCore::receiveCommitment() {
  * @return the committed value if the decommit succeeded; null, otherwise.
  */
 shared_ptr<CmtCommitValue> CmtElGamalReceiverCore::receiveDecommitment(
-    long id) {
+    int64_t id) {
   vector<byte> raw_msg;
   channel->readWithSizeIntoVector(raw_msg);
   auto msg = make_shared<CmtElGamalDecommitmentMessage>();
@@ -334,7 +338,7 @@ vector<byte> CmtElGamalOnGroupElementReceiver::generateBytesFromCommitValue(
 
 shared_ptr<CmtCCommitmentMsg>
 CmtElGamalOnByteArrayCommitter::generateCommitmentMsg(
-    const shared_ptr<CmtCommitValue>& input, long id) {
+    const shared_ptr<CmtCommitValue>& input, int64_t id) {
   auto in = dynamic_pointer_cast<CmtByteArrayCommitValue>(input);
   if (in == NULL)
     throw invalid_argument("The input must be of type CmtByteArrayCommitValue");
@@ -482,7 +486,7 @@ CmtElGamalWithProofsCommitter::CmtElGamalWithProofsCommitter(
       channel, elGamalCommittedValProver, receiver);
 }
 
-void CmtElGamalWithProofsCommitter::proveKnowledge(long id) {
+void CmtElGamalWithProofsCommitter::proveKnowledge(int64_t id) {
   auto keys = getPreProcessValues();
   auto publicKey = static_pointer_cast<ElGamalPublicKey>(keys[0]);
   auto privateKey = static_pointer_cast<ElGamalPrivateKey>(keys[1]);
@@ -491,7 +495,7 @@ void CmtElGamalWithProofsCommitter::proveKnowledge(long id) {
       make_shared<SigmaElGamalCmtKnowledgeProverInput>(input));
 }
 
-void CmtElGamalWithProofsCommitter::proveCommittedValue(long id) {
+void CmtElGamalWithProofsCommitter::proveCommittedValue(int64_t id) {
   // Send s1 to P2
   auto val = getCommitmentPhaseValues(id);
   // Send s1 to P2
@@ -537,7 +541,7 @@ CmtElGamalWithProofsReceiver::CmtElGamalWithProofsReceiver(
       channel, elGamalCommittedValVerifier, committer, prg);
 }
 
-bool CmtElGamalWithProofsReceiver::verifyKnowledge(long id) {
+bool CmtElGamalWithProofsReceiver::verifyKnowledge(int64_t id) {
   auto key = static_pointer_cast<ElGamalPublicKey>(getPreProcessedValues()[0]);
   SigmaElGamalCmtKnowledgeCommonInput input(*key);
   auto emptyA = make_shared<SigmaGroupElementMsg>(
@@ -547,7 +551,7 @@ bool CmtElGamalWithProofsReceiver::verifyKnowledge(long id) {
 }
 
 shared_ptr<CmtCommitValue> CmtElGamalWithProofsReceiver::verifyCommittedValue(
-    long id) {
+    int64_t id) {
   // Receive the committed value from the committer.
   // read biginteger from channel
   vector<byte> raw_msg;  // by the end of the scope - no need to hold it anymore
