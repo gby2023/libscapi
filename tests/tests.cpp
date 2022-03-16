@@ -72,6 +72,7 @@
 #endif
 #include "./catch.hpp"
 
+using std::map;
 using std::move, std::dynamic_pointer_cast;
 
 biginteger endcode_decode(biginteger bi) {
@@ -528,14 +529,16 @@ void test_prp(string key, string in, string expected_out) {
   OpenSSLPRP *prp = new T();
   string s = boost::algorithm::unhex(key);
   char const *c = s.c_str();
-  SecretKey sk = SecretKey(reinterpret_cast<byte *>(c),
+  SecretKey sk = SecretKey(const_cast<byte*>(
+    reinterpret_cast<const byte *>(c)),
   strlen(c), prp->getAlgorithmName());
   prp->setKey(sk);
 
   string sin = boost::algorithm::unhex(in);
   char const *cin = sin.c_str();
   vector<byte> in_vec, out_vec;
-  copy_byte_array_to_byte_vector(reinterpret_cast<byte *>(cin),
+  copy_byte_array_to_byte_vector(const_cast<byte*>(
+    reinterpret_cast<const byte *>(cin)),
   strlen(cin), in_vec, 0);
   prp->computeBlock(in_vec, 0, out_vec, 0);
 
@@ -815,13 +818,13 @@ TEST_CASE("Gates and Wires", "") {
     vector<int> outputWireIndices = {2};
     Gate g(3, truthT, inputWireIndices, outputWireIndices);
     map<int, Wire> computed_wires_map;
-    computed_wires_map[0] = 0;  // x=0
-    computed_wires_map[1] = 0;  // y=0
+    computed_wires_map[0] = static_cast<Wire>(0);  // x=0
+    computed_wires_map[1] = static_cast<Wire>(0);  // y=0
     g.compute(computed_wires_map);
     REQUIRE(computed_wires_map[0].getValue() == 0);  // x still 0
     REQUIRE(computed_wires_map[1].getValue() == 0);  // y still 1
     REQUIRE(computed_wires_map[2].getValue() == 1);  // res = 1
-    computed_wires_map[1] = 1;                       // y=1 now
+    computed_wires_map[1] = static_cast<Wire>(1);    // y=1 now
     g.compute(computed_wires_map);
     REQUIRE(computed_wires_map[0].getValue() == 0);  // x is still 0
     REQUIRE(computed_wires_map[1].getValue() == 1);  // y is now 1
