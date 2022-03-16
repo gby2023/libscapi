@@ -34,10 +34,11 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <algorithm>
 #include "../../include/primitives/PrfOpenSSL.hpp"
 
-#include <algorithm>
+using std::out_of_range, std::invalid_argument;
 
 /*************************************************/
 /**** OpenSSLPRP ***/
@@ -55,8 +56,8 @@ void OpenSSLPRP::computeBlock(const vector<byte> &inBytes, int inOff,
                               vector<byte> &outBytes, int outOff) {
   if (!isKeySet()) throw IllegalStateException("secret key isn't set");
   // Checks that the offset and length are correct.
-  if ((inOff > (int)inBytes.size()) ||
-      (inOff + getBlockSize() > (int)inBytes.size()))
+  if ((inOff > static_cast<int>(inBytes.size())) ||
+      (inOff + getBlockSize() > static_cast<int>(inBytes.size())))
     throw out_of_range("wrong offset for the given input buffer");
 
   const byte *input = &inBytes[inOff];
@@ -65,7 +66,7 @@ void OpenSSLPRP::computeBlock(const vector<byte> &inBytes, int inOff,
   int blockSize = getBlockSize();
 
   // Make anough space in the output vector.
-  if ((int)outBytes.size() - outOff < blockSize)
+  if (static_cast<int>(outBytes.size()) - outOff < blockSize)
     outBytes.resize(outOff + blockSize);
 
   // Compute the prp on the given input array, put the result in ret.
@@ -82,7 +83,7 @@ void OpenSSLPRP::optimizedCompute(const vector<byte> &inBytes,
   int size = inBytes.size();
 
   // Make anough space in the output vector.
-  if ((int)outBytes.size() < size) outBytes.resize(size);
+  if (static_cast<int>(outBytes.size()) < size) outBytes.resize(size);
 
   // Compute the prp on each block and put the result in the output array.
   EVP_EncryptUpdate(computeP, outBytes.data(), &size, &inBytes[0], size);
@@ -118,12 +119,12 @@ void OpenSSLPRP::invertBlock(const vector<byte> &inBytes, int inOff,
                              vector<byte> &outBytes, int outOff) {
   if (!isKeySet()) throw IllegalStateException("secret key isn't set");
   // Checks that the offsets are correct.
-  if ((inOff > (int)inBytes.size()) ||
-      (inOff + getBlockSize() > (int)inBytes.size()))
+  if ((inOff > static_cast<int>(inBytes.size())) ||
+      (inOff + getBlockSize() > static_cast<int>(inBytes.size())))
     throw out_of_range("wrong offset for the given input buffer");
 
   // Make anough space in the output vector.
-  if ((int)outBytes.size() - outOff < getBlockSize())
+  if (static_cast<int>(outBytes.size()) - outOff < getBlockSize())
     outBytes.resize(getBlockSize() + outOff);
   int size;
 
@@ -140,7 +141,7 @@ void OpenSSLPRP::optimizedInvert(const vector<byte> &inBytes,
 
   int size = inBytes.size();
   // Make anough space in the output vector.
-  if ((int)outBytes.size() < size) outBytes.resize(size);
+  if (static_cast<int>(outBytes.size()) < size) outBytes.resize(size);
 
   // compute the prp on each block and put the result in the output array.
   EVP_DecryptUpdate(invertP, outBytes.data(), &size, &inBytes[0], size);
@@ -290,8 +291,8 @@ void OpenSSLHMAC::computeBlock(const vector<byte> &inBytes, int inOffset,
   if (!isKeySet()) throw IllegalStateException("secret key isn't set");
 
   // Check that the offset and length are correct.
-  if ((inOffset > (int)inBytes.size()) ||
-      (inOffset + inLen > (int)inBytes.size()))
+  if ((inOffset > static_cast<int>(inBytes.size())) ||
+      (inOffset + inLen > static_cast<int>(inBytes.size())))
     throw out_of_range("wrong offset for the given input buffer");
 
   // Update the Hmac object.
@@ -301,7 +302,7 @@ void OpenSSLHMAC::computeBlock(const vector<byte> &inBytes, int inOffset,
 #else
   int size = EVP_MD_size(HMAC_CTX_get_md(hmac));
 #endif
-  if ((int)outBytes.size() < outOffset + size)
+  if (static_cast<int>(outBytes.size()) < outOffset + size)
     outBytes.resize(outOffset + size);
 
   // Compute the final function and copy the output the the given output array.
@@ -351,7 +352,7 @@ bool OpenSSLHMAC::verify(const vector<byte> &msg, int offset, int msgLength,
                          vector<byte> &tag) {
   if (!isKeySet()) throw IllegalStateException("secret key isn't set");
   // If the tag size is not the mac size - returns false.
-  if ((int)tag.size() != getMacSize()) return false;
+  if (static_cast<int>(tag.size()) != getMacSize()) return false;
   // Calculate the mac on the msg to get the real tag.
   vector<byte> macTag = mac(msg, offset, msgLength);
 
@@ -383,7 +384,8 @@ void OpenSSLHMAC::doFinal(vector<byte> &msg, int offset, int msgLength,
   // Update the last msg block.
   update(msg, offset, msgLength);
 
-  if ((int)tag_res.size() < getMacSize()) tag_res.resize(getMacSize());
+  if (static_cast<int>(tag_res.size()) <
+      getMacSize()) tag_res.resize(getMacSize());
 
   // compute the final function and copy the output the the given output array
   if (0 == (HMAC_Final(hmac, tag_res.data(), NULL)))

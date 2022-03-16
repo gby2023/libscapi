@@ -40,7 +40,7 @@
 #include "../../include/primitives/Dlog.hpp"
 
 using std::invalid_argument, std::make_shared, std::to_string;
-using std::dynamic_pointer_cast;
+using std::dynamic_pointer_cast, std::invalid_argument;
 
 /*************************************************/
 /*ZpSafePrimeElement*/

@@ -54,12 +54,24 @@
 #include <iomanip>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <memory>
 #include <string>
 #include <tuple>
+#include <utility>
+#include <vector>
 
 #include "./ConfigFile.hpp"
 #include "./json.hpp"
+
+using std::exception;
+using std::fixed, std::setprecision, std::cout, std::endl;
+using std::map;
+using std::ofstream, std::ostream;
+using std::ostringstream;
+using std::pair;
+using std::string;
+using std::vector;
 
 class Protocol;
 
@@ -67,7 +79,7 @@ using json = nlohmann::json;
 
 class Measurement {
  public:
-  Measurement(Protocol &protocol);
+  explicit Measurement(Protocol &protocol);
   Measurement(Protocol &protocol, vector<string> &names);
   Measurement(const string &protocolName, int internalIterationsNumber,
               int partyId, int partiesNumber);

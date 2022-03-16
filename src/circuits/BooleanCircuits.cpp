@@ -34,10 +34,14 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <map>
 #include "../../include/circuits/BooleanCircuits.hpp"
 
-using std::runtime_error, std::to_string, std::ofstream;
+using std::map;
+using std::runtime_error;
+using std::to_string;
+using std::ofstream;
+
 /****************************************************/
 /*                    Gate                          */
 /****************************************************/
@@ -45,7 +49,7 @@ void Gate::compute(map<int, Wire> &computedWires) {
   // we call the calculateIndexOfTruthTable method to tell us the position of
   // the output value in the truth table and look up the value at that position.
   bool bVal = truthTable.at(calculateIndexOfTruthTable(computedWires));
-  byte outputValue = (byte)(bVal ? 1 : 0);
+  byte outputValue = static_cast<byte>(bVal ? 1 : 0);
   int numberOfOutputs = outputWireIndices.size();
 
   // assigns output value to each of this gate's output Wires.
@@ -226,8 +230,8 @@ void BooleanCircuit::setInputs(const map<int, Wire> &presetInputWires,
     auto inputIndices = getInputWireIndices(partyNumber);
 
     for (int i = 0; i < numberOfInputWires; i++) {
-      computedWires[inputIndices[i]] =
-          presetInputWires.at(inputIndices[i]).getValue();
+      computedWires[inputIndices[i]] = static_cast<Wire>(
+          presetInputWires.at(inputIndices[i]).getValue());
     }
   }
 

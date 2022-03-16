@@ -34,8 +34,10 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <memory>
 #include "../../include/mid_layer/ElGamalEnc.hpp"
+
+using std::dynamic_pointer_cast;
 
 void ElGamalOnGrElSendableData::initFromString(const string& row) {
   auto str_vec = explode(row, ':');
@@ -287,7 +289,7 @@ shared_ptr<AsymmetricCiphertext> ElGamalOnGroupElementEnc::completeEncryption(
  */
 shared_ptr<Plaintext> ElGamalOnGroupElementEnc::generatePlaintext(
     vector<byte>& text) {
-  if ((int)text.size() > getMaxLengthOfByteArrayForPlaintext()) {
+  if (static_cast<int>(text.size()) > getMaxLengthOfByteArrayForPlaintext()) {
     throw invalid_argument("the given text is too big for plaintext");
   }
 

@@ -37,9 +37,11 @@
 
 #pragma once
 #include <vector>
+#include <stdexcept>>
 
 #include "./Common.hpp"
 
+using std::invalid_argument;
 /**
  * This class holds general math algorithms needed by cryptographic
  * algorithms.<p> Each algorithm is represented by a static function that can be

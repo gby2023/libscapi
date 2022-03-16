@@ -34,8 +34,14 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <memory>
+#include <list>
 #include "../../include/primitives/DlogOpenSSL.hpp"
+
+using std::dynamic_pointer_cast, std::shared_ptr, std::default_delete;
+using std::invalid_argument, std::length_error;
+using std::list;
 
 biginteger opensslbignum_to_biginteger(BIGNUM* bint) {
   char* s = BN_bn2dec(bint);
@@ -105,8 +111,9 @@ void OpenSSLDlogZpSafePrime::createRandomOpenSSLDlogZp(int numBits) {
   // Sample a generator to the group.
   // Each element in the group, except the identity, is a generator.
   // The elements in the group are elements that have a quadratic residue
-  // modulus p. Algorithm: 	g <- 0 	while g == 0 or g == 1: 		Sample a number between
-  //0 to p, set it to g 		calculate g = g^2 nod p
+  // modulus p. Algorithm: g <- 0  while g == 0 or g == 1:
+  // Sample a number between 0 to p,
+  // set it to g. calculate g = g^2 nod p
   _dlog->g = BN_new();
   while (BN_is_zero(_dlog->g) || BN_is_one(_dlog->g)) {
     BN_rand_range(_dlog->g, _dlog->p);
@@ -118,7 +125,7 @@ void OpenSSLDlogZpSafePrime::createRandomOpenSSLDlogZp(int numBits) {
     throw runtime_error("failed to create OpenSSL Dlog");
 
   BIGNUM* q = BN_new();
-  ;
+
   if (0 == (BN_rshift1(q, p)))
     throw runtime_error("failed to create OpenSSL Dlog");
   BIGNUM* g = BN_new();
@@ -217,8 +224,8 @@ OpenSSLDlogZpSafePrime::OpenSSLDlogZpSafePrime(
 
 bool OpenSSLDlogZpSafePrime::validateElement(BIGNUM* el) {
   // A valid element in the grou pshould satisfy the following:
-  //	1. 0 < el < p.
-  //	2. el ^ q = 1 mod p.
+  // 1. 0 < el < p.
+  // 2. el ^ q = 1 mod p.
   bool result = true;
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
   BIGNUM* p = _dlog->p;
@@ -283,13 +290,14 @@ int OpenSSLDlogZpSafePrime::calcK(const biginteger& p) {
 
 shared_ptr<GroupElement> OpenSSLDlogZpSafePrime::getIdentity() {
   OpenSSLZpSafePrimeElement* el = new OpenSSLZpSafePrimeElement(
-      1, ((ZpGroupParams*)groupParams.get())->getP(), false);
+      1, (reinterpret_cast<ZpGroupParams*>(groupParams.get()))->getP(), false);
   return shared_ptr<OpenSSLZpSafePrimeElement>(el);
 }
 
 shared_ptr<GroupElement> OpenSSLDlogZpSafePrime::createRandomElement() {
   OpenSSLZpSafePrimeElement* el = new OpenSSLZpSafePrimeElement(
-      ((ZpGroupParams*)groupParams.get())->getP(), random_element_gen.get());
+      (reinterpret_cast<ZpGroupParams*>(groupParams.get()))->getP(),
+      random_element_gen.get());
   return shared_ptr<OpenSSLZpSafePrimeElement>(el);
 }
 
@@ -334,9 +342,9 @@ bool OpenSSLDlogZpSafePrime::validateGroup() {
 #endif
   {
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
-    long residue = BN_mod_word(_dlog->p, 24);
+    int64_t residue = BN_mod_word(_dlog->p, 24);
 #else
-    long residue = BN_mod_word(*p, 24);
+    int64_t residue = BN_mod_word(*p, 24);
 #endif
     if (residue == 11 || residue == 23) {
       result &= ~DH_NOT_SUITABLE_GENERATOR;
@@ -470,7 +478,8 @@ shared_ptr<GroupElement> OpenSSLDlogZpSafePrime::generateElement(
     throw invalid_argument(
         "To generate an ZpElement you should pass the x value of the point");
   auto temp = new OpenSSLZpSafePrimeElement(
-      values[0], ((ZpGroupParams*)groupParams.get())->getP(), bCheckMembership);
+      values[0], (reinterpret_cast<ZpGroupParams*>(groupParams.get()))->getP(),
+      bCheckMembership);
   return shared_ptr<OpenSSLZpSafePrimeElement>(temp);
 }
 
@@ -509,12 +518,12 @@ shared_ptr<GroupElement> OpenSSLDlogZpSafePrime::encodeByteArrayToGroupElement(
   // Set the group element to be y=(s+1)^2 (this ensures that the result is not
   // 0 and is a square)
   biginteger y = boost::multiprecision::powm(
-      (s + 1), 2, ((ZpGroupParams*)groupParams.get())->getP());
+    (s + 1), 2, (reinterpret_cast<ZpGroupParams*>(groupParams.get()))->getP());
 
   // There is no need to check membership since the "element" was generated so
   // that it is always an element.
   auto temp = new OpenSSLZpSafePrimeElement(
-      y, ((ZpGroupParams*)groupParams.get())->getP(), false);
+      y, (reinterpret_cast<ZpGroupParams*>(groupParams.get()))->getP(), false);
   auto element = shared_ptr<OpenSSLZpSafePrimeElement>(temp);
   return element;
 }
@@ -529,7 +538,7 @@ const vector<byte> OpenSSLDlogZpSafePrime::decodeGroupElementToByteArray(
   // Given a group element y, find the two inverses z,-z. Take z to be the value
   // between 1 and (p-1)/2. Return s=z-1
   biginteger y = zp_element->getElementValue();
-  biginteger p = ((ZpGroupParams*)groupParams.get())->getP();
+  biginteger p = (reinterpret_cast<ZpGroupParams*>(groupParams.get()))->getP();
   MathAlgorithms::SquareRootResults roots = MathAlgorithms::sqrtModP_3_4(y, p);
 
   biginteger goodRoot;
@@ -853,10 +862,10 @@ int OpenSSLDlogECFp::calcK(biginteger& p) {
   int bitsInp = NumberOfBits(p);
   int k = floor((0.4 * bitsInp) / 8) - 1;
   // For technical reasons of how we chose to do the padding for encoding and
-  // decoding (the least significant byte of the encoded string contains the size
-  // of the the original binary string sent for encoding, which is used to remove
-  // the padding when decoding) k has to be <= 255 bytes so that the size can be
-  // encoded in the padding.
+  // decoding (the least significant byte of the encoded string contains
+  // the size of the the original binary string sent for encoding,
+  // which is used to remove the padding when decoding)
+  // k has to be <= 255 bytes so that the size can be encoded in the padding.
   if (k > 255) {
     k = 255;
   }
@@ -885,11 +894,11 @@ bool OpenSSLDlogECFp::isMember(GroupElement* element) {
 
   // A point (x, y) is a member of a Dlog group with prime order q over an
   // Elliptic Curve if it meets the following two conditions:
-  // 1)	P = (x,y) is a point in the Elliptic curve, i.e (x,y) is a solution of
-  // the curves equation. 2)	P = (x,y) is a point in the q-order group which
+  // 1) P = (x,y) is a point in the Elliptic curve, i.e (x,y) is a solution of
+  // the curves equation. 2) P = (x,y) is a point in the q-order group which
   // is a sub-group of the Elliptic Curve. Those two checks are done in two
-  // steps: 1.	Checking that the point is on the curve, performed by
-  // EC_POINT_is_on_curve. 2.	Checking that the point is in the Dlog
+  // steps: 1. Checking that the point is on the curve, performed by
+  // EC_POINT_is_on_curve. 2. Checking that the point is in the Dlog
   // group,performed by checkSubGroupMembership.
   bool valid =
       EC_POINT_is_on_curve(curve.get(), point->getPoint().get(), ctx.get());
@@ -1028,7 +1037,7 @@ shared_ptr<GroupElement> OpenSSLDlogECFp::encodeByteArrayToGroupElement(
   // copy the given string into the right place within the new string and put it
   // length at the end of the new string.
   memcpy(newString.get() + l - k - 2, binaryString.data(), len);
-  newString.get()[l - k - 2 + len] = (char)len;
+  newString.get()[l - k - 2 + len] = static_cast<char>(len);
   randomArray[0] = 1;  // we fix the first bytes in the random array in order to
                        // fix the x value to be positive.
   // Create the openssl point. This point should contain the calculated value
@@ -1085,7 +1094,7 @@ const vector<unsigned char> OpenSSLDlogECFp::decodeGroupElementToByteArray(
   BN_free(tmp);
 
   // The original size is placed in the last byte of x.
-  int bOriginalSize = (int)(xByteArray.get()[size - 1]);
+  int bOriginalSize = static_cast<int>(xByteArray.get()[size - 1]);
   std::shared_ptr<byte> b2(new byte[bOriginalSize],
                            std::default_delete<byte[]>());
 
@@ -1197,11 +1206,13 @@ void OpenSSLDlogECF2m::createGroupParams() {
   int m = stoi(ecConfig->Value(curveName, curveName));
   // If an irreducible trinomial t^m + t^k + 1 exists over GF(2), then the field
   // polynomial p(t) is chosen to be the irreducible trinomial with the lowest
-  // degree middle term t^k. If no irreducible trinomial exists, then one selects
-  // instead a pentanomial t^m+t^k+t^k2+t^k3+1. The particular pentanomial chosen
-  // has the following properties: the second term t^k has the lowest degree
-  // among all irreducible pentanomials of degree m; the third term t^k2 has the
-  // lowest degree among all irreducible pentanomials of degree m and second term
+  // degree middle term t^k. If no irreducible trinomial exists,
+  // then one selects instead a pentanomial t^m+t^k+t^k2+t^k3+1.
+  // The particular pentanomial chosen has the following properties:
+  // the second term t^k has the lowest degree
+  // among all irreducible pentanomials
+  //  of degree m; the third term t^k2 has the lowest degree
+  // among all irreducible pentanomials of degree m and second term
   // t^k; and the fourth term t^k3 has the lowest degree among all irreducible
   // pentanomials of degree m, second term t^k, and third term t^k2.
   int k = stoi(ecConfig->Value(curveName, "k"));
@@ -1269,11 +1280,11 @@ bool OpenSSLDlogECF2m::isMember(GroupElement* element) {
 
   // A point (x, y) is a member of a Dlog group with prime order q over an
   // Elliptic Curve if it meets the following two conditions:
-  // 1)	P = (x,y) is a point in the Elliptic curve, i.e (x,y) is a solution of
-  // the curves equation. 2)	P = (x,y) is a point in the q-order group which
+  // 1) P = (x,y) is a point in the Elliptic curve, i.e (x,y) is a solution of
+  // the curves equation. 2) P = (x,y) is a point in the q-order group which
   // is a sub-group of the Elliptic Curve. Those two checks are done in two
-  // steps: 1.	Checking that the point is on the curve, performed by
-  // EC_POINT_is_on_curve. 2.	Checking that the point is in the Dlog
+  // steps: 1. Checking that the point is on the curve, performed by
+  // EC_POINT_is_on_curve. 2. Checking that the point is in the Dlog
   // group,performed by checkSubGroupMembership.
   bool valid =
       EC_POINT_is_on_curve(curve.get(), point->getPoint().get(), ctx.get());
@@ -1437,11 +1448,11 @@ OpenSSLECFpPoint::OpenSSLECFpPoint(const biginteger& x, const biginteger& y,
   // auto params =
   // dynamic_pointer_cast<ECFpGroupParams>(curve->getGroupParams()); checks if
   // the given parameters are valid point on the curve.
-  //	bool valid = checkCurveMembership(params.get(), x, y);
+  // bool valid = checkCurveMembership(params.get(), x, y);
   // checks validity
-  //	if (valid == false) // if not valid, throws exception
-  //	throw invalid_argument("x, y values are not a point on this curve");
-  //	}
+  // if (valid == false) // if not valid, throws exception
+  //   throw invalid_argument("x, y values are not a point on this curve");
+  // }
   // Create a point in the field with the given parameters, done by OpenSSL's
   // code.
   BIGNUM* xOssl = biginteger_to_opensslbignum(x);
@@ -1475,7 +1486,6 @@ OpenSSLECFpPoint::OpenSSLECFpPoint(const biginteger& x, const biginteger& y,
     bool valid = curve->isMember(this);
     // checks validity
     if (valid == false) {  // if not valid, throws exception
-
       throw new invalid_argument("x, y values are not a point on this curve");
     }
   }
@@ -1579,7 +1589,6 @@ OpenSSLECF2mPoint::OpenSSLECF2mPoint(const biginteger& x, const biginteger& y,
     bool valid = curve->isMember(this);
     // checks validity
     if (valid == false) {  // if not valid, throws exception
-
       throw invalid_argument("x, y values are not a point on this curve");
     }
   }

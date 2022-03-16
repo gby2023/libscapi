@@ -34,8 +34,10 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <memory>
 #include "../../include/mid_layer/CramerShoupEnc.hpp"
+
+using std::dynamic_pointer_cast;
 
 CramerShoupPublicKeySendableData::CramerShoupPublicKeySendableData(
     const shared_ptr<GroupElementSendableData>& c,
@@ -418,7 +420,7 @@ vector<byte> CramerShoupOnGroupElementEnc::calcAlpha(
  */
 shared_ptr<Plaintext> CramerShoupOnGroupElementEnc::generatePlaintext(
     vector<byte>& text) {
-  if ((int)text.size() > getMaxLengthOfByteArrayForPlaintext()) {
+  if (static_cast<int>(text.size()) > getMaxLengthOfByteArrayForPlaintext()) {
     throw invalid_argument("the given text is too big for plaintext");
   }
 

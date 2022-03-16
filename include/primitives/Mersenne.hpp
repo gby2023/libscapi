@@ -41,6 +41,10 @@
 #ifndef PRIMITIVES_MERSENNE_HPP_
 #define PRIMITIVES_MERSENNE_HPP_
 
+#include <vector>
+#include <string>
+#include <sstream>
+
 #include "NTL/ZZ.h"
 #include "NTL/ZZ_p.h"
 #ifdef __x86_64__
@@ -53,7 +57,9 @@
 #include <cstdint>
 #include "./Prg.hpp"
 
-using std::cout, std::endl, std::ostream, NTL::Error;
+using std::cout, std::endl, std::ostream;
+using NTL::Error;
+using std::ostringstream, std::istringstream;
 
 class ZpMersenneIntElement {
   // private:
@@ -544,7 +550,7 @@ class ZpMersenne127Element {
 };
 
 inline ::ostream& operator<<(::ostream& s, const ZpMersenne127Element& a) {
-  const uint64_t* abytes = reinterpret_cast<uint64_t*>(&a);
+  const uint64_t* abytes = reinterpret_cast<const uint64_t*>(&a);
   return s << abytes[1] << " " << abytes[0] << endl;
 }
 
@@ -567,7 +573,7 @@ class TemplateField {
    * generate the irreducible polynomial x^8 + x^4 + x^3 + x + 1 to work with
    * init the field with the newly generated polynomial
    */
-  TemplateField(int64_t fieldParam);
+  explicit TemplateField(int64_t fieldParam);
 
   /**
    * return the field

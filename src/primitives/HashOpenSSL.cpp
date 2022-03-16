@@ -34,8 +34,14 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
+#include <set>
+#include <memory>
 #include "../../include/primitives/HashOpenSSL.hpp"
+
+using std::make_shared;
+using std::runtime_error, std::out_of_range, std::invalid_argument;
+using std::set;
 
 OpenSSLHash::OpenSSLHash(string hashName) {
   // Instantiates a hash object in OpenSSL.
@@ -80,7 +86,8 @@ string OpenSSLHash::getAlgorithmName() {
 
 void OpenSSLHash::update(const vector<byte> &in, int inOffset, int inLen) {
   // Check that the offset and length are correct.
-  if ((inOffset > (int)in.size()) || (inOffset + inLen > (int)in.size()) ||
+  if ((inOffset > static_cast<int>(in.size())) ||
+      (inOffset + inLen > static_cast<int>(in.size())) ||
       (inOffset < 0))
     throw out_of_range("wrong offset for the given input buffer");
   if (inLen < 0)
@@ -105,7 +112,7 @@ void OpenSSLHash::hashFinal(vector<byte> &out, int outOffset) {
 #else
   int length = EVP_MD_CTX_size(hash);
 #endif
-  if ((int)out.size() < outOffset + length) {
+  if (static_cast<int>(out.size()) < outOffset + length) {
     out.resize(outOffset + length);
   }
   // Call the underlying hash's final method.

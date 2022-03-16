@@ -34,8 +34,10 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
-
+#include <stdexcept>
 #include "../../include/primitives/RandomOracle.hpp"
+
+using std::invalid_argument;
 
 void HashBasedRO::compute(const vector<byte>& input, int inOffset, int inLen,
                           vector<byte>& output, int outLen) {

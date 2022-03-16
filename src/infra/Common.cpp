@@ -35,6 +35,8 @@
  *
  */
 #include <chrono> // NOLINT [build/c++11]
+#include <iostream>
+#include <random>
 
 #include "../../include/infra/Common.hpp"
 
@@ -42,6 +44,9 @@
 #include <boost/multiprecision/miller_rabin.hpp>
 
 #include "../../include/primitives/Prg.hpp"
+
+using std::cout, std::endl;
+using std::mt19937;
 
 /******************************/
 /* Helper Methods *************/
@@ -182,7 +187,7 @@ biginteger decodeBigInteger(const byte* input, size_t length) {
 biginteger fastDecodeBigInteger(const byte* input, size_t length) {
   biginteger output;
   mpz_import(output.backend().data(), 1, -1, length, 0, 0,
-  reinterpret_cast<void*>(input));
+  const_cast<void*>(reinterpret_cast<const void*>(input)));
 
   return output;
 }
@@ -228,7 +233,7 @@ void print_elapsed_micros(
 }
 
 std::chrono::time_point<std::chrono::system_clock> scapi_now() {
-  return chrono::system_clock::now();
+  return std::chrono::system_clock::now();
 }
 
 biginteger getRandomInRange(const biginteger& min, const biginteger& max,
@@ -268,7 +273,8 @@ void print_byte_array(byte* arr, int len, string message) {
 
 bool isPrime(const biginteger& bi, int certainty) {
   mt19937 mt;
-  auto seed = chrono::high_resolution_clock::now().time_since_epoch().count();
+  auto seed = std::chrono::high_resolution_clock::now().
+              time_since_epoch().count();
   mt.seed(seed);
   return (miller_rabin_test(bi, certainty, mt));
 }

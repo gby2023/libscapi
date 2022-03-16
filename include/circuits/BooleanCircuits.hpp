@@ -72,6 +72,7 @@ class NotAllInputsSetException : public logic_error {
  */
 class Wire {
  public:
+  Wire() {}
   /**
    * Creates a {@code Wire} and sets it to the specified value.
    *
@@ -103,6 +104,7 @@ class Wire {
  */
 class Gate {
  public:
+  Gate() {}
   /**
    * Sets the given values.
    * @param gateNumber The gate's number (in a circuit all gates will be

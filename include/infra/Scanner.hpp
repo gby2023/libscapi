@@ -280,7 +280,7 @@ class Scanner {
   }
 
   template <class X>
-  inline bool hasNextX(const X& x) const {
+  inline bool hasNextX(X& x) const {
     string s = peekNext();
 
     if (s == "") return false;

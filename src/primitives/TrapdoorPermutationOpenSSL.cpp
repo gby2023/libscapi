@@ -34,8 +34,11 @@
  * %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  *
  */
+#include<memory>
 
 #include "../../include/primitives/TrapdoorPermutationOpenSSL.hpp"
+
+using std::dynamic_pointer_cast;
 
 void OpenSSLRSAPermutation::setKey(const shared_ptr<PublicKey>& publicKey,
                                    const shared_ptr<PrivateKey>& privateKey) {
