@@ -85,7 +85,7 @@ SigmaDJEncryptedValueProverInput::SigmaDJEncryptedValueProverInput(
   biginteger pMinusOne = p - 1;
   biginteger qMinusOne = q - 1;
   biginteger n = p * q;
-  //(p-1)*(q-1)
+  //  (p-1)*(q-1)
   biginteger phiN = pMinusOne * qMinusOne;
   // m = n^(-1) mod (p-1)(q-1).
   biginteger m = MathAlgorithms::modInverse(n, phiN);

@@ -48,7 +48,7 @@
 #include <vector>
 
 /*****************************************/
-/* CommPartyBF			                */
+/* CommPartyBF                           */
 /*****************************************/
 
 void CommPartyBF::writeWithSize(const unsigned char *data, int size) {
@@ -59,7 +59,7 @@ void CommPartyBF::writeWithSize(const unsigned char *data, int size) {
 int CommPartyBF::readSize() {
   unsigned char buf[sizeof(int)];
   read(buf, sizeof(int));
-  int *res = (int *)buf;
+  int *res = reinterpret_cast<int *>(buf);
   return *res;
 }
 
@@ -242,5 +242,5 @@ size_t CommPartyTCPSyncedBoostFree::read(unsigned char *data, int sizeToRead) {
       }
     }
   }
-  return (size_t)read_size;
+  return static_cast<size_t>(read_size);
 }

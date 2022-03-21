@@ -46,8 +46,6 @@
 #include "../infra/Common.hpp"
 #include "../infra/MathAlgorithms.hpp"
 
-using std::unordered_map, std::to_string;
-
 /**
  * This exception is thrown in case A given Dlog group cannot be acceptted by
  * the protocol. For example, If a protocol needs a DDH Dlog group and it gets a
@@ -150,9 +148,9 @@ class DlogGroup {
   shared_ptr<GroupElement> generator;   // generator of the group
   shared_ptr<PrgFromOpenSSLAES> random_element_gen;
 
-  int k;  // k is the maximum length of a string to be converted to a Group
-          // Element of this group. If a string exceeds the k length it cannot
-          // be converted.
+  // k is the maximum length of a string to be converted to a Group Element
+  // of this group. If a string exceeds the k length it cannot be converted.
+  int k = 0;
 
   /*
    * Computes the simultaneousMultiplyExponentiate using a naive algorithm
@@ -215,7 +213,7 @@ class DlogGroup {
 
   // using pointer as key mean different element ==> different keys even if they
   // are 'equal' in other sense
-  unordered_map<shared_ptr<GroupElement>,
+  std::unordered_map<shared_ptr<GroupElement>,
                 shared_ptr<GroupElementsExponentiations>>
       exponentiationsMap;  // map for multExponentiationsWithSameBase
                            // calculations
@@ -244,7 +242,7 @@ class DlogGroup {
   /*
    * returns the w value according to the given t
    */
-  int getLLW(int t);
+  static int getLLW(int t);
 
  public:
   /**
@@ -468,7 +466,7 @@ class DlogGroup {
    * @param groupElement the element to decode
    * @return the decoded byte array
    */
-  virtual const vector<unsigned char> decodeGroupElementToByteArray(
+  virtual vector<unsigned char> decodeGroupElementToByteArray(
       GroupElement* groupElement) = 0;
 
   /**
@@ -494,7 +492,7 @@ class DlogGroup {
    * array.
    * @return a byte array representation of the given group element
    */
-  virtual const vector<byte> mapAnyGroupElementToByteArray(
+  virtual vector<byte> mapAnyGroupElementToByteArray(
       GroupElement* groupElement) = 0;
 };
 
@@ -613,8 +611,7 @@ class ZpElementSendableData : public GroupElementSendableData {
   biginteger x = 0;
 
  public:
-  explicit ZpElementSendableData(const biginteger& x_) :
-  GroupElementSendableData() {
+  explicit ZpElementSendableData(const biginteger& x_) {
     x = x_;
   }
 
@@ -706,10 +703,11 @@ class ECF2mGroupParams : public ECGroupParams {
     this->m = m;
   }
 
-  int getM() { return m; }
+  int getM() const { return m; }
   virtual int getK1() = 0;
   virtual string toString() = 0;  // making this class abstrast
 };
+
 
 class ECF2mTrinomialBasis : public ECF2mGroupParams {
  private:
@@ -742,8 +740,8 @@ class ECF2mTrinomialBasis : public ECF2mGroupParams {
   int getK1() override { return k; }
 
   string toString() override {
-    string s = "ECF2mTrinomialBasis [k=" + to_string(k);
-    s += ", m=" + to_string(m);
+    string s = "ECF2mTrinomialBasis [k=" + std::to_string(k);
+    s += ", m=" + std::to_string(m);
     s += ", a=" + a.str() + ", b=" + b.str() + ", xG=" + xG.str() +
          ", yG=" + yG.str() + ", h=" + h.str() + ", q=" + q.str() + "]";
     return s;
@@ -794,13 +792,13 @@ class ECF2mPentanomialBasis : public ECF2mGroupParams {
    * Returns the integer k2 where x^m + x^k3 + x^k2 + x^k1 + 1represents the
    * reduction polynomial f(z).
    */
-  int getK2() { return k2; }
+  int getK2() const { return k2; }
 
   /*
    * Returns the integer k3 where x^m + x^k3 + x^k2 + x^k1 + 1represents the
    * reduction polynomial f(z).
    */
-  int getK3() { return k3; }
+  int getK3() const { return k3; }
 
   string toString() override;
 };
@@ -931,7 +929,7 @@ class DlogEllipticCurve : public DlogGroup {
   const string NISTEC_PROPERTIES_FILE = "../include/configFiles/NISTEC.txt";
 #endif
 
-  virtual void init(string fileName, string curveName,
+  void init(string fileName, string curveName,
                     const shared_ptr<PrgFromOpenSSLAES>& random);
 
  public:

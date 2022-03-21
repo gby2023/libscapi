@@ -77,7 +77,8 @@ shared_ptr<SigmaSimulatorOutput> SigmaDlogSimulator::simulate(
     throw CheatAttemptException(
         "the length of the given challenge is different from the soundness "
         "parameter");
-  SigmaDlogCommonInput* dlogInput = (SigmaDlogCommonInput*)input;
+  SigmaDlogCommonInput* dlogInput =
+    reinterpret_cast<SigmaDlogCommonInput*>(input);
 
   // SAMPLE a random z <- Zq
   biginteger z = getRandomInRange(0, qMinusOne, random.get());

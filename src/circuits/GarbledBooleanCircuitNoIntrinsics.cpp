@@ -742,7 +742,6 @@ void GarbledBooleanCircuitNoIntrinsics::compute(byte* singleWiresInputKeys,
       }
       continue;
     } else {
-
       vector<byte> keys2(2 * KEY_SIZE);
       // get the keys from the already calculated wires
       memcpy(keys, computedWires + garbledGates[i].input0 * KEY_SIZE, KEY_SIZE);

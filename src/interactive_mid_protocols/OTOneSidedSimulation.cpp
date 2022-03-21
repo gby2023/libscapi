@@ -235,17 +235,17 @@ void OTOneSidedSimDDHSenderAbs::transfer(CommParty* channel, OTSInput* input) {
   // Compute values w0, k0, w1, k1
   auto g = dlog->getGenerator();  // Get the group generator.
 
-  // Calculates w0 = x^u0 � g^v0
+  // Calculates w0 = x^u0 * g^v0
   auto w0 = dlog->multiplyGroupElements(dlog->exponentiate(x.get(), u0).get(),
                                         dlog->exponentiate(g.get(), v0).get());
-  // Calculates k0 = (z0)^u0 � y^v0
+  // Calculates k0 = (z0)^u0 * y^v0
   auto k0 = dlog->multiplyGroupElements(dlog->exponentiate(z0.get(), u0).get(),
                                         dlog->exponentiate(y.get(), v0).get());
 
-  // Calculates w1 = x^u1 � g^v1
+  // Calculates w1 = x^u1 * g^v1
   auto w1 = dlog->multiplyGroupElements(dlog->exponentiate(x.get(), u1).get(),
                                         dlog->exponentiate(g.get(), v1).get());
-  // Calculates k1 = (z1)^u1 � y^v1
+  // Calculates k1 = (z1)^u1 * y^v1
   auto k1 = dlog->multiplyGroupElements(dlog->exponentiate(z1.get(), u1).get(),
                                         dlog->exponentiate(y.get(), v1).get());
 

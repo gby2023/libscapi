@@ -131,7 +131,7 @@ bool ZKFromSigmaVerifier::verify(ZKCommonInput* input,
   sVerifier->sampleChallenge();
   auto e = sVerifier->getChallenge();
   // run COMMIT.commit as the committer with input e
-  long id = commit(e);
+  int64_t id = commit(e);
   // wait for a message a from P
   receiveMsgFromProver(emptyA.get());
   // run COMMIT.decommit as the decommitter
@@ -211,7 +211,7 @@ bool ZKPOKFromSigmaCmtPedersenVerifier::verify(
   }
 
   // run TRAP_COMMIT.commit as the committer with input e,
-  long id = commit(e);
+  int64_t id = commit(e);
 
   // wait for a message a from P
   receiveMsgFromProver(emptyA.get());
@@ -242,12 +242,12 @@ bool ZKPOKFromSigmaCmtPedersenVerifier::verify(
 /**
  * Runs COMMIT.commit as the committer with input e.
  */
-long ZKPOKFromSigmaCmtPedersenVerifier::commit(const vector<byte>& e) {
+int64_t ZKPOKFromSigmaCmtPedersenVerifier::commit(const vector<byte>& e) {
   auto val = committer->generateCommitValue(e);
   auto id = random->getRandom64();
   committer->commit(val, id);
   return id;
-};
+}
 /**
  * Waits for a message a from the prover.
  * @return the received message
@@ -257,7 +257,7 @@ void ZKPOKFromSigmaCmtPedersenVerifier::receiveMsgFromProver(
   vector<byte> rawMsg;
   channel->readWithSizeIntoVector(rawMsg);
   emptyMsg->initFromByteVector(rawMsg);
-};
+}
 
 /**
  * Waits for a trapdoor a from the prover.
@@ -274,7 +274,7 @@ void ZKPOKFiatShamirProof::initFromString(const string& row) {
   // recover a
   int xSize = atoi(str_vec[0].c_str());
   int i = 2;
-  for (; (int)str_vec[1].size() != xSize; i++) {
+  for (; static_cast<int>(str_vec[1].size()) != xSize; i++) {
     str_vec[1] += ":";
     str_vec[1] += str_vec[i];
   }
@@ -287,7 +287,7 @@ void ZKPOKFiatShamirProof::initFromString(const string& row) {
   i++;
   // recover z
   int zSize = atoi(str_vec[i++].c_str());
-  for (int k = i + 1; (int)str_vec[i].size() != zSize; k++) {
+  for (int k = i + 1; static_cast<int>(str_vec[i].size()) != zSize; k++) {
     str_vec[i] += ":";
     str_vec[i] += str_vec[k];
   }

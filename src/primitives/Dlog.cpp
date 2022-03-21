@@ -39,8 +39,10 @@
 #include <stdexcept>
 #include "../../include/primitives/Dlog.hpp"
 
-using std::invalid_argument, std::make_shared, std::to_string;
-using std::dynamic_pointer_cast, std::invalid_argument;
+using std::dynamic_pointer_cast;
+using std::invalid_argument;
+using std::make_shared;
+using std::to_string;
 
 /*************************************************/
 /*ZpSafePrimeElement*/
@@ -52,12 +54,13 @@ ZpSafePrimeElement::ZpSafePrimeElement(const biginteger &x, const biginteger &p,
         // If the element is in the expected range, set it.
         // else, throw exception
         if (x > 0 && x <= (p - 1)) {
-            if (boost::multiprecision::powm(x, q, p) == 1)  // x^q mod p == 1
+            if (boost::multiprecision::powm(x, q, p) == 1) {  // x^q mod p == 1
                 element = x;
-            else
+            } else {
                 throw invalid_argument(
                   "Cannot create Zp element. Requested value " +
                   x.str() + " is not in the range of this group.");
+            }
         } else {
             throw invalid_argument(
               "Cannot create Zp element. Requested value " +
@@ -78,7 +81,9 @@ ZpSafePrimeElement::ZpSafePrimeElement(const biginteger &p,
 }
 
 bool ZpSafePrimeElement::operator==(const GroupElement &other) const {
-    if (typeid(*this) != typeid(other)) return false;
+    if (typeid(*this) != typeid(other)) {
+        return false;
+    }
     return this->element ==
     (reinterpret_cast<const ZpSafePrimeElement *>(&other))->element;
 }
@@ -142,7 +147,9 @@ DlogGroup::GroupElementsExponentiations::getExponentiation(
     shared_ptr<GroupElement> exponent = NULL;
     /* if the requested index out of the vector bounds, the exponents have not
      * been calculated yet, so calculates them.*/
-    if (exponentiations.size() <= index) prepareExponentiations(size);
+    if (exponentiations.size() <= index) {
+        prepareExponentiations(size);
+    }
 
     exponent = exponentiations[index];  // get the closest exponent in the
                                         // exponentiations vector
@@ -177,7 +184,7 @@ shared_ptr<GroupElement> DlogGroup::createRandomGenerator() {
     // get a random element in the group
     auto randGen = createRandomElement();
     // if the given element is the identity, get a new random element
-    while (randGen->isIdentity() == true) {
+    while (randGen->isIdentity()) {
         randGen = createRandomElement();
     }
     return randGen;
@@ -219,7 +226,7 @@ vector<vector<shared_ptr<GroupElement>>> DlogGroup::createLLPreCompTable(
     }
 
     shared_ptr<GroupElement> base = NULL;
-    size_t baseIndex;
+    size_t baseIndex = 0;
 
     // fill the table
     for (int k = 0; k < h; k++) {
@@ -245,7 +252,7 @@ vector<vector<shared_ptr<GroupElement>>> DlogGroup::createLLPreCompTable(
 }
 
 int DlogGroup::getLLW(int t) {
-    int w;
+    int w = 0;
     // choose w according to the value of t
     if (t <= 10) {
         w = 2;
@@ -318,17 +325,19 @@ shared_ptr<GroupElement> DlogGroup::computeLL(
 
     // get the biggest exponent
     biginteger bigExp = 0;
-    for (size_t i = 0; i < exponentiations.size(); i++)
-        if (bigExp < exponentiations[i]) bigExp = exponentiations[i];
-
+    for (size_t i = 0; i < exponentiations.size(); i++) {
+        if (bigExp < exponentiations[i]) {
+            bigExp = exponentiations[i];
+        }
+    }
     int t = find_log2_floor(bigExp) + 1;  // num bits of the biggest exponent.
     int w = 0;                            // window size
 
     // choose w according to the value of t
-    w = getLLW(t);
+    w = DlogGroup::getLLW(t);
 
     // h = n/w
-    int h;
+    int h = 0;
     if ((n % w) == 0) {
         h = n / w;
     } else {
@@ -377,7 +386,9 @@ int ECF2mKoblitz::getK2() {
     int k2 = 0;
     shared_ptr<ECF2mPentanomialBasis> pentaCurve =
         dynamic_pointer_cast<ECF2mPentanomialBasis>(curve);
-    if (pentaCurve) k2 = pentaCurve->getK2();
+    if (pentaCurve) {
+        k2 = pentaCurve->getK2();
+    }
 
     return k2;
 }
@@ -386,7 +397,9 @@ int ECF2mKoblitz::getK3() {
     int k3 = 0;
     shared_ptr<ECF2mPentanomialBasis> pentaCurve =
         dynamic_pointer_cast<ECF2mPentanomialBasis>(curve);
-    if (pentaCurve) k3 = pentaCurve->getK3();
+    if (pentaCurve) {
+        k3 = pentaCurve->getK3();
+    }
 
     return k3;
 }
@@ -414,12 +427,15 @@ string ECF2mKoblitz::toString() {
 /**************************************/
 
 bool ECElement::operator==(const GroupElement &other) const {
-    if (typeid(*this) != typeid(other)) return false;
+    if (typeid(*this) != typeid(other)) {
+        return false;
+    }
     if (
         (const_cast<ECElement *>(this))->getX() !=
         (const_cast<ECElement *>(
-            reinterpret_cast<ECElement const *>(&other)))->getX())
+            reinterpret_cast<ECElement const *>(&other)))->getX()) {
         return false;
+    }
     return (const_cast<ECElement *>(this))->getY() ==(
         const_cast<ECElement *>(
             reinterpret_cast<ECElement const *>(&other)))->getY();

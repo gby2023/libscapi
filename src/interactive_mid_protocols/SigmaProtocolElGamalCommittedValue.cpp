@@ -65,7 +65,7 @@ SigmaElGamalCommittedValueSimulator::convertInput(SigmaCommonInput* in) {
   auto commitment = input->getCommitment();
 
   // Convert input to the underlying DH prover:
-  //(g,h,u,v) = (g,h,c1,c2/x).
+  // (g,h,u,v) = (g,h,c1,c2/x).
   auto h = input->getPublicKey()->getH();
   // u = c1
   auto u = dlog->reconstructElement(true, commitment->getCipher1().get());
@@ -133,7 +133,7 @@ SigmaElGamalCommittedValueProverComputation::convertInput(
   auto commitment = commonInput->getCommitment();
 
   // Convert input to the underlying DH prover:
-  //(g,h,u,v) = (g,h,c1,c2/x).
+  // (g,h,u,v) = (g,h,c1,c2/x).
   auto h = commonInput->getPublicKey()->getH();
   // u = c1
   auto u = dlog->reconstructElement(true, commitment->getCipher1().get());
@@ -191,7 +191,7 @@ SigmaElGamalCommittedValueVerifierComputation::convertInput(
   auto commitment = input->getCommitment();
 
   // Convert input to the underlying DH prover:
-  //(g,h,u,v) = (g,h,c1,c2/x).
+  // (g,h,u,v) = (g,h,c1,c2/x).
   auto h = input->getPublicKey()->getH();
   // u = c1
   auto u = dlog->reconstructElement(true, commitment->getCipher1().get());

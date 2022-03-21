@@ -116,7 +116,7 @@ CryptoPpDlogZpSafePrime::CryptoPpDlogZpSafePrime(int numBits, mt19937 prg) {
 
   biginteger p = cryptoppint_to_biginteger(pointerToGroup->GetModulus());
   biginteger q = cryptoppint_to_biginteger(pointerToGroup->GetSubgroupOrder());
-  biginteger xG = ((ZpElement *)generator)->getElementValue();
+  biginteger xG = (static_cast<ZpElement *>(generator))->getElementValue();
 
   groupParams = new ZpGroupParams(q, xG, p);
 
@@ -138,9 +138,10 @@ int CryptoPpDlogZpSafePrime::calcK(biginteger p) {
   // the pad.
   k--;
   // For technical reasons of how we chose to do the padding for encoding and
-  // decoding (the least significant byte of the encoded string contains the size
-  // of the the original binary string sent for encoding, which is used to remove
-  // the padding when decoding) k has to be <= 255 bytes so that the size can be
+  // decoding (the least significant byte of the encoded string contains
+  // the size of the the original binary string sent for encoding,
+  // which is used to remove the padding when decoding)
+  // k has to be <= 255 bytes so that the size can be
   // encoded in the padding.
   if (k > 255) {
     k = 255;
@@ -267,7 +268,8 @@ GroupElement *CryptoPpDlogZpSafePrime::generateElement(
         "To generate an ZpElement you should pass the x value of the point");
   }
   return new ZpSafePrimeElementCryptoPp(
-      values[0], ((ZpGroupParams *)groupParams)->getP(), bCheckMembership);
+      values[0], (reinterpret_cast<ZpGroupParams *>(groupParams))->
+                  getP(), bCheckMembership);
 }
 
 CryptoPpDlogZpSafePrime::~CryptoPpDlogZpSafePrime() {
@@ -302,12 +304,12 @@ GroupElement *CryptoPpDlogZpSafePrime::encodeByteArrayToGroupElement(
   // Set the group element to be y=(s+1)^2 (this ensures that the result is not
   // 0 and is a square)
   biginteger y = boost::multiprecision::powm(
-      (s + 1), 2, ((ZpGroupParams *)groupParams)->getP());
+      (s + 1), 2, (reinterpret_cast<ZpGroupParams *>(groupParams))->getP());
 
   // There is no need to check membership since the "element" was generated so
   // that it is always an element.
   ZpSafePrimeElementCryptoPp *element = new ZpSafePrimeElementCryptoPp(
-      y, ((ZpGroupParams *)groupParams)->getP(), false);
+      y, (reinterpret_cast<ZpGroupParams *>(groupParams))->getP(), false);
   delete (bstr);
   return element;
 }
@@ -323,7 +325,7 @@ CryptoPpDlogZpSafePrime::decodeGroupElementToByteArray(
   // Given a group element y, find the two inverses z,-z. Take z to be the value
   // between 1 and (p-1)/2. Return s=z-1
   biginteger y = zp_element->getElementValue();
-  biginteger p = ((ZpGroupParams *)groupParams)->getP();
+  biginteger p = (reinterpret_cast<ZpGroupParams *>(groupParams))->getP();
 
   MathAlgorithms::SquareRootResults roots = MathAlgorithms::sqrtModP_3_4(y, p);
 

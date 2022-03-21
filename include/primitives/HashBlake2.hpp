@@ -40,10 +40,12 @@
 #ifndef SCAPI_HASH_BLAKE2_H
 #define SCAPI_HASH_BLAKE2_H
 
-#include <BLAKE2/sse/blake2.h>
-
 #include <string>
 #include <vector>
+#include <array>
+
+#include "../../lib/BLAKE2/sse/blake2.h"
+
 
 #include "./Hash.hpp"
 
@@ -55,7 +57,7 @@
  */
 class Blake2Hash : public virtual CryptographicHash {
  private:
-  blake2b_state S[1];  // An underlying Blake2 object.
+  std::array<blake2b_state, 1> S;  // An underlying Blake2 object.
   int hashSize;
 
  public:
