@@ -15,7 +15,7 @@
  * This implementation is based on the protocol of Peikert, Vaikuntanathan and Waters (CRYPTO 2008) for achieving UC-secure OT.
  *
  * This is implementation in GroupElement mode, derived from OTUCDDHSenderAbs and implements the functionality
- * related to the byte array inputs.
+ * related to the uint8_t array inputs.
  *
  * The pseudo code of this protocol can be found in Protocol 4.6 of pseudo codes document at <a href="http://cryptobiu.github.io/scapi/SDK_Pseudocode.pdf">http://cryptobiu.github.io/scapi/SDK_Pseudocode.pdf</a>.<p>
  *
@@ -61,7 +61,7 @@ public:
  * This implementation is based on the protocol of Peikert, Vaikuntanathan and Waters (CRYPTO 2008) for achieving UC-secure OT.
  *
  * This is implementation in GroupElement mode, derived from OTUCDDHReceiverAbs and implements the functionality
- * related to the byte array inputs.
+ * related to the uint8_t array inputs.
  *
  * The pseudo code of this protocol can be found in Protocol 4.6 of pseudo codes document at <a href="http://cryptobiu.github.io/scapi/SDK_Pseudocode.pdf">http://cryptobiu.github.io/scapi/SDK_Pseudocode.pdf</a>.<p>
  *
@@ -108,8 +108,8 @@ public:
  * the common reference string model.
  * This implementation is based on the protocol of Peikert, Vaikuntanathan and Waters (CRYPTO 2008) for achieving UC-secure OT.
  *
- * This is implementation in BYTE ARRAY mode, derived from OTUCDDHSenderAbs and implements the functionality
- * related to the byte array inputs.
+ * This is implementation in uint8_t ARRAY mode, derived from OTUCDDHSenderAbs and implements the functionality
+ * related to the uint8_t array inputs.
  *
  * The pseudo code of this protocol can be found in Protocol 4.6 of pseudo codes document at <a href="http://cryptobiu.github.io/scapi/SDK_Pseudocode.pdf">http://cryptobiu.github.io/scapi/SDK_Pseudocode.pdf</a>.<p>
  *
@@ -157,8 +157,8 @@ public:
  * the common reference string model.
  * This implementation is based on the protocol of Peikert, Vaikuntanathan and Waters (CRYPTO 2008) for achieving UC-secure OT.
  *
- * This is implementation in BYTE ARRAY mode, derived from OTUCDDHReceiverAbs and implements the functionality
- * related to the byte array inputs.
+ * This is implementation in uint8_t ARRAY mode, derived from OTUCDDHReceiverAbs and implements the functionality
+ * related to the uint8_t array inputs.
  *
  * The pseudo code of this protocol can be found in Protocol 4.6 of pseudo codes document at <a href="http://cryptobiu.github.io/scapi/SDK_Pseudocode.pdf">http://cryptobiu.github.io/scapi/SDK_Pseudocode.pdf</a>.<p>
  *

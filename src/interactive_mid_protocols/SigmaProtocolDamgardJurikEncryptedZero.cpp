@@ -54,7 +54,7 @@ SigmaDJEncryptedZeroSimulator::SigmaDJEncryptedZeroSimulator(int t, int lengthPa
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 * @throws IllegalArgumentException if the given input is not an instance of SigmaDJEncryptedZeroCommonInput.
 */
-shared_ptr<SigmaSimulatorOutput> SigmaDJEncryptedZeroSimulator::simulate(SigmaCommonInput* input, const vector<byte> & challenge) {
+shared_ptr<SigmaSimulatorOutput> SigmaDJEncryptedZeroSimulator::simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge) {
 	//check the challenge validity.
 	if (!checkChallengeLength(challenge)) {
 		throw CheatAttemptException("the length of the given challenge is differ from the soundness parameter");
@@ -98,7 +98,7 @@ shared_ptr<SigmaSimulatorOutput> SigmaDJEncryptedZeroSimulator::simulate(SigmaCo
 */
 shared_ptr<SigmaSimulatorOutput> SigmaDJEncryptedZeroSimulator::simulate(SigmaCommonInput* input)  {
 	//make space for t/8 bytes and fill it with random values.
-	vector<byte> e(t / 8);
+	vector<uint8_t> e(t / 8);
 	random->getPRGBytes(e, 0, t / 8);
 	//modify the challenge to be positive.
 	e.data()[e.size() - 1] = e.data()[e.size() - 1] & 127;
@@ -122,7 +122,7 @@ bool SigmaDJEncryptedZeroSimulator::checkSoundnessParam(const biginteger & modul
 * Checks if the given challenge length is equal to the soundness parameter.
 * @return true if the challenge length is t; false, otherwise.
 */
-bool SigmaDJEncryptedZeroSimulator::checkChallengeLength(const vector<byte> & challenge) {
+bool SigmaDJEncryptedZeroSimulator::checkChallengeLength(const vector<uint8_t> & challenge) {
 	//If the challenge's length is equal to t, return true. else, return false.
 	return ((int) challenge.size() == (t / 8) ? true : false);
 }
@@ -191,7 +191,7 @@ shared_ptr<SigmaProtocolMsg> SigmaDJEncryptedZeroProverComputation::computeFirst
 * @return the computed message.
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 */
-shared_ptr<SigmaProtocolMsg> SigmaDJEncryptedZeroProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaDJEncryptedZeroProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 
 	//check the challenge validity.
 	if (!checkChallengeLength(challenge)) {

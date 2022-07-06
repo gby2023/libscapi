@@ -171,7 +171,7 @@ public:
 		inversePModQ = u;
 	}
 	string getAlgorithm() override { return "Rabin"; };
-	vector<byte> getEncoded() override { return vector<byte>(0); };
+	vector<uint8_t> getEncoded() override { return vector<uint8_t>(0); };
 	biginteger getPrime1() override { return prime1; };
 	biginteger getPrime2() override { return prime2; };
 	biginteger getInversePModQ() override { return inversePModQ; };
@@ -228,7 +228,7 @@ private:
 	};
 
 	string getAlgorithm() override { return "Rabin"; };
-	vector<byte> getEncoded() override { return vector<byte>(); };
+	vector<uint8_t> getEncoded() override { return vector<uint8_t>(); };
 	biginteger getQuadraticResidueModPrime1() override { return quadraticResidueModPrime1; };
 	biginteger getQuadraticResidueModPrime2() override { return quadraticResidueModPrime2; };
 };
@@ -360,11 +360,11 @@ public:
 	* In formal terms, there is no probabilistic polynomial time algorithm that computes b(x) from f(x)
 	* with probability significantly greater than one half over random choice of x.
 	* @param tpEl the input to the hard core predicate
-	* @return byte the hard core predicate. In java, the smallest types are boolean and byte.
-	* We chose to return a byte since many times we need to concatenate the result of various predicates
-	* and it will be easier with a byte than with a boolean.
+	* @return uint8_t the hard core predicate. In java, the smallest types are boolean and uint8_t.
+	* We chose to return a uint8_t since many times we need to concatenate the result of various predicates
+	* and it will be easier with a uint8_t than with a boolean.
 	*/
-	virtual byte hardCorePredicate(TPElement* tpEl);
+	virtual uint8_t hardCorePredicate(TPElement* tpEl);
 	
 	/**
 	* Computes the hard core function of the given tpElement.
@@ -373,9 +373,9 @@ public:
 	* In formal terms, there is no probabilistic polynomial time algorithm that computes g(x) from f(x)
 	* with probability significantly greater than one half over random choice of x.
 	* @param tpEl the input to the hard core function
-	* @return byte* the result of the hard core function. The byte array is allocated inside the method
+	* @return uint8_t* the result of the hard core function. The uint8_t array is allocated inside the method
 	*/
-	virtual vector<byte> hardCoreFunction(TPElement* tpEl);
+	virtual vector<uint8_t> hardCoreFunction(TPElement* tpEl);
 	
 	/**
 	* Checks if the given element is valid for this trapdoor permutation

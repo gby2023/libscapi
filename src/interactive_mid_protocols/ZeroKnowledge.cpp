@@ -116,7 +116,7 @@ bool ZKFromSigmaVerifier::verify(ZKCommonInput* input, const shared_ptr<SigmaPro
 }
 
 void ZKFromSigmaVerifier::receiveMsgFromProver(SigmaProtocolMsg* concreteMsg) {
-	vector<byte> rawMsg;
+	vector<uint8_t> rawMsg;
 	channel->readWithSizeIntoVector(rawMsg);
 	concreteMsg->initFromByteVector(rawMsg);
 }
@@ -146,7 +146,7 @@ void ZKPOKFromSigmaCmtPedersenProver::prove(const shared_ptr<ZKProverInput> & in
 
 }
 
-void ZKPOKFromSigmaCmtPedersenProver::processSecondMsg(const vector<byte> & e, const shared_ptr<CmtRCommitPhaseOutput> & trap) {
+void ZKPOKFromSigmaCmtPedersenProver::processSecondMsg(const vector<uint8_t> & e, const shared_ptr<CmtRCommitPhaseOutput> & trap) {
 	// compute the second message by the underlying proverComputation.
 	auto z = sProver->computeSecondMsg(e);
 
@@ -210,7 +210,7 @@ bool ZKPOKFromSigmaCmtPedersenVerifier::verify(ZKCommonInput* input,
 /**
 * Runs COMMIT.commit as the committer with input e.
 */
-long ZKPOKFromSigmaCmtPedersenVerifier::commit(const vector<byte> & e) {
+long ZKPOKFromSigmaCmtPedersenVerifier::commit(const vector<uint8_t> & e) {
 	auto val = committer->generateCommitValue(e);
 	auto id = random->getRandom64();
 	committer->commit(val, id);
@@ -221,7 +221,7 @@ long ZKPOKFromSigmaCmtPedersenVerifier::commit(const vector<byte> & e) {
 * @return the received message
 */
 void ZKPOKFromSigmaCmtPedersenVerifier::receiveMsgFromProver(SigmaProtocolMsg* emptyMsg) {
-	vector<byte> rawMsg;
+	vector<uint8_t> rawMsg;
 	channel->readWithSizeIntoVector(rawMsg);
 	emptyMsg->initFromByteVector(rawMsg);
 };
@@ -230,7 +230,7 @@ void ZKPOKFromSigmaCmtPedersenVerifier::receiveMsgFromProver(SigmaProtocolMsg* e
 * Waits for a trapdoor a from the prover.
 */
 void ZKPOKFromSigmaCmtPedersenVerifier::receiveTrapFromProver(CmtRCommitPhaseOutput* emptyOutput) {
-	vector<byte> rawMsg;
+	vector<uint8_t> rawMsg;
 	channel->readWithSizeIntoVector(rawMsg);
 	emptyOutput->initFromByteVector(rawMsg);
 }
@@ -248,7 +248,7 @@ void ZKPOKFiatShamirProof::initFromString(const string & row) {
 	a->initFromString(str_vec[1]);
 	
 	//recover e
-	e = vector<byte>(str_vec[i].size());
+	e = vector<uint8_t>(str_vec[i].size());
 	e.assign(str_vec[i].begin(), str_vec[i].end());
 	
 	i++;
@@ -293,19 +293,19 @@ string ZKPOKFiatShamirProof::toString() {
 * @return the computed challenge
 * @throws IOException
 */
-vector<byte> ZKPOKFiatShamirFromSigmaProver::computeChallenge(ZKPOKFiatShamirProverInput* input, SigmaProtocolMsg* a) {
+vector<uint8_t> ZKPOKFiatShamirFromSigmaProver::computeChallenge(ZKPOKFiatShamirProverInput* input, SigmaProtocolMsg* a) {
 	//The input to the random oracle should include the common data of the prover 
 	//and verifier, and not the prover's private input.
 	auto inputString = input->getSigmaInput()->getCommonInput()->toString();
-	vector<byte> inputArray(inputString.begin(), inputString.end());
+	vector<uint8_t> inputArray(inputString.begin(), inputString.end());
 
 	auto msgString = a->toString();
-	vector<byte> messageArray(msgString.begin(), msgString.end());
+	vector<uint8_t> messageArray(msgString.begin(), msgString.end());
 
 	auto cont = input->getContext();
     string str1(cont.begin(), cont.end());
 
-    vector<byte> inputToRO;
+    vector<uint8_t> inputToRO;
 
 	if (cont.size() != 0) {
 		inputToRO.resize(inputArray.size() + messageArray.size() + cont.size());
@@ -318,7 +318,7 @@ vector<byte> ZKPOKFiatShamirFromSigmaProver::computeChallenge(ZKPOKFiatShamirPro
 	memcpy(inputToRO.data() + inputArray.size(), messageArray.data(), messageArray.size());
 
 	int outLen = sProver->getSoundnessParam() / 8;
-	vector<byte> output(outLen);
+	vector<uint8_t> output(outLen);
 	ro->compute(inputToRO, 0, inputToRO.size(), output, outLen);
 
     string str(output.begin(), output.end());
@@ -377,7 +377,7 @@ ZKPOKFiatShamirProof ZKPOKFiatShamirFromSigmaProver::generateFiatShamirProof(con
 	}
 
 
-	vector<byte> vec;
+	vector<uint8_t> vec;
 
 	if (sigmaInput != nullptr) {
 		fsInput = make_shared<ZKPOKFiatShamirProverInput>(sigmaInput, vec);
@@ -403,11 +403,11 @@ ZKPOKFiatShamirProof ZKPOKFiatShamirFromSigmaProver::generateFiatShamirProof(con
 * @throws IOException if failed to send the message.
 */
 shared_ptr<ZKPOKFiatShamirProof> ZKPOKFiatShamirFromSigmaVerifier::receiveMsgFromProver(const shared_ptr<SigmaProtocolMsg> & emptyA, const shared_ptr<SigmaProtocolMsg> & emptyZ) {
-	vector<byte> raw_msg;
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 
 
-	vector<byte> vec;
+	vector<uint8_t> vec;
 	// create an empty OTRGroupElementPairMsg and initialize it with the received data. 
 	auto msg = make_shared<ZKPOKFiatShamirProof>(emptyA, vec, emptyZ);
 	msg->initFromByteVector(raw_msg);
@@ -423,22 +423,22 @@ shared_ptr<ZKPOKFiatShamirProof> ZKPOKFiatShamirFromSigmaVerifier::receiveMsgFro
 * @return the computed challenge
 * @throws IOException
 */
-vector<byte> ZKPOKFiatShamirFromSigmaVerifier::computeChallenge(ZKPOKFiatShamirCommonInput* input, SigmaProtocolMsg* a) {
+vector<uint8_t> ZKPOKFiatShamirFromSigmaVerifier::computeChallenge(ZKPOKFiatShamirCommonInput* input, SigmaProtocolMsg* a) {
 	//The input to the random oracle should include the common data of the prover 
 	//and verifier, and not the prover's private input.
 	auto inputString = input->getSigmaInput()->toString();
-	vector<byte> inputArray(inputString.begin(), inputString.end());
+	vector<uint8_t> inputArray(inputString.begin(), inputString.end());
 	
 	auto msgString = a->toString();
 
-	vector<byte> messageArray(msgString.begin(), msgString.end());
+	vector<uint8_t> messageArray(msgString.begin(), msgString.end());
 	
 	auto cont = input->getContext();
     string str1(cont.begin(), cont.end());
 
 
 
-	vector<byte> inputToRO;
+	vector<uint8_t> inputToRO;
 
 	if (cont.size() != 0) {
 		inputToRO.resize(inputArray.size() + messageArray.size() + cont.size());
@@ -451,7 +451,7 @@ vector<byte> ZKPOKFiatShamirFromSigmaVerifier::computeChallenge(ZKPOKFiatShamirC
 	memcpy(inputToRO.data() + inputArray.size(), messageArray.data(), messageArray.size());
 	
 	int outLen = sVerifier->getSoundnessParam() / 8;
-	vector<byte> output(outLen);
+	vector<uint8_t> output(outLen);
 	ro->compute(inputToRO, 0, inputToRO.size(), output, outLen);
 
     string str(output.begin(), output.end());
@@ -466,7 +466,7 @@ vector<byte> ZKPOKFiatShamirFromSigmaVerifier::computeChallenge(ZKPOKFiatShamirC
 * @throws IOException if failed to send the message.
 * @throws ClassNotFoundException
 */
-bool ZKPOKFiatShamirFromSigmaVerifier::proccessVerify(SigmaCommonInput* input, SigmaProtocolMsg* a, const vector<byte> & challenge, SigmaProtocolMsg* z) {
+bool ZKPOKFiatShamirFromSigmaVerifier::proccessVerify(SigmaCommonInput* input, SigmaProtocolMsg* a, const vector<uint8_t> & challenge, SigmaProtocolMsg* z) {
 	//If transcript (a, e, z) is accepting in sigma on input x, output ACC
 	//Else outupt REJ
 
@@ -519,7 +519,7 @@ bool ZKPOKFiatShamirFromSigmaVerifier::verifyFiatShamirProof(ZKCommonInput* inpu
 		throw invalid_argument("the given input must be an instance of ZKPOKFiatShamirCommonInput or SigmaCommonInput");
 	}
 	if (sigmaInput != nullptr) {
-		vector<byte> vec;
+		vector<uint8_t> vec;
 		fsInput = new ZKPOKFiatShamirCommonInput(sigmaInput,vec);
 	}
 

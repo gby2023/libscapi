@@ -46,8 +46,8 @@ public:
     ~CommUDP(){};
     int join(int sleepBetweenAttempts = 500, int timeout = 5000, bool first = true) override;
 
-    size_t write(const byte* data, int size, int peer=-1, int protocol=-1) override;
-    size_t read(byte* buffer, int sizeToRead, int peer=-1, int protocol=-1) override;
+    size_t write(const uint8_t* data, int size, int peer=-1, int protocol=-1) override;
+    size_t read(uint8_t* buffer, int sizeToRead, int peer=-1, int protocol=-1) override;
 
 private:
 

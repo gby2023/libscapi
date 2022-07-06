@@ -70,7 +70,7 @@ string OpenSSLHash::getAlgorithmName() {
 }
 
 
-void OpenSSLHash::update(const vector<byte> &in, int inOffset, int inLen){
+void OpenSSLHash::update(const vector<uint8_t> &in, int inOffset, int inLen){
 	//Check that the offset and length are correct.
 	if ((inOffset > (int)in.size()) || (inOffset + inLen > (int)in.size()) || (inOffset<0))
 		throw out_of_range("wrong offset for the given input buffer");
@@ -87,7 +87,7 @@ void OpenSSLHash::update(const vector<byte> &in, int inOffset, int inLen){
 #endif
 }
 
-void OpenSSLHash::hashFinal(vector<byte> &out, int outOffset) {
+void OpenSSLHash::hashFinal(vector<uint8_t> &out, int outOffset) {
 
 	//Checks that the offset and length are correct.
 	if (outOffset<0)

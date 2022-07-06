@@ -186,7 +186,7 @@ public:
 * privacy for the case that the sender is corrupted and simulation in the case that the receiver
 * is corrupted.
 *
-* This class derived from OTOneSidedSimDDHSenderAbs and implements the functionality related to the byte vector inputs.
+* This class derived from OTOneSidedSimDDHSenderAbs and implements the functionality related to the uint8_t vector inputs.
 *
 * For more information see Protocol 7.3 page 185 of <i>Efficient Secure Two-Party Protocols</i> by Hazay-Lindell.
 * The pseudo code of this protocol can be found in Protocol 4.3 of pseudo codes document at https://github.com/cryptobiu/scapi/blob/master/doc/old/SDD_docs/SDK_Pseudocode.docx
@@ -302,7 +302,7 @@ protected:
 	* @return OTROutput contains xSigma
 	* @throws CheatAttemptException
 	*/
-	virtual shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & beta) = 0;
+	virtual shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & beta) = 0;
 
 private:
 	shared_ptr<PrgFromOpenSSLAES> random;
@@ -320,7 +320,7 @@ private:
 	* @param gAlpha g^alpha
 	* @return OTRPrivacyOnlyMessage contains the tuple (x, y, z0, z1).
 	*/
-	OTRGroupElementQuadMsg computeTuple(byte sigma, biginteger & alpha, biginteger & beta, GroupElement* gAlpha);
+	OTRGroupElementQuadMsg computeTuple(uint8_t sigma, biginteger & alpha, biginteger & beta, GroupElement* gAlpha);
 
 	/**
 	* Runs the following line from the protocol:
@@ -398,7 +398,7 @@ protected:
 	* @return OTROutput contains xSigma
 	* @throws CheatAttemptException
 	*/
-	shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & beta) override;
+	shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & beta) override;
 
 public:
 
@@ -419,7 +419,7 @@ public:
 * privacy for the case that the sender is corrupted and simulation in the case that the receiver
 * is corrupted.
 *
-* This class derived from OTOneSidedSimDDHReceiverAbs and implements the functionality related to the byte array inputs.
+* This class derived from OTOneSidedSimDDHReceiverAbs and implements the functionality related to the uint8_t array inputs.
 *
 * For more information see Protocol 7.3 page 185 of <i>Efficient Secure Two-Party Protocols</i> by Hazay-Lindell.
 * The pseudo code of this protocol can be found in Protocol 4.3 of pseudo codes document at https://github.com/cryptobiu/scapi/blob/master/doc/old/SDD_docs/SDK_Pseudocode.docx
@@ -438,7 +438,7 @@ private:
 	*	   REPORT ERROR"
 	* @throws CheatAttemptException if there was a cheat attempt during the execution of the protocol.
 	*/
-	void checkReceivedTuple(GroupElement* w0, GroupElement* w1, vector<byte> & c0, vector<byte> & c1);
+	void checkReceivedTuple(GroupElement* w0, GroupElement* w1, vector<uint8_t> & c0, vector<uint8_t> & c1);
 
 protected:
 
@@ -456,7 +456,7 @@ protected:
 	* @return OTROutput contains xSigma
 	* @throws CheatAttemptException
 	*/
-	shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & beta) override;
+	shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & beta) override;
 
 public:
 

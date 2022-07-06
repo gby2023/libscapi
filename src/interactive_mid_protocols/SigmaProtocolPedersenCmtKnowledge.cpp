@@ -71,7 +71,7 @@ bool SigmaPedersenCmtKnowledgeSimulator::checkSoundnessParam() {
 	return (soundness < q);
 }
 
-shared_ptr<SigmaSimulatorOutput> SigmaPedersenCmtKnowledgeSimulator::simulate(SigmaCommonInput* input, const vector<byte> & challenge) {
+shared_ptr<SigmaSimulatorOutput> SigmaPedersenCmtKnowledgeSimulator::simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge) {
 	//  SAMPLE random values u, v in Zq  
 	//	COMPUTE a = h^u*g^v*c^(-e) (where -e here means -e mod q)
 	//	OUTPUT (a,e,(u,v))
@@ -110,8 +110,8 @@ shared_ptr<SigmaSimulatorOutput> SigmaPedersenCmtKnowledgeSimulator::simulate(Si
 }
 
 shared_ptr<SigmaSimulatorOutput> SigmaPedersenCmtKnowledgeSimulator::simulate(SigmaCommonInput* input) {
-	//Create a new byte array of size t/8, to get the required byte size.
-	vector<byte> e(t / 8);
+	//Create a new uint8_t array of size t/8, to get the required uint8_t size.
+	vector<uint8_t> e(t / 8);
 	random->getPRGBytes(e, 0, t / 8);
 
 	//Call the other simulate function with the given input and the sampled e.
@@ -185,7 +185,7 @@ bool SigmaPedersenCmtKnowledgeProverComputation::checkSoundnessParam() {
 * @return the computed message.
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 */
-shared_ptr<SigmaProtocolMsg> SigmaPedersenCmtKnowledgeProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaPedersenCmtKnowledgeProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 
 	//check the challenge validity.
 	if (!checkChallengeLength(challenge.size())) {

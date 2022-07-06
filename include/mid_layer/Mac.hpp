@@ -85,7 +85,7 @@ public:
 	* @param msgLen the length of the message in bytes.
 	* @return the return tag from the mac operation.
 	*/
-	virtual vector<byte> mac(const vector<byte> &msg, int offset, int msgLen) = 0;
+	virtual vector<uint8_t> mac(const vector<uint8_t> &msg, int offset, int msgLen) = 0;
 
 	/**
 	* Verifies that the given tag is valid for the given message.
@@ -95,15 +95,15 @@ public:
 	* @param tag the tag to verify.
 	* @return true if the tag is the result of computing mac on the message. false, otherwise.
 	*/
-	virtual bool verify(const vector<byte> &msg, int offset, int msgLength, vector<byte>& tag)=0;
+	virtual bool verify(const vector<uint8_t> &msg, int offset, int msgLength, vector<uint8_t>& tag)=0;
 
 	/**
-	* Adds the byte array to the existing message to mac.
+	* Adds the uint8_t array to the existing message to mac.
 	* @param msg the message to add.
 	* @param offset the offset within the message array to take the bytes from.
 	* @param msgLen the length of the message in bytes.
 	*/
-	virtual void update(vector<byte> & msg, int offset, int msgLen) = 0 ;
+	virtual void update(vector<uint8_t> & msg, int offset, int msgLen) = 0 ;
 
 	/**
 	* Completes the mac computation and puts the result tag in the tag array.
@@ -112,7 +112,7 @@ public:
 	* @param msgLength the length of the message in bytes.
 	* @param output - the result tag from the mac operation.
 	*/
-	virtual void doFinal(vector<byte> & msg, int offset, int msgLength, vector<byte> & tag_res) = 0;
+	virtual void doFinal(vector<uint8_t> & msg, int offset, int msgLength, vector<uint8_t> & tag_res) = 0;
 };
 
 /**

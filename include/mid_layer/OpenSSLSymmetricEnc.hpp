@@ -59,8 +59,8 @@ protected:
 		return EVP_CIPHER_CTX_iv_length(enc);
 	}
 	
-	vector<byte> encryptOpenSSL(vector<byte> & plaintext, vector<byte> & iv);	//Encrypt the given plaintext.
-	vector<byte> decryptOpenSSL(vector<byte> & cipher, vector<byte> & iv);		//Decrypt the given ciphertext.
+	vector<uint8_t> encryptOpenSSL(vector<uint8_t> & plaintext, vector<uint8_t> & iv);	//Encrypt the given plaintext.
+	vector<uint8_t> decryptOpenSSL(vector<uint8_t> & cipher, vector<uint8_t> & iv);		//Decrypt the given ciphertext.
 
 																		
 public:
@@ -119,7 +119,7 @@ public:
 	* @param iv random bytes to use in the encryption of the message.
 	* @return an IVCiphertext, which contains the IV used and the encrypted data.
 	*/
-	shared_ptr<SymmetricCiphertext> encrypt(Plaintext* plaintext, vector<byte> & iv) override;
+	shared_ptr<SymmetricCiphertext> encrypt(Plaintext* plaintext, vector<uint8_t> & iv) override;
 
 	/**
 	* Decrypts the given ciphertext using the underlying prp as the block cipher function.
@@ -189,8 +189,8 @@ public:
 		}
 		
 		//Initialize the encryption objects with the key.
-		EVP_EncryptInit(enc, cipher, (unsigned char*)key.data(), NULL);
-		EVP_DecryptInit(dec, cipher, (unsigned char*)key.data(), NULL);
+		EVP_EncryptInit(enc, cipher, (uint8_t*)key.data(), NULL);
+		EVP_DecryptInit(dec, cipher, (uint8_t*)key.data(), NULL);
 	}
 
 	/**

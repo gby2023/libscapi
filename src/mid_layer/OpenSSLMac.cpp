@@ -34,19 +34,19 @@ SecretKey OpenSSLGMAC::generateKey(int keySize) {
     if ((keySize % 8) != 0)
         throw invalid_argument("Wrong key size: must be a multiple of 8");
 
-    vector<byte> genBytes(keySize / 8); // Creates a byte vector of size keySize.
+    vector<uint8_t> genBytes(keySize / 8); // Creates a uint8_t vector of size keySize.
     random->getPRGBytes(genBytes, 0, keySize / 8);    // Generates the bytes using the random.
     return SecretKey(genBytes.data(), keySize / 8, "");
 }
 
-vector<byte> OpenSSLGMAC::mac(const vector<byte> &msg, int offset, int msgLen) {
+vector<uint8_t> OpenSSLGMAC::mac(const vector<uint8_t> &msg, int offset, int msgLen) {
 
-    vector<byte> tag(16);
+    vector<uint8_t> tag(16);
 
 
     if (_isIVToSet == true)
     {
-        //generate random iv. Creates a byte vector of size keySize.
+        //generate random iv. Creates a uint8_t vector of size keySize.
         random->getPRGBytes(iv, 0, 12);    // Generates the bytes using the random.
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
         EVP_EncryptInit_ex(&_ctx, NULL, NULL, NULL, iv.data());
@@ -85,7 +85,7 @@ vector<byte> OpenSSLGMAC::mac(const vector<byte> &msg, int offset, int msgLen) {
     return tag;
 }
 
-bool OpenSSLGMAC::verify(const vector<byte> &msg, int offset, int msgLength, vector<byte>& tag) {
+bool OpenSSLGMAC::verify(const vector<uint8_t> &msg, int offset, int msgLength, vector<uint8_t>& tag) {
     if (!isKeySet())
         throw IllegalStateException("secret key isn't set");
 
@@ -106,7 +106,7 @@ bool OpenSSLGMAC::verify(const vector<byte> &msg, int offset, int msgLength, vec
 
     _isIVToSet=false;//do not set the iv, use the current iv for this mac
 
-    vector<byte> macTag = mac(msg, offset, msgLength);
+    vector<uint8_t> macTag = mac(msg, offset, msgLength);
     // Compares the real tag to the given tag.
     // for code-security reasons, the comparison is fully performed. Even if we know already after the first few bits
     // that the tag is not equal to the mac, we continue the checking until the end of the tag bits.
@@ -135,7 +135,7 @@ void OpenSSLGMAC::setMacKey(SecretKey & secretKey) {
 }
 
 
-void OpenSSLGMAC::update(vector<byte> & msg, int offset, int msgLen) {
+void OpenSSLGMAC::update(vector<uint8_t> & msg, int offset, int msgLen) {
     if (!isKeySet())
         throw IllegalStateException("secret key isn't set");
 
@@ -152,7 +152,7 @@ void OpenSSLGMAC::update(vector<byte> & msg, int offset, int msgLen) {
 }
 
 
-void OpenSSLGMAC::doFinal(vector<byte> & msg, int offset, int msgLength, vector<byte> & tag_res) {
+void OpenSSLGMAC::doFinal(vector<uint8_t> & msg, int offset, int msgLength, vector<uint8_t> & tag_res) {
     tag_res = mac(msg, offset, msgLength);
 }
 

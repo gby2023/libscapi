@@ -102,7 +102,7 @@ bool SigmaDHExtendedSimulator::checkSoundnessParam() {
 	return (soundness < q);
 }
 
-shared_ptr<SigmaSimulatorOutput> SigmaDHExtendedSimulator::simulate(SigmaCommonInput* input, const vector<byte> & challenge) {
+shared_ptr<SigmaSimulatorOutput> SigmaDHExtendedSimulator::simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge) {
 	//check the challenge validity.
 	if (!checkChallengeLength(challenge.size())) {
 		throw CheatAttemptException("the length of the given challenge is differ from the soundness parameter");
@@ -155,8 +155,8 @@ shared_ptr<SigmaSimulatorOutput> SigmaDHExtendedSimulator::simulate(SigmaCommonI
 }
 
 shared_ptr<SigmaSimulatorOutput> SigmaDHExtendedSimulator::simulate(SigmaCommonInput* input) {
-	//Create a new byte array of size t/8, to get the required byte size.
-	vector<byte> e(t / 8);
+	//Create a new uint8_t array of size t/8, to get the required uint8_t size.
+	vector<uint8_t> e(t / 8);
 	random->getPRGBytes(e, 0, t / 8);
 	
 	//Call the other simulate function with the given input and the sampled e.
@@ -222,7 +222,7 @@ shared_ptr<SigmaProtocolMsg> SigmaDHExtendedProverComputation::computeFirstMsg(c
 	return make_shared<SigmaDHExtendedMsg>(aArray);
 }
 
-shared_ptr<SigmaProtocolMsg> SigmaDHExtendedProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaDHExtendedProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 
 	//check the challenge validity.
 	if (!checkChallengeLength(challenge.size())) {

@@ -34,7 +34,7 @@
 /**
 * Checks if the given challenge length is equal to the soundness parameter.
 */
-bool checkChallengeLength(const vector<byte> & challenge, int t);
+bool checkChallengeLength(const vector<uint8_t> & challenge, int t);
 
 
 
@@ -86,7 +86,7 @@ public:
 	* @return the output of the computation - (a, e, eSize, z).
 	*/
 	shared_ptr<SigmaSimulatorOutput> simulate(SigmaCommonInput* input, 
-		const vector<byte> & challenge) override;
+		const vector<uint8_t> & challenge) override;
 	/**
 	* Computes the simulator computation, using random challenge.<p>
 	* "SAMPLE a random z <- Zq<p>
@@ -168,7 +168,7 @@ public:
 	* @param challenge<p>
 	* @return the computed message.
 	*/
-	shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<byte> & challenge) override;
+	shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<uint8_t> & challenge) override;
 	/**
 	* Returns the simulator that matches this sigma protocol prover.
 	*/
@@ -223,12 +223,12 @@ public:
 	/**
 	* Sets the given challenge and its size.
 	*/
-	void setChallenge(const vector<byte> & challenge) override { e = challenge;	}
+	void setChallenge(const vector<uint8_t> & challenge) override { e = challenge;	}
 
 	/**
 	* Returns the sampled challenge.
 	*/
-	vector<byte> getChallenge() override { return e; };
+	vector<uint8_t> getChallenge() override { return e; };
 
 	/**
 	* Verifies the proof.<p>
@@ -244,7 +244,7 @@ public:
 private:
 	shared_ptr<DlogGroup> dlog;		// Underlying DlogGroup.
 	int t; 							// Soundness parameter in BITS.
-	vector<byte> e;					// The challenge.
+	vector<uint8_t> e;					// The challenge.
 	shared_ptr<PrgFromOpenSSLAES> random;
 
 	/**

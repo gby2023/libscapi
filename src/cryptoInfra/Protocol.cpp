@@ -145,14 +145,15 @@ MPCProtocol::MPCProtocol(string protocolName, int argc, char* argv[], bool initC
 MPCProtocol::~MPCProtocol()
 {
     json party = json::array();
-    for (int idx = 0; idx < parties.size(); idx++) {
-        if(partyID == idx) continue;
+    for (int idx = parties.size() - 1; idx>=0; idx--) {
+      if (partyID == idx)
+        continue;
 
-        json commData = json::object();
-        commData["partyId"] = idx;
-        commData["bytesSent"] = parties[idx].get()->bytesOut;
-        commData["bytesReceived"] = parties[idx].get()->bytesIn;
-        party.insert(party.end(), commData);
+      json commData = json::object();
+      commData["partyId"] = idx;
+      commData["bytesSent"] = parties[idx].get()->bytesOut;
+      commData["bytesReceived"] = parties[idx].get()->bytesIn;
+      party.insert(party.end(), commData);
     }
     string fileName = "party" + to_string(partyID) + "CommData.json";
     timer->analyzeComm(party, fileName);
@@ -162,8 +163,8 @@ MPCProtocol::~MPCProtocol()
 }
 
 void MPCProtocol::initTimes(){
-    byte tmpBytes[20];
-    byte allBytes[20*numParties];
+    uint8_t tmpBytes[20];
+    uint8_t allBytes[20*numParties];
     roundFunctionSameMsg(tmpBytes, allBytes, 20);
 
 }
@@ -185,7 +186,7 @@ void MPCProtocol::run(){
 
 }
 
-void MPCProtocol::roundFunctionSameMsg(byte* sendData, byte* receiveData, size_t msgSize){
+void MPCProtocol::roundFunctionSameMsg(uint8_t* sendData, uint8_t* receiveData, size_t msgSize){
     vector<thread> threads(numThreads);
     //Split the work to threads. Each thread gets some parties to work on.
     for (int t=0; t<numThreads; t++) {
@@ -203,7 +204,7 @@ void MPCProtocol::roundFunctionSameMsg(byte* sendData, byte* receiveData, size_t
 }
 
 
-void MPCProtocol::roundFunctionDiffMsg(byte* sendData, byte* receiveData, int msgSize){
+void MPCProtocol::roundFunctionDiffMsg(uint8_t* sendData, uint8_t* receiveData, int msgSize){
     vector<thread> threads(numThreads);
     //Split the work to threads. Each thread gets some parties to work on.
     for (int t=0; t<numThreads; t++) {
@@ -220,7 +221,7 @@ void MPCProtocol::roundFunctionDiffMsg(byte* sendData, byte* receiveData, int ms
     }
 }
 
-void MPCProtocol::exchangeDataSameInput(byte* sendData, byte* receiveData, int first, int last, int msgSize){
+void MPCProtocol::exchangeDataSameInput(uint8_t* sendData, uint8_t* receiveData, int first, int last, int msgSize){
     for (int j=first; j<last; j++){
         if (partyID < j) {
             //send myData to the other party
@@ -239,7 +240,7 @@ void MPCProtocol::exchangeDataSameInput(byte* sendData, byte* receiveData, int f
     }
 }
 
-void MPCProtocol::exchangeDataDiffInput(byte* sendData, byte* receiveData, int first, int last, int msgSize){
+void MPCProtocol::exchangeDataDiffInput(uint8_t* sendData, uint8_t* receiveData, int first, int last, int msgSize){
     for (int j=first; j<last; j++){
         if (partyID < j) {
             //send myData to the other party

@@ -32,7 +32,7 @@ private:
 
 public:
 	/**
-	* Constructor that sets two byte arrays - x0, x1.
+	* Constructor that sets two uint8_t arrays - x0, x1.
 	*/
 	OTOnGroupElementSInput(const shared_ptr<GroupElement> & x0, const shared_ptr<GroupElement> & x1) : x0(x0), x1(x1) {}
 
@@ -57,24 +57,24 @@ public:
 class OTOnByteArraySInput : public OTSInput {
 
 private:
-	vector<byte> x0;
-	vector<byte> x1;
+	vector<uint8_t> x0;
+	vector<uint8_t> x1;
 
 public:
 	/**
-	* Constructor that sets two byte arrays - x0, x1.
+	* Constructor that sets two uint8_t arrays - x0, x1.
 	*/
-	OTOnByteArraySInput(vector<byte> & x0, vector<byte> & x1) : x0(x0), x1(x1) {}
+	OTOnByteArraySInput(vector<uint8_t> & x0, vector<uint8_t> & x1) : x0(x0), x1(x1) {}
 
 	/**
-	* Returns the first byte array input.
+	* Returns the first uint8_t array input.
 	*/
-	vector<byte> getX0() { return x0; }
+	vector<uint8_t> getX0() { return x0; }
 
 	/**
-	* Returns the second byte array input.
+	* Returns the second uint8_t array input.
 	*/
-	vector<byte> getX1() { return x1; }
+	vector<uint8_t> getX1() { return x1; }
 };
 
 /**
@@ -99,7 +99,7 @@ public:
 */
 class OTRBasicInput : public OTRInput {
 
-	//Because java has no bit data type, we decided to hold the given bit in the smallest data type - byte. 
+	//Because java has no bit data type, we decided to hold the given bit in the smallest data type - uint8_t. 
 	//in order to use small memory space without use bit manipulation. 
 private:
 	bool sigma;
@@ -164,9 +164,9 @@ public:
 
 /**
 * Concrete implementation of OT receiver (on byteArray) output.
-* In the byteArray scenario, the receiver outputs xSigma as a byte array.
+* In the byteArray scenario, the receiver outputs xSigma as a uint8_t array.
 *
-* This output class also can be viewed as the output of batch OT when xSigma is a concatenation of all xSigma byte array of all OTs.
+* This output class also can be viewed as the output of batch OT when xSigma is a concatenation of all xSigma uint8_t array of all OTs.
 *
 * @author Cryptography and Computer Security Research Group Department of Computer Science Bar-Ilan University (Moriya Farbstein)
 *
@@ -174,20 +174,20 @@ public:
 class OTOnByteArrayROutput : public OTROutput, public OTBatchROutput {
 
 protected:
-	vector<byte> xSigma;
+	vector<uint8_t> xSigma;
 
 public:
 	/**
 	* Constructor that sets the output array of the protocol.
 	* @param xSigma outputed from the protocol.
 	*/
-	OTOnByteArrayROutput(vector<byte> & xSigma) : xSigma(xSigma) {}
+	OTOnByteArrayROutput(vector<uint8_t> & xSigma) : xSigma(xSigma) {}
 	OTOnByteArrayROutput(){}
 
 	/**
 	* Return the output array of the protocol.
 	*/
-	vector<byte> getXSigma() {	return xSigma;	}
+	vector<uint8_t> getXSigma() {	return xSigma;	}
 
 	int getLength() { return xSigma.size();	}
 };
@@ -372,8 +372,8 @@ public:
 };
 
 /**
-* Concrete implementation of OT sender (on byte array) message.
-* In the byteArray scenario, the sender sends two GroupElement - w0 and w1 and two byte arrays - c0 and c1.
+* Concrete implementation of OT sender (on uint8_t array) message.
+* In the byteArray scenario, the sender sends two GroupElement - w0 and w1 and two uint8_t arrays - c0 and c1.
 * This class is used by most of OT implementations. 
 * An OT protocol that does not use this class (like OT SemiHonest) will create a separate
 * class that matches what it needs.
@@ -386,8 +386,8 @@ class OTOnByteArraySMsg : public OTSMsg {
 private:
 	shared_ptr<GroupElementSendableData> w0;
 	shared_ptr<GroupElementSendableData> w1;
-	vector<byte> c0;
-	vector<byte> c1;
+	vector<uint8_t> c0;
+	vector<uint8_t> c1;
 
 	/**
 	* Constructor that sets the tuples (w0,c0), (w1, c1) calculated by the protocol.
@@ -399,17 +399,17 @@ private:
 public:
 	OTOnByteArraySMsg() {}
 
-	OTOnByteArraySMsg(const shared_ptr<GroupElementSendableData> & w0, vector<byte> & c0,
-		const shared_ptr<GroupElementSendableData> & w1, vector<byte> & c1) 
+	OTOnByteArraySMsg(const shared_ptr<GroupElementSendableData> & w0, vector<uint8_t> & c0,
+		const shared_ptr<GroupElementSendableData> & w1, vector<uint8_t> & c1) 
 		: w0(w0), w1(w1), c0(c0), c1(c1) {}
 
 	shared_ptr<GroupElementSendableData> getW0() { return w0; }
 
 	shared_ptr<GroupElementSendableData> getW1() { return w1; }
 
-	vector<byte> getC0() { return c0; }
+	vector<uint8_t> getC0() { return c0; }
 
-	vector<byte> getC1() { return c1; }
+	vector<uint8_t> getC1() { return c1; }
 
 	string toString();
 	void initFromString(const string & row);

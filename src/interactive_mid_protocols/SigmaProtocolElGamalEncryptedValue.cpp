@@ -102,7 +102,7 @@ SigmaElGamalEncryptedValueSimulator::SigmaElGamalEncryptedValueSimulator(const s
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 * @throws IllegalArgumentException if input is not the expected.
 */
-shared_ptr<SigmaSimulatorOutput> SigmaElGamalEncryptedValueSimulator::simulate(SigmaCommonInput* input, const vector<byte> & challenge) {
+shared_ptr<SigmaSimulatorOutput> SigmaElGamalEncryptedValueSimulator::simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge) {
 	auto underlyingInput = checkAndCreateUnderlyingInput(input);
 
 	//Delegates the computation to the underlying Sigma DH simulator.
@@ -242,7 +242,7 @@ shared_ptr<SigmaProtocolMsg> SigmaElGamalEncryptedValueProverComputation::comput
 * @return the computed message.
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 */
-shared_ptr<SigmaProtocolMsg> SigmaElGamalEncryptedValueProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaElGamalEncryptedValueProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 	//Delegates the computation to the underlying Sigma DH prover.
 	return sigmaDH.computeSecondMsg(challenge);
 

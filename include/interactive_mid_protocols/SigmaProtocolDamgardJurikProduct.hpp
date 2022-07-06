@@ -255,7 +255,7 @@ private:
 	* Checks if the given challenge length is equal to the soundness parameter.
 	* @return true if the challenge length is t; false, otherwise.
 	*/
-	bool checkChallengeLength(const vector<byte> & challenge);
+	bool checkChallengeLength(const vector<uint8_t> & challenge);
 
 public:
 
@@ -281,7 +281,7 @@ public:
 	* @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 	* @throws IllegalArgumentException if the given input is not an instance of SigmaDJProductCommonInput.
 	*/
-	shared_ptr<SigmaSimulatorOutput> simulate(SigmaCommonInput* input, const vector<byte> & challenge)  override;
+	shared_ptr<SigmaSimulatorOutput> simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge)  override;
 
 	/**
 	* Computes the simulator computation with a randomly chosen challenge.
@@ -330,7 +330,7 @@ private:
 	* Checks if the given challenge length is equal to the soundness parameter.
 	* @return true if the challenge length is t; false, otherwise.
 	*/
-	bool checkChallengeLength(const vector<byte> & challenge);
+	bool checkChallengeLength(const vector<uint8_t> & challenge);
 
 public:
 	/**
@@ -365,7 +365,7 @@ public:
 	* @return the computed message.
 	* @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 	*/
-	shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<byte> & challenge) override;
+	shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<uint8_t> & challenge) override;
 
 	/**
 	* Returns the simulator that matches this sigma protocol prover.
@@ -401,7 +401,7 @@ private:
 	int t; 						// Soundness parameter in BITS.
 	int lengthParameter;		// Length parameter in BITS.
 	shared_ptr<PrgFromOpenSSLAES> random;
-	vector<byte> e;					// The challenge.
+	vector<uint8_t> e;					// The challenge.
 
 	/**
 	* Checks the validity of the given soundness parameter.<p>
@@ -444,13 +444,13 @@ public:
 	* Sets the given challenge.
 	* @param challenge
 	*/
-	void setChallenge(const vector<byte> & challenge) override { e = challenge;	}
+	void setChallenge(const vector<uint8_t> & challenge) override { e = challenge;	}
 
 	/**
 	* Returns the sampled challenge.
 	* @return the challenge.
 	*/
-	vector<byte> getChallenge() override { return e; }
+	vector<uint8_t> getChallenge() override { return e; }
 
 	/**
 	* Computes the verification of the protocol.<p>

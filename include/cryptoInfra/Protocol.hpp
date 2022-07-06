@@ -90,8 +90,8 @@ class MPCProtocol : public Protocol{
 private:
 
     void initTimes();
-    void exchangeDataSameInput(byte* sendData, byte* receiveData, int first, int last, int msgSize);
-    void exchangeDataDiffInput(byte* sendData, byte* receiveData, int first, int last, int msgSize);
+    void exchangeDataSameInput(uint8_t* sendData, uint8_t* receiveData, int first, int last, int msgSize);
+    void exchangeDataDiffInput(uint8_t* sendData, uint8_t* receiveData, int first, int last, int msgSize);
 protected:
 
     MPCCommunication comm;
@@ -115,7 +115,7 @@ public:
      * The sendData array contains the message that should be sent to all the other parties.
      * The receiveData array will be filled with all the messages that the other parties sent to this party, ordered by the party id index.
      */
-    void roundFunctionSameMsg(byte* sendData, byte* receiveData, size_t msgSize);
+    void roundFunctionSameMsg(uint8_t* sendData, uint8_t* receiveData, size_t msgSize);
 
     /**
      * This function sends a unique message to each one of the other parties and receive data from all the other parties.
@@ -123,7 +123,7 @@ public:
      * The sendData array contains a message for each one of the other parties, ordered by the party id index.
      * The receiveData array will be filled with all the messages that the other parties sent to this party, ordered by the party id index.
      */
-    void roundFunctionDiffMsg(byte* sendData, byte* receiveData, int msgSize);
+    void roundFunctionDiffMsg(uint8_t* sendData, uint8_t* receiveData, int msgSize);
 
 
 };

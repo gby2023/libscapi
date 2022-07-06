@@ -42,22 +42,22 @@ int SocketPartyData::compare(const SocketPartyData &other) const {
 /* CommParty			                */
 /*****************************************/
 
-void CommParty::writeWithSize(const byte* data, int size) {
-	write((const byte *)&size, sizeof(int));
+void CommParty::writeWithSize(const uint8_t* data, int size) {
+	write((const uint8_t *)&size, sizeof(int));
 	write(data, size);
 }
 
 int CommParty::readSize() {
-	byte buf[sizeof(int)];
+	uint8_t buf[sizeof(int)];
 	read(buf, sizeof(int));
 	int * res = (int *)buf;
 	return *res;
 }
 
-size_t CommParty::readWithSizeIntoVector(vector<byte> & targetVector) {
+size_t CommParty::readWithSizeIntoVector(vector<uint8_t> & targetVector) {
 	int msgSize = readSize();
 	targetVector.resize(msgSize);
-	auto res = read((byte*)&targetVector[0], msgSize);
+	auto res = read((uint8_t*)&targetVector[0], msgSize);
 	return res;
 }
 
@@ -112,7 +112,7 @@ void CommPartyTCPSynced::setSocketOptions() {
 	
 }
 
-size_t CommPartyTCPSynced::write(const byte* data, int size, int peer, int protocol) {
+size_t CommPartyTCPSynced::write(const uint8_t* data, int size, int peer, int protocol) {
 	boost::system::error_code ec;
 	bytesOut += size;
 	return boost::asio::write(socketForWrite(),

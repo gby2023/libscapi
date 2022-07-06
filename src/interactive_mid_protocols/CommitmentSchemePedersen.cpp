@@ -68,7 +68,7 @@ shared_ptr<CmtRCommitPhaseOutput> CmtPedersenReceiverCore::receiveCommitment() {
 	auto msg = make_shared<CmtPedersenCommitmentMessage>(dlog->getGenerator()->generateSendableData());
 	
 	// read encoded CmtPedersenCommitmentMessage from channel
-	vector<byte> raw_msg; // by the end of the scope - no need to hold it anymore - already decoded and copied
+	vector<uint8_t> raw_msg; // by the end of the scope - no need to hold it anymore - already decoded and copied
 	channel->readWithSizeIntoVector(raw_msg);
 	// init the empy CmtPedersenCommitmentMessage using the encdoed data
 	msg->initFromByteVector(raw_msg);
@@ -78,7 +78,7 @@ shared_ptr<CmtRCommitPhaseOutput> CmtPedersenReceiverCore::receiveCommitment() {
 }
 
 shared_ptr<CmtCommitValue> CmtPedersenReceiverCore::receiveDecommitment(long id) {
-	vector<byte> raw_msg;
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 	shared_ptr<CmtPedersenDecommitmentMessage> msg = make_shared<CmtPedersenDecommitmentMessage>();
 	msg->initFromByteVector(raw_msg);
@@ -162,7 +162,7 @@ shared_ptr<GroupElementSendableData> CmtPedersenCommitterCore::waitForMessageFro
 	if (channel == NULL) {
 		throw runtime_error("In order to pre-compute the channel must be given");
 	}
-	vector<byte> rawMsg;
+	vector<uint8_t> rawMsg;
 	channel->readWithSizeIntoVector(rawMsg);
 	auto dummySendableData = dlog->getGenerator()->generateSendableData();
 	dummySendableData->initFromByteVector(rawMsg);
@@ -222,10 +222,10 @@ vector<shared_ptr<void>> CmtPedersenCommitterCore::getPreProcessValues() {
 /**********/
 /* Helper */
 /**********/
-vector<byte> fromCmtToByteArray(CmtCommitValue* value) {
+vector<uint8_t> fromCmtToByteArray(CmtCommitValue* value) {
 	biginteger x = *((biginteger *)value->getX().get());
 	int size = bytesCount(x);
-	vector<byte> byteRes(size);
+	vector<uint8_t> byteRes(size);
 	encodeBigInteger(x, byteRes.data(), size);
 	return byteRes;
 }
@@ -233,14 +233,14 @@ vector<byte> fromCmtToByteArray(CmtCommitValue* value) {
 /*********************************/
 /*   CmtPedersenCommitter        */
 /*********************************/
-vector<byte> CmtPedersenCommitter::generateBytesFromCommitValue(CmtCommitValue* value) {
+vector<uint8_t> CmtPedersenCommitter::generateBytesFromCommitValue(CmtCommitValue* value) {
 	return fromCmtToByteArray(value);
 }
 
 /*********************************/
 /*   CmtPedersenReceiver         */
 /*********************************/
-vector<byte> CmtPedersenReceiver::generateBytesFromCommitValue(CmtCommitValue* value) {
+vector<uint8_t> CmtPedersenReceiver::generateBytesFromCommitValue(CmtCommitValue* value) {
 	return fromCmtToByteArray(value);
 }
 
@@ -302,11 +302,11 @@ bool CmtPedersenWithProofsReceiver::verifyKnowledge(long id) {
 
 shared_ptr<CmtCommitValue> CmtPedersenWithProofsReceiver::verifyCommittedValue(long id) {
 	// read biginteger from channel
-	vector<byte> raw_msg; // by the end of the scope - no need to hold it anymore - already decoded and copied
+	vector<uint8_t> raw_msg; // by the end of the scope - no need to hold it anymore - already decoded and copied
 	channel->readWithSizeIntoVector(raw_msg);
 
 	// init the empy CmtPedersenCommitmentMessage using the encdoed data
-	const byte * uc = &(raw_msg[0]);
+	const uint8_t * uc = &(raw_msg[0]);
 	string s(reinterpret_cast<char const*>(uc), raw_msg.size());
 	biginteger x = biginteger(s);
 

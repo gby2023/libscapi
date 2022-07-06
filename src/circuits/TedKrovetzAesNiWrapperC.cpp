@@ -27,7 +27,7 @@
 
 #include "../../include/circuits/TedKrovetzAesNiWrapperC.h"
 
-void AES_128_Key_Expansion(const unsigned char *userkey, AES_KEY *aesKey)
+void AES_128_Key_Expansion(const uint8_t *userkey, AES_KEY *aesKey)
 {
     block x0,x1,x2;
     //block *kp = (block *)&aesKey;
@@ -47,7 +47,7 @@ void AES_128_Key_Expansion(const unsigned char *userkey, AES_KEY *aesKey)
 
 
 
-void AES_192_Key_Expansion(const unsigned char *userkey, AES_KEY *aesKey)
+void AES_192_Key_Expansion(const uint8_t *userkey, AES_KEY *aesKey)
 {
     __m128i x0,x1,x2,x3,tmp,*kp = (block *)&aesKey;
     kp[0] = x0 = _mm_loadu_si128((block*)userkey);
@@ -59,7 +59,7 @@ void AES_192_Key_Expansion(const unsigned char *userkey, AES_KEY *aesKey)
     EXPAND192_STEP(10,64);
 }
 
-void AES_256_Key_Expansion(const unsigned char *userkey, AES_KEY *aesKey)
+void AES_256_Key_Expansion(const uint8_t *userkey, AES_KEY *aesKey)
 {
 	__m128i x0, x1, x2, x3;/* , *kp = (block *)&aesKey;*/
 	aesKey->rd_key[0] = x0 = _mm_loadu_si128((block*)userkey);
@@ -80,7 +80,7 @@ void AES_256_Key_Expansion(const unsigned char *userkey, AES_KEY *aesKey)
 	EXPAND_ASSIST(x0, x1, x2, x3, 255, 64); aesKey->rd_key[14] = x0;
 }
 
-void AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *aesKey)
+void AES_set_encrypt_key(const uint8_t *userKey, const int bits, AES_KEY *aesKey)
 {
     if (bits == 128) {
 		AES_128_Key_Expansion(userKey, aesKey);

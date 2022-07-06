@@ -36,7 +36,7 @@
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 * @throws IllegalArgumentException if the given input is not an instance of SigmaElGamalPrivateKeyCommonInput.
 */
-shared_ptr<SigmaSimulatorOutput> SigmaElGamalPrivateKeySimulator::simulate(SigmaCommonInput* input, const vector<byte> & challenge) {
+shared_ptr<SigmaSimulatorOutput> SigmaElGamalPrivateKeySimulator::simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge) {
 	auto elGamalInput = dynamic_cast<SigmaElGamalPrivateKeyCommonInput*>(input);
 	if (elGamalInput == NULL) {
 		throw invalid_argument("the given input must be an instance of SigmaElGamalPrivateKeyCommonInput");
@@ -107,7 +107,7 @@ shared_ptr<SigmaProtocolMsg> SigmaElGamalPrivateKeyProverComputation::computeFir
 * @return the computed message.
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 */
-shared_ptr<SigmaProtocolMsg> SigmaElGamalPrivateKeyProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaElGamalPrivateKeyProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 	//Delegates the computation to the underlying Sigma Dlog prover.
 	return sigmaDlog.computeSecondMsg(challenge);
 

@@ -78,8 +78,8 @@ void OpenSSLEncWithIVAbs::setKey(SecretKey & secretKey) {
 * @return the generated secret key.
 */
 SecretKey OpenSSLEncWithIVAbs::generateKey(int keySize) {
-	//Creates a byte array of size keySize.
-	vector<byte> genBytes(keySize / 8);
+	//Creates a uint8_t array of size keySize.
+	vector<uint8_t> genBytes(keySize / 8);
 
 	//Generates the bytes using the random.
 	random->getPRGBytes(genBytes, 0, keySize / 8);
@@ -98,7 +98,7 @@ SecretKey OpenSSLEncWithIVAbs::generateKey(int keySize) {
 shared_ptr<SymmetricCiphertext> OpenSSLEncWithIVAbs::encrypt(Plaintext* plaintext) {
 	//Allocate space for the IV.
 	int size = getIVSize();
-	vector<byte> iv(size);
+	vector<uint8_t> iv(size);
 	//Generate a random IV.
 	random->getPRGBytes(iv, 0, size);
 
@@ -112,7 +112,7 @@ shared_ptr<SymmetricCiphertext> OpenSSLEncWithIVAbs::encrypt(Plaintext* plaintex
 * @param iv random bytes to use in the encryption of the message.
 * @return an IVCiphertext, which contains the IV used and the encrypted data.
 */
-shared_ptr<SymmetricCiphertext> OpenSSLEncWithIVAbs::encrypt(Plaintext* plaintext, vector<byte> & iv) {
+shared_ptr<SymmetricCiphertext> OpenSSLEncWithIVAbs::encrypt(Plaintext* plaintext, vector<uint8_t> & iv) {
 	if (!keySet) {
 		throw IllegalStateException("no SecretKey was set");
 	}
@@ -128,7 +128,7 @@ shared_ptr<SymmetricCiphertext> OpenSSLEncWithIVAbs::encrypt(Plaintext* plaintex
 
 	//Call the native function that idoes the encryption. 
 	auto plainT = plain->getText();
-	vector<byte> cipher = encryptOpenSSL(plainT, iv);
+	vector<uint8_t> cipher = encryptOpenSSL(plainT, iv);
 
 	//Create and return an IVCiphertext with the iv and encrypted data.
 	return make_shared<IVCiphertext>(make_shared<ByteArraySymCiphertext>(cipher), iv);
@@ -162,23 +162,23 @@ shared_ptr<Plaintext> OpenSSLEncWithIVAbs::decrypt(SymmetricCiphertext* cipherte
 	return make_shared<ByteArrayPlaintext>(plaintext);
 }
 
-vector<byte> OpenSSLEncWithIVAbs::encryptOpenSSL(vector<byte> & plaintext, vector<byte> & iv) {
+vector<uint8_t> OpenSSLEncWithIVAbs::encryptOpenSSL(vector<uint8_t> & plaintext, vector<uint8_t> & iv) {
 	
 	//Initialize the encryption objects with the key.
-	EVP_EncryptInit(enc, NULL, NULL, (unsigned char*)iv.data());
+	EVP_EncryptInit(enc, NULL, NULL, (uint8_t*)iv.data());
 		
 	int blockSize = EVP_CIPHER_CTX_block_size(enc);
 
 	//Before the encryption, tha plaintext should be padded.
 	//The padding scheme aligns the plaintext to size blockSize (and if the plaintext already aligned, it add an entire blockSize bytes.
 	//As a result, the size of the ciphertext should be at most of size plaintextSize + blockSize.
-	vector<byte> out(plaintext.size() + blockSize);
+	vector<uint8_t> out(plaintext.size() + blockSize);
 
 	int size, rem;
 
 	//Encrypt the plaintext.
-	EVP_EncryptUpdate(enc, (unsigned char*)out.data(), &size, (unsigned char*)plaintext.data(), plaintext.size());
-	EVP_EncryptFinal_ex(enc, (unsigned char*)out.data() + size, &rem);
+	EVP_EncryptUpdate(enc, (uint8_t*)out.data(), &size, (uint8_t*)plaintext.data(), plaintext.size());
+	EVP_EncryptFinal_ex(enc, (uint8_t*)out.data() + size, &rem);
 
 	//shrink the output to the actual size.
 	out.resize(size + rem);
@@ -186,20 +186,20 @@ vector<byte> OpenSSLEncWithIVAbs::encryptOpenSSL(vector<byte> & plaintext, vecto
 	return out;
 }
 
-vector<byte> OpenSSLEncWithIVAbs::decryptOpenSSL(vector<byte> & cipher, vector<byte> & iv) {
+vector<uint8_t> OpenSSLEncWithIVAbs::decryptOpenSSL(vector<uint8_t> & cipher, vector<uint8_t> & iv) {
 
 	//Initialize the encryption object with the key.
-	EVP_DecryptInit(dec, NULL, NULL, (unsigned char*)iv.data());
+	EVP_DecryptInit(dec, NULL, NULL, (uint8_t*)iv.data());
 
-	//Allocate a new byte array of size cipherSize.
-	vector<byte> out(cipher.size());
+	//Allocate a new uint8_t array of size cipherSize.
+	vector<uint8_t> out(cipher.size());
 
 	int size, rem;
 
 	//Decrypt the ciphertext.
-	EVP_DecryptUpdate(dec, (unsigned char*)out.data(), &size, (unsigned char*)cipher.data(), cipher.size());
+	EVP_DecryptUpdate(dec, (uint8_t*)out.data(), &size, (uint8_t*)cipher.data(), cipher.size());
 
-	EVP_DecryptFinal_ex(dec, (unsigned char*)out.data() + size, &rem);
+	EVP_DecryptFinal_ex(dec, (uint8_t*)out.data() + size, &rem);
 
 	//shrink the output to the actual size.
 	out.resize(size + rem); //TODO delete?

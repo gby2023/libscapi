@@ -171,7 +171,7 @@ public:
 	* @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 	* @throws IllegalArgumentException if the given input is not an instance of SigmaElGamalCommittedValueCommonInput.
 	*/
-	shared_ptr<SigmaSimulatorOutput> simulate(SigmaCommonInput* input, const vector<byte> & challenge)  override;
+	shared_ptr<SigmaSimulatorOutput> simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge)  override;
 
 	/**
 	* Computes the simulator computation with a randomly chosen challenge.
@@ -248,7 +248,7 @@ public:
 	* @return the computed message.
 	* @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 	*/
-	shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<byte> & challenge) override;
+	shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<uint8_t> & challenge) override;
 
 	/**
 	* Returns the simulator that matches this sigma protocol prover.
@@ -318,13 +318,13 @@ public:
 	* Sets the given challenge.
 	* @param challenge
 	*/
-	void setChallenge(const vector<byte> & challenge) override { sigmaDH.setChallenge(challenge); }
+	void setChallenge(const vector<uint8_t> & challenge) override { sigmaDH.setChallenge(challenge); }
 
 	/**
 	* Returns the sampled challenge.
 	* @return the challenge.
 	*/
-	vector<byte> getChallenge() { return sigmaDH.getChallenge(); }
+	vector<uint8_t> getChallenge() { return sigmaDH.getChallenge(); }
 
 	/**
 	* Verifies the proof.

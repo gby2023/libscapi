@@ -35,20 +35,20 @@
 
 SecretKey OpenSSLPRP::generateKey(int keySize) {
 	//Generate random bytes to set as the key.
-	vector<byte> vec(keySize / 8);
+	vector<uint8_t> vec(keySize / 8);
 	prg->getPRGBytes(vec, 0, keySize / 8);
 	SecretKey sk(vec, getAlgorithmName());
 	return sk;
 }
 
-void OpenSSLPRP::computeBlock(const vector<byte> & inBytes, int inOff, vector<byte> &outBytes, int outOff) {
+void OpenSSLPRP::computeBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t> &outBytes, int outOff) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	// Checks that the offset and length are correct.
 	if ((inOff > (int)inBytes.size()) || (inOff + getBlockSize() > (int)inBytes.size()))
 		throw out_of_range("wrong offset for the given input buffer");
 	
-	const byte* input = & inBytes[inOff];
+	const uint8_t* input = & inBytes[inOff];
 	
 	int size;
 	int blockSize = getBlockSize();
@@ -61,7 +61,7 @@ void OpenSSLPRP::computeBlock(const vector<byte> & inBytes, int inOff, vector<by
 	EVP_EncryptUpdate(computeP, outBytes.data() + outOff, &size, input, blockSize);
 }
 
-void OpenSSLPRP::optimizedCompute(const vector<byte> & inBytes, vector<byte> &outBytes) {
+void OpenSSLPRP::optimizedCompute(const vector<uint8_t> & inBytes, vector<uint8_t> &outBytes) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	if ((inBytes.size() % getBlockSize()) != 0)
@@ -77,7 +77,7 @@ void OpenSSLPRP::optimizedCompute(const vector<byte> & inBytes, vector<byte> &ou
 	EVP_EncryptUpdate(computeP, outBytes.data(), &size, &inBytes[0], size);
 }
 
-void OpenSSLPRP::computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte> &outBytes, int outOff, int outLen) {
+void OpenSSLPRP::computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t> &outBytes, int outOff, int outLen) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	// the checks on the offset and length are done in the computeBlock(inBytes, inOff, outBytes, outOff).
@@ -88,7 +88,7 @@ void OpenSSLPRP::computeBlock(const vector<byte> & inBytes, int inOff, int inLen
 }
 
 
-void OpenSSLPRP::computeBlock(const vector<byte> & inBytes, int inOffset, int inLen, vector<byte> &outBytes, int outOffset) {
+void OpenSSLPRP::computeBlock(const vector<uint8_t> & inBytes, int inOffset, int inLen, vector<uint8_t> &outBytes, int outOffset) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	// The checks on the offset and length is done in the computeBlock (inBytes, inOffset, outBytes, outOffset).
@@ -98,7 +98,7 @@ void OpenSSLPRP::computeBlock(const vector<byte> & inBytes, int inOffset, int in
 		throw out_of_range("Wrong size");
 }
 
-void OpenSSLPRP::invertBlock(const vector<byte> & inBytes, int inOff, vector<byte>& outBytes, int outOff) {
+void OpenSSLPRP::invertBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t>& outBytes, int outOff) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	// Checks that the offsets are correct. 
@@ -114,7 +114,7 @@ void OpenSSLPRP::invertBlock(const vector<byte> & inBytes, int inOff, vector<byt
 	EVP_DecryptUpdate(invertP, outBytes.data(), &size, &inBytes[inOff], getBlockSize());
 }
 
-void OpenSSLPRP::optimizedInvert(const vector<byte> & inBytes, vector<byte> &outBytes) {
+void OpenSSLPRP::optimizedInvert(const vector<uint8_t> & inBytes, vector<uint8_t> &outBytes) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	if ((inBytes.size() % getBlockSize()) != 0) 
@@ -129,7 +129,7 @@ void OpenSSLPRP::optimizedInvert(const vector<byte> & inBytes, vector<byte> &out
 	EVP_DecryptUpdate(invertP, outBytes.data(), &size, &inBytes[0], size);
 }
 
-void OpenSSLPRP::invertBlock(const vector<byte> & inBytes, int inOff, vector<byte>& outBytes, int outOff, int len) {
+void OpenSSLPRP::invertBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t>& outBytes, int outOff, int len) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	// the checks of the offset and lengths are done in the invertBlock(inBytes, inOff, outBytes, outOff)
@@ -166,7 +166,7 @@ void OpenSSLAES::setKey(SecretKey & secretKey) {
 		throw InvalidKeyException("AES key size should be 128/192/256 bits long");
 
 	// Set the key to the underlying objects.
-	byte* keyBytes = &keyVec[0];
+	uint8_t* keyBytes = &keyVec[0];
 	int bitLen = len * 8; //number of bits in key.
 
 	// Create the requested block cipher.
@@ -241,13 +241,13 @@ string OpenSSLHMAC::getAlgorithmName() {
 	return "Hmac/" + string(name);
 }
 
-void OpenSSLHMAC::computeBlock(const vector<byte> & inBytes, int inOff, vector<byte> &outBytes, int outOff) {
+void OpenSSLHMAC::computeBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t> &outBytes, int outOff) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	throw out_of_range("Size of input is not specified");
 }
 
-void OpenSSLHMAC::computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte> &outBytes, int outOff, int outLen) {
+void OpenSSLHMAC::computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t> &outBytes, int outOff, int outLen) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 
@@ -259,7 +259,7 @@ void OpenSSLHMAC::computeBlock(const vector<byte> & inBytes, int inOff, int inLe
 		throw out_of_range("Output size is incorrect");
 }
 
-void OpenSSLHMAC::computeBlock(const vector<byte> & inBytes, int inOffset, int inLen, vector<byte> &outBytes, int outOffset) {
+void OpenSSLHMAC::computeBlock(const vector<uint8_t> & inBytes, int inOffset, int inLen, vector<uint8_t> &outBytes, int outOffset) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	
@@ -304,30 +304,30 @@ SecretKey OpenSSLHMAC::generateKey(int keySize) {
 	if ((keySize % 8) != 0)
 		throw invalid_argument("Wrong key size: must be a multiple of 8");
 
-	vector<byte> genBytes(keySize / 8); // Creates a byte vector of size keySize.
+	vector<uint8_t> genBytes(keySize / 8); // Creates a uint8_t vector of size keySize.
 	random->getPRGBytes(genBytes, 0, keySize / 8);	// Generates the bytes using the random.
 	return SecretKey(genBytes.data(), keySize/8, "");
 }
 
-vector<byte> OpenSSLHMAC::mac(const vector<byte> &msg, int offset, int msgLen) {
+vector<uint8_t> OpenSSLHMAC::mac(const vector<uint8_t> &msg, int offset, int msgLen) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	// Creates the tag.
-	vector<byte> tag(getMacSize());
+	vector<uint8_t> tag(getMacSize());
 	// Computes the hmac operation.
 	computeBlock(msg, offset, msgLen, tag, 0);
 	//Returns the tag.
 	return tag;
 }
 
-bool OpenSSLHMAC::verify(const vector<byte> &msg, int offset, int msgLength, vector<byte>& tag) {
+bool OpenSSLHMAC::verify(const vector<uint8_t> &msg, int offset, int msgLength, vector<uint8_t>& tag) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	// If the tag size is not the mac size - returns false.
 	if ((int) tag.size() != getMacSize())
 		return false;
 	// Calculate the mac on the msg to get the real tag.
-	vector<byte> macTag = mac(msg, offset, msgLength);
+	vector<uint8_t> macTag = mac(msg, offset, msgLength);
 
 	// Compares the real tag to the given tag.
 	// for code-security reasons, the comparison is fully performed. that is, even if we know already after the first few bits 
@@ -342,7 +342,7 @@ bool OpenSSLHMAC::verify(const vector<byte> &msg, int offset, int msgLength, vec
 	return equal;
 }
 
-void OpenSSLHMAC::update(vector<byte> & msg, int offset, int msgLen) {
+void OpenSSLHMAC::update(vector<uint8_t> & msg, int offset, int msgLen) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 
@@ -350,7 +350,7 @@ void OpenSSLHMAC::update(vector<byte> & msg, int offset, int msgLen) {
 	HMAC_Update(hmac, &msg[offset], msgLen);
 }
 
-void OpenSSLHMAC::doFinal(vector<byte> & msg, int offset, int msgLength, vector<byte> & tag_res) {
+void OpenSSLHMAC::doFinal(vector<uint8_t> & msg, int offset, int msgLength, vector<uint8_t> & tag_res) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	
@@ -399,7 +399,7 @@ OpenSSLTripleDES::OpenSSLTripleDES() {
 }
 
 void OpenSSLTripleDES::setKey(SecretKey & secretKey) {
-	vector<byte> keyBytesVector = secretKey.getEncoded();
+	vector<uint8_t> keyBytesVector = secretKey.getEncoded();
 	int len = keyBytesVector.size();
 
 	// TripleDES key size should be 128/192 bits long.

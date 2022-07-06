@@ -45,7 +45,7 @@ class SigmaOrTwoProverInput : public SigmaProverInput {
 private:
 	shared_ptr<SigmaProverInput> proverInput;
 	shared_ptr<SigmaCommonInput> simulatorInput;
-	byte b;
+	uint8_t b;
 
 public:
 	/**
@@ -54,7 +54,7 @@ public:
 	* @param simulatorInput
 	* @param b such that (xb,w) is in R.
 	*/
-	SigmaOrTwoProverInput(const shared_ptr<SigmaProverInput> & proverInput, const shared_ptr<SigmaCommonInput> & simulatorInput, byte b) {
+	SigmaOrTwoProverInput(const shared_ptr<SigmaProverInput> & proverInput, const shared_ptr<SigmaCommonInput> & simulatorInput, uint8_t b) {
 		this->proverInput = proverInput;
 		this->simulatorInput = simulatorInput;
 		this->b = b;
@@ -63,7 +63,7 @@ public:
 	/**
 	* Returns the bit b such that (xb,w) is in R.
 	*/
-	byte getB() { return b;	}
+	uint8_t getB() { return b;	}
 
 	/**
 	* Returns the input for the underlying prover.
@@ -91,12 +91,12 @@ class SigmaOrTwoSecondMsg : public SigmaProtocolMsg {
 
 private:
 	shared_ptr<SigmaProtocolMsg> z0;
-	vector<byte> e0;
+	vector<uint8_t> e0;
 	shared_ptr<SigmaProtocolMsg> z1;
-	vector<byte> e1;
+	vector<uint8_t> e1;
 
 public:
-	SigmaOrTwoSecondMsg(const shared_ptr<SigmaProtocolMsg> & z0, const vector<byte> & e0, const shared_ptr<SigmaProtocolMsg> & z1, const vector<byte> & e1) {
+	SigmaOrTwoSecondMsg(const shared_ptr<SigmaProtocolMsg> & z0, const vector<uint8_t> & e0, const shared_ptr<SigmaProtocolMsg> & z1, const vector<uint8_t> & e1) {
 		this->z0 = z0;
 		this->e0 = e0;
 		this->z1 = z1;
@@ -105,11 +105,11 @@ public:
 
 	shared_ptr<SigmaProtocolMsg> getZ0() { return z0; }
 
-	vector<byte> getE0() { return e0; }
+	vector<uint8_t> getE0() { return e0; }
 
 	shared_ptr<SigmaProtocolMsg> getZ1() {return z1; }
 
-	vector<byte> getE1() { return e1; }
+	vector<uint8_t> getE1() { return e1; }
 
 	void initFromString(const string & s) override;
 	string toString() override;
@@ -171,7 +171,7 @@ public:
 	* @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 	* @throws IllegalArgumentException if the given input is not an instance of SigmaORTwoCommonInput.
 	*/
-	shared_ptr<SigmaSimulatorOutput> simulate(SigmaCommonInput* input, const vector<byte> & challenge)  override;
+	shared_ptr<SigmaSimulatorOutput> simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge)  override;
 
 	/**
 	* Computes the simulator computation with a randomly chosen challenge.
@@ -214,7 +214,7 @@ private:
 	shared_ptr<PrgFromOpenSSLAES> random;
 	int t;											//Soundness parameter.
 	int b;											// The bit b such that (xb,w) is in R.
-	vector<byte> eOneMinusB;						//Sampled challenge for the simulator.
+	vector<uint8_t> eOneMinusB;						//Sampled challenge for the simulator.
 	shared_ptr<SigmaProtocolMsg> zOneMinusB;		// The output of the simulator.
 
 	/**
@@ -260,7 +260,7 @@ public:
 	* @return SigmaORTwoSecondMsg contains e0,z0,e1,z1.
 	* @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 	*/
-	shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<byte> & challenge) override;
+	shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<uint8_t> & challenge) override;
 
 	/**
 	* Returns the simulator that matches this sigma protocol prover.
@@ -292,7 +292,7 @@ class SigmaOrTwoVerifierComputation : public SigmaVerifierComputation {
 
 private:
 	vector<shared_ptr<SigmaVerifierComputation>> verifiers;	// Underlying Sigma protocol verifiers to the OR calculation.
-	vector<byte> e;											//The challenge.
+	vector<uint8_t> e;											//The challenge.
 	int t;													//Soundness parameter.
 	shared_ptr<PrgFromOpenSSLAES> random;
 
@@ -326,13 +326,13 @@ public:
 	* Sets the given challenge.
 	* @param challenge
 	*/
-	void setChallenge(const vector<byte> & challenge) override { e = challenge;	}
+	void setChallenge(const vector<uint8_t> & challenge) override { e = challenge;	}
 
 	/**
 	* Returns the sampled challenge.
 	* @return the challenge.
 	*/
-	vector<byte> getChallenge() { return e; }
+	vector<uint8_t> getChallenge() { return e; }
 
 	/**
 	* Computes the following line from the protocol:

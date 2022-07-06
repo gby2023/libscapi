@@ -148,7 +148,7 @@ int CommUDP::join(int sleepBetweenAttempts, int timeout, bool first)
         if (mPid == i)
             continue;
 
-        ret = write((const byte*)"0", 1, i, 0); // Send byte for sync
+        ret = write((const uint8_t*)"0", 1, i, 0); // Send uint8_t for sync
         KCP_CHECK(ret, mCat + ".sync")
     }
 
@@ -158,7 +158,7 @@ int CommUDP::join(int sleepBetweenAttempts, int timeout, bool first)
     cnt = 0;
     while (cnt < mNumPeers - 1)
     {
-        byte b;
+        uint8_t b;
 
         for (int i = 0; i < mNumPeers; i++)
         {
@@ -196,7 +196,7 @@ int CommUDP::join(int sleepBetweenAttempts, int timeout, bool first)
 }
 
 
-size_t CommUDP::write(const byte *data, int size, int peer, int protocol)
+size_t CommUDP::write(const uint8_t *data, int size, int peer, int protocol)
 {
     assert(0 <= peer  && peer < mNumPeers && peer != mPid);
     assert(0 <= protocol && protocol < mNumProtocols);
@@ -209,7 +209,7 @@ size_t CommUDP::write(const byte *data, int size, int peer, int protocol)
     return ret;
 }
 
-size_t CommUDP::read(byte *buffer, int sizeToRead, int peer, int protocol)
+size_t CommUDP::read(uint8_t *buffer, int sizeToRead, int peer, int protocol)
 {
     assert(0 <= peer && peer < mNumPeers && peer!= mPid);
     assert(0 <= protocol && protocol < mNumProtocols);

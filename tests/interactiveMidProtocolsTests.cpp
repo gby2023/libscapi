@@ -47,11 +47,13 @@
 #include "../include/interactive_mid_protocols/SigmaProtocolOrTwo.hpp"
 #include "../include/interactive_mid_protocols/SigmaProtocolOrMultiple.hpp"
 
+#include <cstdint>
+
 void computeSigmaProtocol(SigmaProverComputation* prover, SigmaVerifierComputation* verifier,
 	SigmaCommonInput* commonInput, shared_ptr<SigmaProverInput> proverInput) {
 	shared_ptr<SigmaProtocolMsg> firstMsg = prover->computeFirstMsg(proverInput);
 	verifier->sampleChallenge();
-	vector<byte> challenge = verifier->getChallenge();
+	vector<uint8_t> challenge = verifier->getChallenge();
 	shared_ptr<SigmaProtocolMsg> secondMsg = prover->computeSecondMsg(challenge);
 	bool verified = verifier->verify(commonInput, firstMsg.get(), secondMsg.get());
 

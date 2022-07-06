@@ -31,35 +31,35 @@
 /*************************************************/
 /*TrapdoorPermutationAbs                         */
 /*************************************************/
-byte TrapdoorPermutation::hardCorePredicate(TPElement * tpEl) {
+uint8_t TrapdoorPermutation::hardCorePredicate(TPElement * tpEl) {
 	if (!isKeySet())
 		throw IllegalStateException("keys aren't set");
 	/*
 	*  We use this implementation both in RSA permutation and in Rabin permutation.
 	* Thus, We implement it in TrapdoorPermutationAbs and let derived classes override it if needed.
 	*/
-	//Get the element value as byte array
+	//Get the element value as uint8_t array
 	biginteger elementValue = tpEl->getElement();
 	size_t bytesSize = bytesCount(elementValue);
-	std::shared_ptr<byte> bytesValue(new byte[bytesSize], std::default_delete<byte[]>());
+	std::shared_ptr<uint8_t> bytesValue(new uint8_t[bytesSize], std::default_delete<uint8_t[]>());
 	encodeBigInteger(elementValue, bytesValue.get(), bytesSize);
 
-	// Return the least significant bit (byte, as we said above)
-	byte res = bytesValue.get()[bytesSize - 1];
+	// Return the least significant bit (uint8_t, as we said above)
+	uint8_t res = bytesValue.get()[bytesSize - 1];
 	return res;
 }
 
-vector<byte> TrapdoorPermutation::hardCoreFunction(TPElement * tpEl) {
+vector<uint8_t> TrapdoorPermutation::hardCoreFunction(TPElement * tpEl) {
 	if (!isKeySet())
 		throw IllegalStateException("keys aren't set");
 	/*
 	* We use this implementation both in RSA permutation and in Rabin permutation.
 	* Thus, We implement it in TrapdoorPermutationAbs and let derived classes override it if needed.
 	*/
-	// Get the element value as byte array
+	// Get the element value as uint8_t array
 	biginteger elementValue = tpEl->getElement();
 	int bytesSize = bytesCount(elementValue);
-	std::shared_ptr<byte> bytesValue(new byte[bytesSize], std::default_delete<byte[]>());
+	std::shared_ptr<uint8_t> bytesValue(new uint8_t[bytesSize], std::default_delete<uint8_t[]>());
 	encodeBigInteger(elementValue, bytesValue.get(), bytesSize);
 	
 	// The number of bytes to get the log (N) least significant bits
@@ -67,9 +67,9 @@ vector<byte> TrapdoorPermutation::hardCoreFunction(TPElement * tpEl) {
 	double logBits = NumberOfBits(modulus) / 2.0;  //log N bits
 	int logBytes = (int)ceil(logBits / 8); //log N bites in bytes
 
-	// If the element length is less than log(N), the return byte[] should be all the element bytes
+	// If the element length is less than log(N), the return uint8_t[] should be all the element bytes
 	int size = min(logBytes, bytesSize);
-	vector<byte> leastSignificantBytes(size);
+	vector<uint8_t> leastSignificantBytes(size);
 	
 	// Copy the bytes to the output array
 	for (int i = 0; i < size; i++)

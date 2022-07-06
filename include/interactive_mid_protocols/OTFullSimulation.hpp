@@ -142,7 +142,7 @@ protected:
 	/**
 	* Runs the following lines from the protocol:
 	* "COMPUTE:
-	* 		in the byte array scenario:
+	* 		in the uint8_t array scenario:
 	*			COMPUTE c0 = x0 XOR KDF(|x0|,v0)
 	*			COMPUTE c1 = x1 XOR KDF(|x1|,v1)
 	*		in the GroupElement scenario:
@@ -167,7 +167,7 @@ public:
 	*	DENOTE the values received by (g,h) 
 	*	COMPUTE (u0,v0) = RAND(g0,g,h0,h)
 	*	COMPUTE (u1,v1) = RAND(g1,g,h1,h)
-	*	in the byte array scenario:
+	*	in the uint8_t array scenario:
 	*		COMPUTE c0 = x0 XOR KDF(|x0|,v0)
 	*		COMPUTE c1 = x1 XOR KDF(|x1|,v1)
 	*	in the GroupElement scenario:
@@ -216,7 +216,7 @@ public:
 };
 
 /**
-* This class executes the computations in the transfer function that related to the byte vector inputs.
+* This class executes the computations in the transfer function that related to the uint8_t vector inputs.
 *
 */
 class OTFullSimOnByteArraySenderTransferUtil : public OTFullSimSenderTransferUtilAbs {
@@ -262,7 +262,7 @@ private:
 	* @param r random value sampled in the protocol
 	* @return OTRFullSimMessage contains the tuple (g,h).
 	*/
-	OTRGroupElementPairMsg computeSecondTuple(byte sigma, biginteger & r, OTFullSimPreprocessPhaseValues* preprocessValues);
+	OTRGroupElementPairMsg computeSecondTuple(uint8_t sigma, biginteger & r, OTFullSimPreprocessPhaseValues* preprocessValues);
 
 protected:
 	shared_ptr<DlogGroup> dlog;
@@ -286,7 +286,7 @@ protected:
 	* @return OTROutput contains xSigma
 	* @throws CheatAttemptException
 	*/
-	virtual shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & r) = 0;
+	virtual shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & r) = 0;
 
 public:
 	/**
@@ -355,7 +355,7 @@ protected:
 	* @return OTROutput contains xSigma
 	* @throws CheatAttemptException
 	*/
-	shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & r) override;
+	shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & r) override;
 
 public:
 	/**
@@ -367,7 +367,7 @@ public:
 };
 
 /**
-* This class executes the computations in the transfer function that related to the byte vector inputs.
+* This class executes the computations in the transfer function that related to the uint8_t vector inputs.
 *
 */
 class OTFullSimOnByteArrayReceiverTransferUtil : public OTFullSimReceiverTransferUtilAbs {
@@ -383,7 +383,7 @@ private:
 	*	   REPORT ERROR"
 	* @throws CheatAttemptException if there was a cheat attempt during the execution of the protocol.
 	*/
-	void checkReceivedTuple(GroupElement* u0, GroupElement* u1, vector<byte> & c0, vector<byte> & c1);
+	void checkReceivedTuple(GroupElement* u0, GroupElement* u1, vector<uint8_t> & c0, vector<uint8_t> & c1);
 
 public:
 	/**
@@ -405,7 +405,7 @@ public:
 	* @return OTROutput contains xSigma
 	* @throws CheatAttemptException
 	*/
-	shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & r) override;
+	shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & r) override;
 
 };
 
@@ -462,7 +462,7 @@ public:
 * In batch oblivious transfer, the parties run an initialization phase and then can carry out concrete OTs later
 * whenever they have new inputs and wish to carry out an OT. 
 *
-* This class derived from OTFullSimDDHSenderAbs and implements the functionality related to the byte vector inputs.
+* This class derived from OTFullSimDDHSenderAbs and implements the functionality related to the uint8_t vector inputs.
 *
 * For more information see Protocol 7.5.1 page 201 of <i>Efficient Secure Two-Party Protocols</i> by Hazay-Lindell;
 * this is the protocol of [PVW] adapted to the stand-alone setting .
@@ -570,7 +570,7 @@ public:
 * In batch oblivious transfer, the parties run an initialization phase and then can carry out concrete
 * OTs later whenever they have new inputs and wish to carry out an OT. 
 *
-* This class derived from OTFullSimDDHReceiverAbs and implements the functionality related to the byte vector inputs.
+* This class derived from OTFullSimDDHReceiverAbs and implements the functionality related to the uint8_t vector inputs.
 *
 * For more information see Protocol 7.5.1 page 201 of <i>Efficient Secure Two-Party Protocols</i> by Hazay-Lindell;
 * this is the protocol of [PVW] adapted to the stand-alone setting <P>

@@ -37,7 +37,7 @@
 #include "../infra/aes_arm.h"
 #endif
 
-
+#include <cstdint>
 
 
 typedef struct { block rd_key[15]; int rounds; } AES_KEY;
@@ -71,10 +71,10 @@ typedef struct { block rd_key[15]; int rounds; } AES_KEY;
 
 
 
-void AES_128_Key_Expansion(const unsigned char *userkey, AES_KEY* aesKey);
-void AES_192_Key_Expansion(const unsigned char *userkey, AES_KEY* aesKey);
-void AES_256_Key_Expansion(const unsigned char *userkey, AES_KEY* aesKey);
-void AES_set_encrypt_key(const unsigned char *userKey, const int bits, AES_KEY *aesKey);
+void AES_128_Key_Expansion(const uint8_t *userkey, AES_KEY* aesKey);
+void AES_192_Key_Expansion(const uint8_t *userkey, AES_KEY* aesKey);
+void AES_256_Key_Expansion(const uint8_t *userkey, AES_KEY* aesKey);
+void AES_set_encrypt_key(const uint8_t *userKey, const int bits, AES_KEY *aesKey);
 	
 void AES_encryptC(block *in, block *out, AES_KEY *aesKey);
 void AES_ecb_encrypt(block *blk, AES_KEY *aesKey);

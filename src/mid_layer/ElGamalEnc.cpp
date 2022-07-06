@@ -43,7 +43,7 @@ void ElGamalOnGrElSendableData::initFromString(const string & row) {
 string ElGamalOnByteArraySendableData::toString() {
 	string output = cipher1->toString();
 	output += ":";
-	const byte * uc = &(cipher2[0]);
+	const uint8_t * uc = &(cipher2[0]);
 	output += string(reinterpret_cast<char const*>(uc), cipher2.size());
 	return output;
 }
@@ -245,10 +245,10 @@ shared_ptr<AsymmetricCiphertext> ElGamalOnGroupElementEnc::completeEncryption(co
 
 /**
 * Generates a Plaintext suitable to ElGamal encryption scheme from the given message.
-* @param text byte array to convert to a Plaintext object.
+* @param text uint8_t array to convert to a Plaintext object.
 * @throws IllegalArgumentException if the given message's length is greater than the maximum.
 */
-shared_ptr<Plaintext> ElGamalOnGroupElementEnc::generatePlaintext(vector<byte> & text) {
+shared_ptr<Plaintext> ElGamalOnGroupElementEnc::generatePlaintext(vector<uint8_t> & text) {
 	if ((int) text.size() > getMaxLengthOfByteArrayForPlaintext()) {
 		throw invalid_argument("the given text is too big for plaintext");
 	}
@@ -292,14 +292,14 @@ shared_ptr<Plaintext> ElGamalOnGroupElementEnc::decrypt(AsymmetricCiphertext* ci
 }
 
 /**
-* Generates a byte array from the given plaintext.
+* Generates a uint8_t array from the given plaintext.
 * This function should be used when the user does not know the specific type of the Asymmetric encryption he has,
-* and therefore he is working on byte array.
-* @param plaintext to generates byte array from. MUST be an instance of GroupElementPlaintext.
-* @return the byte array generated from the given plaintext.
+* and therefore he is working on uint8_t array.
+* @param plaintext to generates uint8_t array from. MUST be an instance of GroupElementPlaintext.
+* @return the uint8_t array generated from the given plaintext.
 * @throws IllegalArgumentException if the given plaintext is not an instance of GroupElementPlaintext.
 */
-vector<byte> ElGamalOnGroupElementEnc::generateBytesFromPlaintext(Plaintext* plaintext) {
+vector<uint8_t> ElGamalOnGroupElementEnc::generateBytesFromPlaintext(Plaintext* plaintext) {
 	
 	auto plain = dynamic_cast<GroupElementPlaintext*>(plaintext);
 	if (plain == NULL) {
@@ -423,7 +423,7 @@ shared_ptr<AsymmetricCiphertext> ElGamalOnByteArrayEnc::completeEncryption(const
 
 	//Xores the result from the kdf with the plaintext.
 	for (int i = 0; i<size; i++) {
-		c2[i] = (byte)(c2[i] ^ msg[i]);
+		c2[i] = (uint8_t)(c2[i] ^ msg[i]);
 	}
 
 	//Returns an ElGamalOnByteArrayCiphertext with c1, c2.
@@ -466,7 +466,7 @@ shared_ptr<Plaintext> ElGamalOnByteArrayEnc::decrypt(AsymmetricCiphertext* ciphe
 
 	//Xores the result from the kdf with the plaintext.
 	for (int i = 0; i<len; i++) {
-		m[i] = (byte)(m[i] ^ c2[i]);
+		m[i] = (uint8_t)(m[i] ^ c2[i]);
 	}
 
 	//Creates a plaintext object with the element and returns it.
@@ -474,14 +474,14 @@ shared_ptr<Plaintext> ElGamalOnByteArrayEnc::decrypt(AsymmetricCiphertext* ciphe
 }
 
 /**
-* Generates a byte array from the given plaintext.
+* Generates a uint8_t array from the given plaintext.
 * This function should be used when the user does not know the specific type of the Asymmetric encryption he has,
-* and therefore he is working on byte array.
-* @param plaintext to generates byte array from. MUST be an instance of ByteArrayPlaintext.
-* @return the byte array generated from the given plaintext.
+* and therefore he is working on uint8_t array.
+* @param plaintext to generates uint8_t array from. MUST be an instance of ByteArrayPlaintext.
+* @return the uint8_t array generated from the given plaintext.
 * @throws IllegalArgumentException if the given plaintext is not an instance of ByteArrayPlaintext.
 */
-vector<byte> ElGamalOnByteArrayEnc::generateBytesFromPlaintext(Plaintext* plaintext) {
+vector<uint8_t> ElGamalOnByteArrayEnc::generateBytesFromPlaintext(Plaintext* plaintext) {
 	auto plain = dynamic_cast<ByteArrayPlaintext*>(plaintext);
 	if (plain == NULL) {
 		throw invalid_argument("plaintext should be an instance of ByteArrayPlaintext");

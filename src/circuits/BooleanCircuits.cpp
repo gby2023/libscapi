@@ -34,7 +34,7 @@ void Gate::compute(map<int, Wire> & computedWires) {
 	// we call the calculateIndexOfTruthTable method to tell us the position of the output value in the truth table 
 	// and look up the value at that position.
 	bool bVal = truthTable.at(calculateIndexOfTruthTable(computedWires));
-	byte outputValue = (byte)(bVal ? 1 : 0);
+	uint8_t outputValue = (uint8_t)(bVal ? 1 : 0);
 	int numberOfOutputs = outputWireIndices.size();
 
 	// assigns output value to each of this gate's output Wires.

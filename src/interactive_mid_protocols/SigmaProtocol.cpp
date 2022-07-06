@@ -46,7 +46,7 @@ void SigmaProtocolProver::processSecondMsg() {
 		throw IllegalStateException("processFirstMsg should be called before processSecondMsg");
 	// receive the challenge.
 	int challengeSize = channel->readSize();
-	vector<byte> challenge(challengeSize); // will be deleted by the end of the scope with all its content
+	vector<uint8_t> challenge(challengeSize); // will be deleted by the end of the scope with all its content
 	channel->read(&challenge[0], challengeSize);
 
 	// compute the second message by the underlying proverComputation.
@@ -102,7 +102,7 @@ bool SigmaProtocolVerifier::processVerify(SigmaCommonInput* input) {
 }
 
 void SigmaProtocolVerifier::receiveMsgFromProver(SigmaProtocolMsg* msg) {
-	vector<byte> rawMsg;
+	vector<uint8_t> rawMsg;
 	channel->readWithSizeIntoVector(rawMsg);
 	msg->initFromByteVector(rawMsg);
 }

@@ -91,16 +91,16 @@ public:
 */
 class ByteArrayPlaintext : public Plaintext, public PlaintextSendableData {
 private:
-	vector<byte> text;
+	vector<uint8_t> text;
 public:
-	ByteArrayPlaintext(vector<byte> text) { this->text = text; };
-	vector<byte> getText() const { return text; };
+	ByteArrayPlaintext(vector<uint8_t> text) { this->text = text; };
+	vector<uint8_t> getText() const { return text; };
 	int getTextSize() const { return text.size(); };
 
 	bool operator==(const Plaintext &other) const {
 		auto temp = dynamic_cast<const ByteArrayPlaintext*>(&other);
 
-		vector<byte> text2 = temp->getText();
+		vector<uint8_t> text2 = temp->getText();
 		int len2 = temp->getTextSize();
 		int len = getTextSize();
 		if (len2 != len)
@@ -120,7 +120,7 @@ public:
 	};
 
 	string toString() override {
-		const byte * uc = &(text[0]);
+		const uint8_t * uc = &(text[0]);
 		return string(reinterpret_cast<char const*>(uc), text.size());
 	};
 
@@ -247,12 +247,12 @@ public:
 class SymmetricCiphertext : public NetworkSerialized {
 public:
 	/**
-	* @return the byte array representation of the ciphertext.
+	* @return the uint8_t array representation of the ciphertext.
 	*/
-	virtual vector<byte> getBytes() = 0;
+	virtual vector<uint8_t> getBytes() = 0;
 
 	/**
-	* @return the length of the byte array representation of the ciphertext.
+	* @return the length of the uint8_t array representation of the ciphertext.
 	*/
 	virtual int getLength() = 0;
 
@@ -290,7 +290,7 @@ public:
 	/*
 	* Delegate to underlying (decorated) ciphertext. This behavior can be overridden by inheriting classes.
 	*/
-	vector<byte> getBytes() override { return cipher->getBytes(); }
+	vector<uint8_t> getBytes() override { return cipher->getBytes(); }
 
 	/*
 	* Delegate to underlying (decorated) ciphertext. This behavior can be overridden by inheriting classes.
@@ -315,7 +315,7 @@ public:
 class ByteArraySymCiphertext : public SymmetricCiphertext {
 	friend class boost::serialization::access;
 private:
-	vector<byte> data;
+	vector<uint8_t> data;
 
 public:
 	ByteArraySymCiphertext(){}
@@ -323,14 +323,14 @@ public:
 	* The encrypted bytes need to be passed to construct this holder.
 	* @param data
 	*/
-	ByteArraySymCiphertext(vector<byte> data) { this->data = data; }
+	ByteArraySymCiphertext(vector<uint8_t> data) { this->data = data; }
 
-	vector<byte> getBytes() override { return data; }
+	vector<uint8_t> getBytes() override { return data; }
 
 	int getLength() override { return data.size(); }
 
 	string toString() override {
-		const byte * uc = &(data[0]);
+		const uint8_t * uc = &(data[0]);
 		return string(reinterpret_cast<char const*>(uc), data.size());
 	};
 
@@ -355,7 +355,7 @@ public:
 class IVCiphertext : public SymCiphertextDecorator {
 	friend class boost::serialization::access;
 private:
-	vector<byte> iv;
+	vector<uint8_t> iv;
 
 public:
 	IVCiphertext(){}
@@ -364,17 +364,17 @@ public:
 	* @param cipher symmetric ciphertext to which we need to add an IV.
 	* @param iv the IV we need to add to the ciphertext.
 	*/
-	IVCiphertext(shared_ptr<SymmetricCiphertext> cipher, vector<byte> iv) : SymCiphertextDecorator(cipher) {
+	IVCiphertext(shared_ptr<SymmetricCiphertext> cipher, vector<uint8_t> iv) : SymCiphertextDecorator(cipher) {
 		this->iv = iv;
 	}
 
 	/**
 	* @return the IV of this ciphertext-with-IV.
 	*/
-	vector<byte> getIv() { return iv; }
+	vector<uint8_t> getIv() { return iv; }
 
 	string toString() override {
-		const byte * uc = &(iv[0]);
+		const uint8_t * uc = &(iv[0]);
 		return cipher->toString() + ":" + string(reinterpret_cast<char const*>(uc), iv.size());
 	};
 

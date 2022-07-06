@@ -70,7 +70,7 @@ public:
 		return make_shared<ElGamalPublicKeySendableData>(h->generateSendableData());
 	}
 	string getAlgorithm() override { return "ElGamal"; }
-	vector<byte> getEncoded() override { throw UnsupportedOperationException("cannot decode a group element to byte array"); }
+	vector<uint8_t> getEncoded() override { throw UnsupportedOperationException("cannot decode a group element to uint8_t array"); }
 };
 
 /**
@@ -91,7 +91,7 @@ public:
 	string toString() override { return x.str(); }
 	void initFromString(const string & row) override {	x = biginteger(row); }
 	string getAlgorithm() override { return "ElGamal"; }
-	vector<byte> getEncoded() override { throw NotImplementedException(""); }
+	vector<uint8_t> getEncoded() override { throw NotImplementedException(""); }
 };
 
 //Holds the sendable data of ElGamalOnGroupElementCiphertext class.
@@ -168,17 +168,17 @@ private:
 	//First part of the ciphertext.
 	shared_ptr<GroupElementSendableData> cipher1;
 	//Second part of the ciphertext.
-	vector<byte> cipher2;
+	vector<uint8_t> cipher2;
 
 public:
-	ElGamalOnByteArraySendableData(const shared_ptr<GroupElementSendableData> & cipher1, vector<byte> & cipher2) {
+	ElGamalOnByteArraySendableData(const shared_ptr<GroupElementSendableData> & cipher1, vector<uint8_t> & cipher2) {
 		this->cipher1 = cipher1;
 		this->cipher2 = cipher2;
 	}
 
 	shared_ptr<GroupElementSendableData> getCipher1() {	return cipher1;	}
 
-	vector<byte> getCipher2() { return cipher2; }
+	vector<uint8_t> getCipher2() { return cipher2; }
 
 	string toString() override;
 	void initFromString(const string & row) override;
@@ -194,7 +194,7 @@ private:
 	//First part of the ciphertext.
 	shared_ptr<GroupElement> cipher1;
 	//Second part of the ciphertext.
-	vector<byte> cipher2;
+	vector<uint8_t> cipher2;
 
 public:
 	/**
@@ -203,7 +203,7 @@ public:
 	* @param c1 the first part of the cihertext
 	* @param c2 the second part of the ciphertext
 	*/
-	ElGamalOnByteArrayCiphertext(const shared_ptr<GroupElement> & c1, vector<byte> & c2) {
+	ElGamalOnByteArrayCiphertext(const shared_ptr<GroupElement> & c1, vector<uint8_t> & c2) {
 		cipher1 = c1;
 		cipher2 = c2;
 	}
@@ -216,7 +216,7 @@ public:
 	/**
 	* @return the second part of the ciphertext
 	*/
-	vector<byte> getC2() { return cipher2; }
+	vector<uint8_t> getC2() { return cipher2; }
 
 	shared_ptr<AsymmetricCiphertextSendableData> generateSendableData() override {
 		return make_shared<ElGamalOnByteArraySendableData>(cipher1->generateSendableData(), cipher2);
@@ -394,23 +394,23 @@ public:
 
 	
 	/**
-	* El-Gamal encryption scheme has a limit of the byte array length to generate a plaintext from.
+	* El-Gamal encryption scheme has a limit of the uint8_t array length to generate a plaintext from.
 	* @return true.
 	*/
 	bool hasMaxByteArrayLengthForPlaintext() override { return true; }
 
 	/**
-	* Returns the maximum size of the byte array that can be passed to generatePlaintext function.
-	* This is the maximum size of a byte array that can be converted to a Plaintext object suitable to this encryption scheme.
+	* Returns the maximum size of the uint8_t array that can be passed to generatePlaintext function.
+	* This is the maximum size of a uint8_t array that can be converted to a Plaintext object suitable to this encryption scheme.
 	*/
 	int getMaxLengthOfByteArrayForPlaintext() override { return dlog->getMaxLengthOfByteArrayForEncoding(); }
 
 	/**
 	* Generates a Plaintext suitable to ElGamal encryption scheme from the given message.
-	* @param text byte array to convert to a Plaintext object.
+	* @param text uint8_t array to convert to a Plaintext object.
 	* @throws invalid_argument if the given message's length is greater than the maximum.
 	*/
-	shared_ptr<Plaintext> generatePlaintext(vector<byte> & text) override;
+	shared_ptr<Plaintext> generatePlaintext(vector<uint8_t> & text) override;
 
 	/**
 	* Decrypts the given ciphertext using ElGamal encryption scheme.
@@ -423,14 +423,14 @@ public:
 	shared_ptr<Plaintext> decrypt(AsymmetricCiphertext* cipher) override;
 
 	/**
-	* Generates a byte array from the given plaintext.
+	* Generates a uint8_t array from the given plaintext.
 	* This function should be used when the user does not know the specific type of the Asymmetric encryption he has,
-	* and therefore he is working on byte array.
-	* @param plaintext to generates byte array from. MUST be an instance of GroupElementPlaintext.
-	* @return the byte array generated from the given plaintext.
+	* and therefore he is working on uint8_t array.
+	* @param plaintext to generates uint8_t array from. MUST be an instance of GroupElementPlaintext.
+	* @return the uint8_t array generated from the given plaintext.
 	* @throws invalid_argument if the given plaintext is not an instance of GroupElementPlaintext.
 	*/
-	vector<byte> generateBytesFromPlaintext(Plaintext* plaintext) override;
+	vector<uint8_t> generateBytesFromPlaintext(Plaintext* plaintext) override;
 
 	/**
 	* Calculates the ciphertext resulting of multiplying two given ciphertexts.
@@ -517,7 +517,7 @@ public:
 	}
 	
 	/**
-	* ElGamalOnByteArray encryption scheme has no limit of the byte array length to generate a plaintext from.
+	* ElGamalOnByteArray encryption scheme has no limit of the uint8_t array length to generate a plaintext from.
 	* @return false.
 	*/
 	bool hasMaxByteArrayLengthForPlaintext() override { return false; }
@@ -532,9 +532,9 @@ public:
 
 	/**
 	* Generates a Plaintext suitable to ElGamal encryption scheme from the given message.
-	* @param text byte array to convert to a Plaintext object.
+	* @param text uint8_t array to convert to a Plaintext object.
 	*/
-	shared_ptr<Plaintext> generatePlaintext(vector<byte> & text) override {
+	shared_ptr<Plaintext> generatePlaintext(vector<uint8_t> & text) override {
 		return make_shared<ByteArrayPlaintext>(text);
 	}
 
@@ -549,14 +549,14 @@ public:
 	shared_ptr<Plaintext> decrypt(AsymmetricCiphertext* cipher) override; 
 
 	/**
-	* Generates a byte array from the given plaintext.
+	* Generates a uint8_t array from the given plaintext.
 	* This function should be used when the user does not know the specific type of the Asymmetric encryption he has,
-	* and therefore he is working on byte array.
-	* @param plaintext to generates byte array from. MUST be an instance of ByteArrayPlaintext.
-	* @return the byte array generated from the given plaintext.
+	* and therefore he is working on uint8_t array.
+	* @param plaintext to generates uint8_t array from. MUST be an instance of ByteArrayPlaintext.
+	* @return the uint8_t array generated from the given plaintext.
 	* @throws invalid_argument if the given plaintext is not an instance of ByteArrayPlaintext.
 	*/
-	vector<byte> generateBytesFromPlaintext(Plaintext* plaintext) override; 
+	vector<uint8_t> generateBytesFromPlaintext(Plaintext* plaintext) override; 
 
 	/**
 	* @see edu.biu.scapi.midLayer.asymmetricCrypto.encryption.AsymmetricEnc#reconstructCiphertext(edu.biu.scapi.midLayer.ciphertext.AsymmetricCiphertextSendableData)

@@ -119,22 +119,22 @@ public:
 class SigmaOrMultipleSecondMsg : public SigmaProtocolMsg {
 
 private:
-	vector<vector<byte>> polynomial;
+	vector<vector<uint8_t>> polynomial;
 	vector<shared_ptr<SigmaProtocolMsg>> z;
-	vector<vector<byte>> challenges;
+	vector<vector<uint8_t>> challenges;
 
 public:
-	SigmaOrMultipleSecondMsg(const vector<vector<byte>> & polynomBytes, const vector<shared_ptr<SigmaProtocolMsg>> & z, const vector<vector<byte>> & challenges) {
+	SigmaOrMultipleSecondMsg(const vector<vector<uint8_t>> & polynomBytes, const vector<shared_ptr<SigmaProtocolMsg>> & z, const vector<vector<uint8_t>> & challenges) {
 		this->polynomial = polynomBytes;
 		this->z = z;
 		this->challenges = challenges;
 	};
 
-	vector<vector<byte>> getPolynomial() { return polynomial; };
+	vector<vector<uint8_t>> getPolynomial() { return polynomial; };
 
 	vector<shared_ptr<SigmaProtocolMsg>> getMessages() { return z; };
 
-	vector<vector<byte>> getChallenges() { return challenges; };
+	vector<vector<uint8_t>> getChallenges() { return challenges; };
 
 	string toString() override;
 	void initFromString(const string & raw) override;
@@ -143,16 +143,16 @@ public:
 //Initializes the field GF2E with a random irreducible polynomial with degree t.
 void initField(int t, int seed);
 //Samples random field elements to be the challenges.
-vector<vector<byte>> sampleRandomFieldElements(int numElements, int t, vector<shared_ptr<NTL::GF2E>> & elements, PrgFromOpenSSLAES*  random);
-vector<byte> convertElementToBytes(NTL::GF2E & element);
-NTL::GF2E convertBytesToGF2E(const vector<byte> & elementByts);
+vector<vector<uint8_t>> sampleRandomFieldElements(int numElements, int t, vector<shared_ptr<NTL::GF2E>> & elements, PrgFromOpenSSLAES*  random);
+vector<uint8_t> convertElementToBytes(NTL::GF2E & element);
+NTL::GF2E convertBytesToGF2E(const vector<uint8_t> & elementByts);
 NTL::GF2E generateIndexPolynomial(int i);
 //Interpolates the points to get a polynomial.
-NTL::GF2EX interpolate(const vector<byte> & challenge, vector<shared_ptr<NTL::GF2E>> & fieldElements, const vector<int> & sampledIndexes);
+NTL::GF2EX interpolate(const vector<uint8_t> & challenge, vector<shared_ptr<NTL::GF2E>> & fieldElements, const vector<int> & sampledIndexes);
 //Calculates the challenges for the statements with the witnesses.
-vector<vector<byte>> getRestChallenges(NTL::GF2EX & polynomial, const vector<int> & indexesInI);
+vector<vector<uint8_t>> getRestChallenges(NTL::GF2EX & polynomial, const vector<int> & indexesInI);
 //Returns the byteArray of the polynomial coefficients.
-vector<vector<byte>> getPolynomialBytes(NTL::GF2EX & polynomial);
+vector<vector<uint8_t>> getPolynomialBytes(NTL::GF2EX & polynomial);
 
 /**
 * Concrete implementation of Sigma Simulator.<p>
@@ -210,7 +210,7 @@ public:
 	* @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 	* @throws IllegalArgumentException if the given input is not an instance of SigmaORMultipleCommonInput.
 	*/
-	shared_ptr<SigmaSimulatorOutput> simulate(SigmaCommonInput* input, const vector<byte> & challenge) override;
+	shared_ptr<SigmaSimulatorOutput> simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge) override;
 
 	/**
 	* Computes the simulator computation with a randomly chosen challenge.
@@ -260,7 +260,7 @@ private:
 
 	shared_ptr<SigmaOrMultipleProverInput> input;			// Used in computeFirstMsg function.
 
-	vector<vector<byte>> challenges;						// hold the challenges to the underlying simulators and provers.
+	vector<vector<uint8_t>> challenges;						// hold the challenges to the underlying simulators and provers.
 															// Some will be calculate in sampleRandomValues function and some in compueSecondMsg. 
 
 	map<int, shared_ptr<SigmaSimulatorOutput>> simulatorsOutput;		// We save this because we calculate it in computeFirstMsg and using 
@@ -308,7 +308,7 @@ public:
 	* @return SigmaMultipleMsg contains z1, ..., zm.
 	* @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 	*/
-	shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<byte> & challenge) override;
+	shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<uint8_t> & challenge) override;
 
 	/**
 	* Returns the simulator that matches this sigma protocol prover.
@@ -344,14 +344,14 @@ class SigmaOrMultipleVerifierComputation : public SigmaVerifierComputation {
 private:
 	vector<shared_ptr<SigmaVerifierComputation>> verifiers;	// Underlying Sigma protocol verifiers to the OR calculation.
 	int len;										// Number of underlying verifiers.
-	vector<byte> challengeBytes;										// The challenge.
+	vector<uint8_t> challengeBytes;										// The challenge.
 	int t;											// Soundness parameter.
 	NTL::GF2E challengeElement;							// Pointer to the sampled challenge element.
 	int k;											// Number of true statements.
 	shared_ptr<PrgFromOpenSSLAES> random;
 
-	bool checkPolynomialValidity(const vector<vector<byte>> & polynomial, int k, const NTL::GF2E & challengeElement, const vector<vector<byte>> & challenges);
-	NTL::GF2EX createPolynomial(const vector<vector<byte>> & polynomialBytes);
+	bool checkPolynomialValidity(const vector<vector<uint8_t>> & polynomial, int k, const NTL::GF2E & challengeElement, const vector<vector<uint8_t>> & challenges);
+	NTL::GF2EX createPolynomial(const vector<vector<uint8_t>> & polynomialBytes);
 
 public:
 	/**
@@ -380,13 +380,13 @@ public:
 	* Sets the given challenge.
 	* @param challenge
 	*/
-	void setChallenge(const vector<byte> & challenge) override;
+	void setChallenge(const vector<uint8_t> & challenge) override;
 
 	/**
 	* Returns the sampled challenge.
 	* @return the challenge.
 	*/
-	vector<byte> getChallenge() override { return challengeBytes; }
+	vector<uint8_t> getChallenge() override { return challengeBytes; }
 
 	/**
 	* Computes the verification of the protocol.<p>

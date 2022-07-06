@@ -71,7 +71,7 @@ string SigmaOrMultipleSecondMsg::toString() {
 	string output = to_string(polynomial.size());
 	output += ":";
 	for (size_t i = 0; i < polynomial.size(); i++) {
-		const byte * poly = polynomial[i].data();
+		const uint8_t * poly = polynomial[i].data();
 		output += string(reinterpret_cast<char const*>(poly), polynomial[i].size());
 		output += ":";
 	}
@@ -84,7 +84,7 @@ string SigmaOrMultipleSecondMsg::toString() {
 	output += to_string(challenges.size());
 	output += ":";
 	for (size_t i = 0; i < challenges.size(); i++) {
-		const byte * challenge = challenges[i].data();
+		const uint8_t * challenge = challenges[i].data();
 		output += string(reinterpret_cast<char const*>(challenge), challenges[i].size());
 		output += ":";
 	}
@@ -97,7 +97,7 @@ void SigmaOrMultipleSecondMsg::initFromString(const string & row) {
 
 	int polynomialSize = stoi(str_vec[0]);
 	for (int i = 0; i < polynomialSize; i++) {
-		vector<byte> poly;
+		vector<uint8_t> poly;
 		poly.assign(str_vec[1 + i].begin(), str_vec[1 + i].end());
 		polynomial.push_back(poly);
 	}
@@ -107,7 +107,7 @@ void SigmaOrMultipleSecondMsg::initFromString(const string & row) {
 	}
 	int challengesSize = stoi(str_vec[polynomialSize + zSize]);
 	for (int i = 0; i < challengesSize; i++) {
-		vector<byte> challenge;
+		vector<uint8_t> challenge;
 		challenge.assign(str_vec[polynomialSize + zSize + 1 + i].begin(), str_vec[polynomialSize + zSize + 1 + i].end());
 		challenges.push_back(challenge);
 	}
@@ -161,7 +161,7 @@ void initField(int t, int s) {
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 * @throws IllegalArgumentException if the given input is not an instance of SigmaORMultipleCommonInput.
 */
-shared_ptr<SigmaSimulatorOutput> SigmaOrMultipleSimulator::simulate(SigmaCommonInput* input, const vector<byte> & challenge)  {
+shared_ptr<SigmaSimulatorOutput> SigmaOrMultipleSimulator::simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge)  {
 	if (!checkChallengeLength(challenge.size())) {
 		throw CheatAttemptException("the length of the given challenge is differ from the soundness parameter");
 	}
@@ -175,7 +175,7 @@ shared_ptr<SigmaSimulatorOutput> SigmaOrMultipleSimulator::simulate(SigmaCommonI
 
 	vector<shared_ptr<NTL::GF2E>> elements;
 	//For every j = 1 to n-k, sample a random element ej <- GF[2^t]. We sample the random elements in one native call.
-	vector<vector<byte>> challenges = sampleRandomFieldElements(nMinusK, t, elements, random.get());
+	vector<vector<uint8_t>> challenges = sampleRandomFieldElements(nMinusK, t, elements, random.get());
 
 	//Create two arrays of indexes. These arrays used for calculate the interpolated polynomial.
 	vector<int> indexesNotInI;
@@ -196,7 +196,7 @@ shared_ptr<SigmaSimulatorOutput> SigmaOrMultipleSimulator::simulate(SigmaCommonI
 	challenges.insert(challenges.end(), ejs.begin(), ejs.end());
 
 	vector<shared_ptr<SigmaProtocolMsg>> aOutputs;
-	vector<vector<byte>> eOutputs;
+	vector<vector<uint8_t>> eOutputs;
 	vector<shared_ptr<SigmaProtocolMsg>> zOutputs;
 	shared_ptr<SigmaSimulatorOutput> output;
 	//Run the simulator on each statement,challenge pair (xi,ei) for all i=1,...,n to obtain (ai,ei,zi).
@@ -215,12 +215,12 @@ shared_ptr<SigmaSimulatorOutput> SigmaOrMultipleSimulator::simulate(SigmaCommonI
 	return make_shared<SigmaSimulatorOutput>(first, challenge, second);
 }
 
-vector<vector<byte>> getPolynomialBytes(NTL::GF2EX & polynomial) {
+vector<vector<uint8_t>> getPolynomialBytes(NTL::GF2EX & polynomial) {
 	long degree = deg(polynomial);
 
-	vector<vector<byte>> polynomBytes;
+	vector<vector<uint8_t>> polynomBytes;
 
-	//convert each coefficient polynomial to byte array and put it in the output array.
+	//convert each coefficient polynomial to uint8_t array and put it in the output array.
 	for (int i = 0; i <= degree; i++) {
 		//get the coefficient polynomial
 		NTL::GF2E coefficient = coeff(polynomial, i);
@@ -232,10 +232,10 @@ vector<vector<byte>> getPolynomialBytes(NTL::GF2EX & polynomial) {
 	return polynomBytes;
 }
 
-vector<vector<byte>> getRestChallenges(NTL::GF2EX & polynomial, const vector<int> & indexesInI) {
+vector<vector<uint8_t>> getRestChallenges(NTL::GF2EX & polynomial, const vector<int> & indexesInI) {
 
 	int size = indexesInI.size();
-	vector<vector<byte>> challenges;
+	vector<vector<uint8_t>> challenges;
 
 	//calculate the y coordinate (the challenge) to each one of the indexes (the indexes).
 	for (int i = 0; i<size; i++) {
@@ -251,7 +251,7 @@ vector<vector<byte>> getRestChallenges(NTL::GF2EX & polynomial, const vector<int
 	return challenges;
 }
 
-NTL::GF2EX interpolate(const vector<byte> & challenge, vector<shared_ptr<NTL::GF2E>> & fieldElements, const vector<int> & sampledIndexes) {
+NTL::GF2EX interpolate(const vector<uint8_t> & challenge, vector<shared_ptr<NTL::GF2E>> & fieldElements, const vector<int> & sampledIndexes) {
 	//Create vectors of polynomials to the interpolate function.
 	NTL::vec_GF2E xVector; //the x coordinates
 	NTL::vec_GF2E yVector; //the y coordinates
@@ -290,23 +290,23 @@ NTL::GF2E generateIndexPolynomial(int i) {
 
 	NTL::ZZ index;
 	index = i;
-	unsigned char* indexBytes = new unsigned char[4];
+	uint8_t* indexBytes = new uint8_t[4];
 	BytesFromZZ(indexBytes, index, 4);
 
 	NTL::GF2X indexPoly;
-	GF2XFromBytes(indexPoly, (unsigned char*)indexBytes, 4);
+	GF2XFromBytes(indexPoly, (uint8_t*)indexBytes, 4);
 
 	delete [](indexBytes);
 
 	return to_GF2E(indexPoly);
 }
 
-vector<vector<byte>> sampleRandomFieldElements(int numElements, int t, vector<shared_ptr<NTL::GF2E>> & elements, PrgFromOpenSSLAES* random) {
-	vector<vector<byte>> challenges;
+vector<vector<uint8_t>> sampleRandomFieldElements(int numElements, int t, vector<shared_ptr<NTL::GF2E>> & elements, PrgFromOpenSSLAES* random) {
+	vector<vector<uint8_t>> challenges;
 
 	//Samples random elements, puts their bytes in the output array and put their addresses in the pointers array.
 	for (int i = 0; i<numElements; i++) {
-		vector<byte> e(t / 8);
+		vector<uint8_t> e(t / 8);
 		random->getPRGBytes(e, 0, t / 8);
 		//modify the challenge to be positive.
 		e.data()[e.size() - 1] = e.data()[e.size() - 1] & 127;
@@ -320,18 +320,18 @@ vector<vector<byte>> sampleRandomFieldElements(int numElements, int t, vector<sh
 	return challenges;
 }
 
-vector<byte> convertElementToBytes(NTL::GF2E & element) {
+vector<uint8_t> convertElementToBytes(NTL::GF2E & element) {
 	//Get the bytes of the random element.
 	NTL::GF2X fromEl = NTL::rep(element); //convert the GF2E element to GF2X element.
 	int numBytes = NTL::NumBytes(fromEl); //get the number of element bytes.
 	
-	vector<byte> challenge(numBytes);
+	vector<uint8_t> challenge(numBytes);
 	//the function rep returns the representation of GF2E as the related GF2X, it returns as read only.
 	BytesFromGF2X(challenge.data(), fromEl, numBytes);
 	return challenge;
 }
 
-NTL::GF2E convertBytesToGF2E(const vector<byte> & elementByts) {
+NTL::GF2E convertBytesToGF2E(const vector<uint8_t> & elementByts) {
 	
 	//translate the bytes into a GF2X element.
 	NTL::GF2X e;
@@ -348,8 +348,8 @@ NTL::GF2E convertBytesToGF2E(const vector<byte> & elementByts) {
 * @throws IllegalArgumentException if the given input is not an instance of SigmaORMultipleCommonInput.
 */
 shared_ptr<SigmaSimulatorOutput> SigmaOrMultipleSimulator::simulate(SigmaCommonInput* input)  {
-	//Create a new byte array of size t/8, to get the required byte size and fill the byte array with random values.
-	vector<byte> e(t / 8);
+	//Create a new uint8_t array of size t/8, to get the required uint8_t size and fill the uint8_t array with random values.
+	vector<uint8_t> e(t / 8);
 	random->getPRGBytes(e, 0, t / 8);
 	//modify the challenge to be positive.
 	e.data()[e.size() - 1] = e.data()[e.size() - 1] & 127;
@@ -467,7 +467,7 @@ The message is Q,e1,z1,...,en,zn (where by Q we mean its coefficients)".<p>
 * @return SigmaMultipleMsg contains z1, ..., zm.
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 */
-shared_ptr<SigmaProtocolMsg> SigmaOrMultipleProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaOrMultipleProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 	//Create two arrays of indexes. These arrays used to calculate the interpolated polynomial.
 	vector<int> indexesNotInI;
 	vector<int> indexesInI;
@@ -500,7 +500,7 @@ shared_ptr<SigmaProtocolMsg> SigmaOrMultipleProverComputation::computeSecondMsg(
 		}
 	}
 
-	//Get the byte array that represent the polynomial
+	//Get the uint8_t array that represent the polynomial
 	auto polynomBytes = getPolynomialBytes(polynomial);
 
 	//Create a SigmaORMultipleSecondMsg with the messages array.
@@ -567,7 +567,7 @@ void SigmaOrMultipleVerifierComputation::sampleChallenge() {
 * Sets the given challenge.
 * @param challenge
 */
-void SigmaOrMultipleVerifierComputation::setChallenge(const vector<byte> & challenge) {
+void SigmaOrMultipleVerifierComputation::setChallenge(const vector<uint8_t> & challenge) {
 	challengeBytes = challenge;
 
 	challengeElement = convertBytesToGF2E(challenge);
@@ -631,7 +631,7 @@ bool SigmaOrMultipleVerifierComputation::verify(SigmaCommonInput* input, SigmaPr
 	return verified;
 }
 
-bool SigmaOrMultipleVerifierComputation::checkPolynomialValidity(const vector<vector<byte>> & polynomial, int k, const NTL::GF2E & challengeElement, const vector<vector<byte>> & challenges) {
+bool SigmaOrMultipleVerifierComputation::checkPolynomialValidity(const vector<vector<uint8_t>> & polynomial, int k, const NTL::GF2E & challengeElement, const vector<vector<uint8_t>> & challenges) {
 	bool valid = true;
 
 	//Create the polynomial out of the coefficeints array.
@@ -653,7 +653,7 @@ bool SigmaOrMultipleVerifierComputation::checkPolynomialValidity(const vector<ve
 
 	//for each one of the challenges, check that Q(i)=ei
 	for (int i = 0; i<size; i++) {
-		//create the challenge element out of the byte array.
+		//create the challenge element out of the uint8_t array.
 		NTL::GF2E challengeElement = convertBytesToGF2E(challenges[i]);
 
 		//create the index element
@@ -670,7 +670,7 @@ bool SigmaOrMultipleVerifierComputation::checkPolynomialValidity(const vector<ve
 	return valid;
 }
 
-NTL::GF2EX SigmaOrMultipleVerifierComputation::createPolynomial(const vector<vector<byte>> & polynomialBytes) {
+NTL::GF2EX SigmaOrMultipleVerifierComputation::createPolynomial(const vector<vector<uint8_t>> & polynomialBytes) {
 	int deg = polynomialBytes.size();
 	NTL::GF2EX polynom;
 

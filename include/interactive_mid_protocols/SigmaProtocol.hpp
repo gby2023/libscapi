@@ -98,11 +98,11 @@ class SigmaProtocolMsg : public NetworkSerialized {};
 class SigmaSimulatorOutput {
 private:
 	shared_ptr<SigmaProtocolMsg> a;
-	vector<byte> e;
+	vector<uint8_t> e;
 	shared_ptr<SigmaProtocolMsg> z;
 
 public:
-	SigmaSimulatorOutput(const shared_ptr<SigmaProtocolMsg> & a, const vector<byte> & e, const shared_ptr<SigmaProtocolMsg> & z) {
+	SigmaSimulatorOutput(const shared_ptr<SigmaProtocolMsg> & a, const vector<uint8_t> & e, const shared_ptr<SigmaProtocolMsg> & z) {
 		this->a = a;
 		this->e = e;
 		this->z = z;
@@ -118,7 +118,7 @@ public:
 	* All SigmaSimulators contains first message, challenge and second message. 
 	* Returns the challenge 
 	*/
-	vector<byte> getE() { return e; }
+	vector<uint8_t> getE() { return e; }
 
 	/**
 	* All SigmaSimulators contains first message, challenge and second message. 
@@ -140,7 +140,7 @@ public:
 	* Computes the simulator computation.
 	*/
 	virtual shared_ptr<SigmaSimulatorOutput> simulate(SigmaCommonInput* input,
-		const vector<byte> & challenge) = 0;
+		const vector<uint8_t> & challenge) = 0;
 
 	/**
 	* Chooses random challenge and computes the simulator computation.
@@ -165,7 +165,7 @@ public:
 	/**
 	* Computes the second message of the sigma protocol.
 	*/
-	virtual shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<byte> & challenge) = 0;
+	virtual shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<uint8_t> & challenge) = 0;
 	/**
 	* Returns the soundness parameter for this Sigma protocol.
 	* @return t soundness parameter
@@ -200,11 +200,11 @@ public:
 	/**
 	* Sets the given challenge.
 	*/
-	virtual void setChallenge(const vector<byte> & challenge) = 0;
+	virtual void setChallenge(const vector<uint8_t> & challenge) = 0;
 	/**
 	* @return the challenge.
 	*/
-	virtual vector<byte> getChallenge() = 0;
+	virtual vector<uint8_t> getChallenge() = 0;
 };
 
 /**
@@ -349,15 +349,15 @@ public:
 	/**
 	* Sets the given challenge
 	*/
-	void setChallenge(const vector<byte> & challenge) {
+	void setChallenge(const vector<uint8_t> & challenge) {
 		// delegates to the underlying verifierComputation object.
 		verifierComputation->setChallenge(challenge);
 	}
 
 	/**
-	* Return the challenge byte array
+	* Return the challenge uint8_t array
 	*/
-	vector<byte> getChallenge() {
+	vector<uint8_t> getChallenge() {
 		// delegates to the underlying verifierComputation object.
 		return verifierComputation->getChallenge();
 	}
@@ -376,7 +376,7 @@ private:
 	/**
 	* Sends the challenge to the prover.
 	*/
-	void sendChallengeToProver(const vector<byte> & challenge) {
+	void sendChallengeToProver(const vector<uint8_t> & challenge) {
 		channel->writeWithSize(challenge.data(), challenge.size());
 		//channel->write(challenge.data(), challenge.size());
 	}

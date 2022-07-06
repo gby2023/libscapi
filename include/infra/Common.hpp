@@ -109,7 +109,7 @@ using biginteger = boost::multiprecision::cpp_int;
 using biginteger = boost::multiprecision::mpz_int;
 #endif
 
-typedef unsigned char byte;		// put in global namespace to avoid ambiguity with other byte typedefs
+// typedef uint8_t uint8_t;		// put in global namespace to avoid ambiguity with other uint8_t typedefs
 
 
 int find_log2_floor(biginteger);
@@ -117,7 +117,7 @@ int NumberOfBits(const biginteger & bi);
 
 /*
 * Retruns the number of bytes needed to represent a biginteger
-* Notice that due to the sign number of byte can exceed log(value)
+* Notice that due to the sign number of uint8_t can exceed log(value)
 */
 size_t bytesCount(const biginteger & value);
 
@@ -125,25 +125,25 @@ class PrgFromOpenSSLAES;
 
 shared_ptr<PrgFromOpenSSLAES> get_seeded_prg();
 
-void copy_byte_vector_to_byte_array(const vector<byte> &source_vector, byte * dest, int beginIndex);
-void copy_byte_array_to_byte_vector(const byte* src, int src_len, vector<byte>& target_vector, int beginIndex);
+void copy_byte_vector_to_byte_array(const vector<uint8_t> &source_vector, uint8_t * dest, int beginIndex);
+void copy_byte_array_to_byte_vector(const uint8_t* src, int src_len, vector<uint8_t>& target_vector, int beginIndex);
 
 /*
-* Converting big integer to a byte array. Array must be allocated already
+* Converting big integer to a uint8_t array. Array must be allocated already
 * Number can be postive or negative - the sign will be preserved in the encoding
 * Use byteCount(biginteger) method to calculate the number of bytes needed.
 */
-void encodeBigInteger(const biginteger & value, byte* output, size_t length);
+void encodeBigInteger(const biginteger & value, uint8_t* output, size_t length);
 
-void fastEncodeBigInteger(const biginteger & value, byte* output, size_t length);
+void fastEncodeBigInteger(const biginteger & value, uint8_t* output, size_t length);
 
 
 /*
-* Decodoing big integer from byte array back to a biginteger object
+* Decodoing big integer from uint8_t array back to a biginteger object
 */
-biginteger decodeBigInteger(const byte* input, size_t length);
+biginteger decodeBigInteger(const uint8_t* input, size_t length);
 
-biginteger fastDecodeBigInteger(const byte* input, size_t length);
+biginteger fastDecodeBigInteger(const uint8_t* input, size_t length);
 
 
 
@@ -171,19 +171,19 @@ bool isPrime(const biginteger & bi, int certainty = 40);
 void print_elapsed_ms(std::chrono::time_point<std::chrono::system_clock> start, string message);
 void print_elapsed_micros(std::chrono::time_point<std::chrono::system_clock> start, string message);
 std::chrono::time_point<std::chrono::system_clock> scapi_now();
-string hexStr(vector<byte> const & data);
-void print_byte_array(byte * arr, int len, string message);
-void gen_random_bytes_vector(vector<byte> &v, const int len, PrgFromOpenSSLAES* random);
+string hexStr(vector<uint8_t> const & data);
+void print_byte_array(uint8_t * arr, int len, string message);
+void gen_random_bytes_vector(vector<uint8_t> &v, const int len, PrgFromOpenSSLAES* random);
 
 /**
-* Abstract marker interface that allow serialization and deserialization from byte array and size
+* Abstract marker interface that allow serialization and deserialization from uint8_t array and size
 */
 class NetworkSerialized {
 public:
 	virtual string toString() = 0;
 	virtual void initFromString(const string & raw) = 0;
-	virtual void initFromByteVector(const vector<byte> & byteVector) {
-		const byte * uc = &(byteVector[0]);
+	virtual void initFromByteVector(const vector<uint8_t> & byteVector) {
+		const uint8_t * uc = &(byteVector[0]);
 		std::string s(reinterpret_cast<char const*>(uc), byteVector.size());
 		initFromString(s);
 	}

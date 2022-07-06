@@ -164,7 +164,7 @@ private:
 	* @param l
 	* @param ctOutput
 	*/
-	vector<byte> receiveDecommit(long id) {
+	vector<uint8_t> receiveDecommit(long id) {
 		auto val = receiver->receiveDecommitment(id);
 		if (!val) 
 			throw CheatAttemptException("Decommit phase returned invalid");
@@ -178,9 +178,9 @@ private:
 	*   OUTPUT nothing".
 	* This is a blocking function!
 	*/
-	void processSecondMsg(byte* e, int eSize) {
+	void processSecondMsg(uint8_t* e, int eSize) {
 		// compute the second message by the underlying proverComputation.
-		vector<byte> eVector;
+		vector<uint8_t> eVector;
 		copy_byte_array_to_byte_vector(e, eSize, eVector, 0);
 		auto z = sProver->computeSecondMsg(eVector);
 		// send the second message.
@@ -260,7 +260,7 @@ private:
 	* Runs COMMIT.commit as the committer with input e.
 	* @param e
 	*/
-	long commit(const vector<byte> & e) {
+	long commit(const vector<uint8_t> & e) {
 		auto val = committer->generateCommitValue(e);
 		long id = random->getRandom64();
 		id = abs(id);
@@ -376,7 +376,7 @@ private:
 	* @param ctOutput
 	* @return
 	*/
-	vector<byte> receiveDecommit(long id) {
+	vector<uint8_t> receiveDecommit(long id) {
 		auto val = receiver->receiveDecommitment(id);
 		if (val == NULL) throw CheatAttemptException("Decommit phase returned invalid");
 		return receiver->generateBytesFromCommitValue(val.get());
@@ -395,7 +395,7 @@ private:
 	*   OUTPUT nothing".<p>
 	* This is a blocking function!
 	*/
-	void processSecondMsg(const vector<byte> & e, const shared_ptr<CmtRCommitPhaseOutput> & trap);
+	void processSecondMsg(const vector<uint8_t> & e, const shared_ptr<CmtRCommitPhaseOutput> & trap);
 
 };
 
@@ -420,7 +420,7 @@ private:
 	/**
 	* Runs COMMIT.commit as the committer with input e.
 	*/
-	long commit(const vector<byte> & e);
+	long commit(const vector<uint8_t> & e);
 
 	/**
 	* Waits for a message a from the prover.
@@ -484,7 +484,7 @@ class ZKPOKFiatShamirProof : public NetworkSerialized {
 
 private:
 	shared_ptr<SigmaProtocolMsg> a;
-	vector<byte> e;
+	vector<uint8_t> e;
 	shared_ptr<SigmaProtocolMsg> z;
 
 public:
@@ -497,7 +497,7 @@ public:
 	* @param e challenge
 	* @param z second message
 	*/
-	ZKPOKFiatShamirProof(const shared_ptr<SigmaProtocolMsg> & a, const vector<byte> & e, const shared_ptr<SigmaProtocolMsg> & z)
+	ZKPOKFiatShamirProof(const shared_ptr<SigmaProtocolMsg> & a, const vector<uint8_t> & e, const shared_ptr<SigmaProtocolMsg> & z)
 		: a(a), e(e), z(z){}
 
 	/**
@@ -508,7 +508,7 @@ public:
 	/**
 	* Returns the challenge.
 	*/
-	vector<byte> getE() { return e; }
+	vector<uint8_t> getE() { return e; }
 
 	/**
 	* @return second message.
@@ -531,7 +531,7 @@ class ZKPOKFiatShamirCommonInput : public ZKCommonInput {
 
 private:
 	SigmaCommonInput* input; //Input for the underlying sigma protocol.
-	vector<byte> context;			  //possible context information.
+	vector<uint8_t> context;			  //possible context information.
 
 public:
 	/**
@@ -539,7 +539,7 @@ public:
 	* @param input for the underlying sigma protocol
 	* @param cont possible context information
 	*/
-	ZKPOKFiatShamirCommonInput(SigmaCommonInput* input, const vector<byte> & cont)
+	ZKPOKFiatShamirCommonInput(SigmaCommonInput* input, const vector<uint8_t> & cont)
 		: input(input), context(cont) {}
 
 	/**
@@ -550,7 +550,7 @@ public:
 	/**
 	* Returns the context information.
 	*/
-	vector<byte> getContext() {	return context; }
+	vector<uint8_t> getContext() {	return context; }
 
 };
 
@@ -564,7 +564,7 @@ class ZKPOKFiatShamirProverInput : public ZKProverInput {
 
 private:
 	shared_ptr<SigmaProverInput> input; //Input for the underlying sigma protocol.
-	vector<byte> context;			  //possible context information.
+	vector<uint8_t> context;			  //possible context information.
 
 public:
 	/**
@@ -572,7 +572,7 @@ public:
 	* @param input for the underlying sigma protocol.
 	* @param cont context information
 	*/
-	ZKPOKFiatShamirProverInput(const shared_ptr<SigmaProverInput> & input, const vector<byte> & cont)
+	ZKPOKFiatShamirProverInput(const shared_ptr<SigmaProverInput> & input, const vector<uint8_t> & cont)
 		: input(input), context(cont){}
 
 	/**
@@ -583,7 +583,7 @@ public:
 	/**
 	* Returns the context information.
 	*/
-	vector<byte> getContext() {	return context;	}
+	vector<uint8_t> getContext() {	return context;	}
 };
 
 /**
@@ -615,7 +615,7 @@ private:
 	* @return the computed challenge
 	* @throws IOException
 	*/
-	vector<byte> computeChallenge(ZKPOKFiatShamirProverInput* input, SigmaProtocolMsg* a);
+	vector<uint8_t> computeChallenge(ZKPOKFiatShamirProverInput* input, SigmaProtocolMsg* a);
 
 	/**
 	* Sends the given message to the verifier.
@@ -701,7 +701,7 @@ private:
 	* @return the computed challenge
 	* @throws IOException
 	*/
-	vector<byte> computeChallenge(ZKPOKFiatShamirCommonInput* input, SigmaProtocolMsg* a);
+	vector<uint8_t> computeChallenge(ZKPOKFiatShamirCommonInput* input, SigmaProtocolMsg* a);
 
 	/**
 	* Verifies the proof.
@@ -710,7 +710,7 @@ private:
 	* @throws IOException if failed to send the message.
 	* @throws ClassNotFoundException
 	*/
-	bool proccessVerify(SigmaCommonInput* input, SigmaProtocolMsg* a, const vector<byte> & challenge, SigmaProtocolMsg* z);
+	bool proccessVerify(SigmaCommonInput* input, SigmaProtocolMsg* a, const vector<uint8_t> & challenge, SigmaProtocolMsg* z);
 
 public:
 

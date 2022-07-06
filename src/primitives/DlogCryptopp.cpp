@@ -115,11 +115,11 @@ int CryptoPpDlogZpSafePrime::calcK(biginteger p) {
 	int bitsInp = find_log2_floor(p) + 1;
 	//any string of length k has a numeric value that is less than (p-1)/2 - 1
 	int k = (bitsInp - 3) / 8;
-	//The actual k that we allow is one byte less. This will give us an extra byte to pad the binary string passed to encode to a group element with a 01 byte
-	//and at decoding we will remove that extra byte. This way, even if the original string translates to a negative BigInteger the encode and decode functions
+	//The actual k that we allow is one uint8_t less. This will give us an extra uint8_t to pad the binary string passed to encode to a group element with a 01 uint8_t
+	//and at decoding we will remove that extra uint8_t. This way, even if the original string translates to a negative BigInteger the encode and decode functions
 	//always work with positive numbers. The encoding will be responsible for padding and the decoding will be responsible for removing the pad.
 	k--;
-	//For technical reasons of how we chose to do the padding for encoding and decoding (the least significant byte of the encoded string contains the size of the 
+	//For technical reasons of how we chose to do the padding for encoding and decoding (the least significant uint8_t of the encoded string contains the size of the 
 	//the original binary string sent for encoding, which is used to remove the padding when decoding) k has to be <= 255 bytes so that the size can be encoded in the padding.
 	if (k > 255) {
 		k = 255;
@@ -236,7 +236,7 @@ CryptoPpDlogZpSafePrime::~CryptoPpDlogZpSafePrime()
 	// super.finalize(); - no need. happens automatically
 }
 
- GroupElement * CryptoPpDlogZpSafePrime::encodeByteArrayToGroupElement(const vector<unsigned char> & binaryString) {
+ GroupElement * CryptoPpDlogZpSafePrime::encodeByteArrayToGroupElement(const vector<uint8_t> & binaryString) {
 	//Any string of length up to k has numeric value that is less than (p-1)/2 - 1.
 	//If longer than k then throw exception.
 	 int bs_size = binaryString.size();
@@ -244,12 +244,12 @@ CryptoPpDlogZpSafePrime::~CryptoPpDlogZpSafePrime()
 		throw length_error("The binary array to encode is too long.");
 	}
 
-	//Pad the binaryString with a x01 byte in the most significant byte to ensure that the 
+	//Pad the binaryString with a x01 uint8_t in the most significant uint8_t to ensure that the 
 	//encoding and decoding always work with positive numbers.
-	list<unsigned char> newString(binaryString.begin(), binaryString.end());
+	list<uint8_t> newString(binaryString.begin(), binaryString.end());
 	newString.push_front(1);
 
-	byte *bstr = new byte[bs_size + 1];
+	uint8_t *bstr = new uint8_t[bs_size + 1];
 	for (auto it = newString.begin(); it != newString.end(); ++it) {
 		int index = std::distance(newString.begin(), it);
 		bstr[index] = *it;
@@ -266,7 +266,7 @@ CryptoPpDlogZpSafePrime::~CryptoPpDlogZpSafePrime()
 	return element;
 }
 
- const vector<unsigned char> CryptoPpDlogZpSafePrime::decodeGroupElementToByteArray(GroupElement * groupElement) {
+ const vector<uint8_t> CryptoPpDlogZpSafePrime::decodeGroupElementToByteArray(GroupElement * groupElement) {
 	 ZpSafePrimeElementCryptoPp * zp_element = dynamic_cast<ZpSafePrimeElementCryptoPp *>(groupElement);
 	 if (!(zp_element))
 		 throw invalid_argument("element type doesn't match the group type");
@@ -287,22 +287,22 @@ CryptoPpDlogZpSafePrime::~CryptoPpDlogZpSafePrime()
 
 	 CryptoPP::Integer cpi = biginteger_to_cryptoppint(goodRoot);
 	 int len = ceil((cpi.BitCount() + 1) / 8.0); //ceil(find_log2_floor(goodRoot) / 8.0);
-	 byte * output = new byte[len];
+	 uint8_t * output = new uint8_t[len];
 	 cpi.Encode(output, len);
-	 vector<byte> res;
+	 vector<uint8_t> res;
 	 
-	 // Remove the padding byte at the most significant position (that was added while encoding)
+	 // Remove the padding uint8_t at the most significant position (that was added while encoding)
 	 for (int i = 1; i < len; ++i)
 		 res.push_back(output[i]);
 	 return res;
  }
 
- const vector<unsigned char> CryptoPpDlogZpSafePrime::mapAnyGroupElementToByteArray(GroupElement * groupElement) {
+ const vector<uint8_t> CryptoPpDlogZpSafePrime::mapAnyGroupElementToByteArray(GroupElement * groupElement) {
 	 ZpSafePrimeElementCryptoPp * zp_element = dynamic_cast<ZpSafePrimeElementCryptoPp *>(groupElement);
 	 if (!(zp_element))
 		 throw invalid_argument("element type doesn't match the group type");
 	 string res = string(zp_element->getElementValue());
-	 return vector<unsigned char>(res.begin(), res.end());
+	 return vector<uint8_t>(res.begin(), res.end());
  }
 
  GroupElement * CryptoPpDlogZpSafePrime::reconstructElement(bool bCheckMembership, GroupElementSendableData * data) {

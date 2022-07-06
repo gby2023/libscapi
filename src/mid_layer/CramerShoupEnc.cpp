@@ -246,7 +246,7 @@ shared_ptr<AsymmetricCiphertext> CramerShoupOnGroupElementEnc::encrypt(const sha
 	*	Calculate 	u1 = g1^r
 	*         		u2 = g2^r
 	*         		e = (h^r)*msgEl
-	*	Convert u1, u2, e to byte[] using the dlogGroup
+	*	Convert u1, u2, e to uint8_t[] using the dlogGroup
 	*	Compute alpha  - the result of computing the hash function on the concatenation u1+ u2+ e.
 	*	Calculate v = c^r * d^(r*alpha)
 	*	Create and return an CramerShoupCiphertext object with u1, u2, e and v.
@@ -264,7 +264,7 @@ shared_ptr<AsymmetricCiphertext> CramerShoupOnGroupElementEnc::encrypt(const sha
 	*	Calculate 	u1 = g1^r
 	*         		u2 = g2^r
 	*         		e = (h^r)*msgEl
-	*	Convert u1, u2, e to byte[] using the dlogGroup
+	*	Convert u1, u2, e to uint8_t[] using the dlogGroup
 	*	Compute alpha  - the result of computing the hash function on the concatenation u1+ u2+ e.
 	*	Calculate v = c^r * d^(r*alpha)
 	*	Create and return an CramerShoupCiphertext object with u1, u2, e and v.
@@ -309,7 +309,7 @@ shared_ptr<AsymmetricCiphertext> CramerShoupOnGroupElementEnc::encrypt(const sha
 * @param alpha the value returned from the hash calculation.
 * @return the calculated value v.
 */
-shared_ptr<GroupElement> CramerShoupOnGroupElementEnc::calcV(const biginteger & r, vector<byte> & alpha) {
+shared_ptr<GroupElement> CramerShoupOnGroupElementEnc::calcV(const biginteger & r, vector<uint8_t> & alpha) {
 	auto cExpr = dlogGroup->exponentiate(publicKey->getC().get(), r);
 	biginteger rAlphaModQ = (r * decodeBigInteger(alpha.data(), alpha.size())) % dlogGroup->getOrder();
 	auto dExpRAlpha = dlogGroup->exponentiate(publicKey->getD().get(), rAlphaModQ);
@@ -317,13 +317,13 @@ shared_ptr<GroupElement> CramerShoupOnGroupElementEnc::calcV(const biginteger & 
 }
 
 /**
-* Recieves three byte arrays and calculates the hash function on their concatenation.
+* Recieves three uint8_t arrays and calculates the hash function on their concatenation.
 * @param u1ToByteArray
 * @param u2ToByteArray
 * @param eToByteArray
 * @return the result of hash(u1ToByteArray+u2ToByteArray+eToByteArray)
 */
-vector<byte> CramerShoupOnGroupElementEnc::calcAlpha(vector<byte> & u1ToByteArray, vector<byte> & u2ToByteArray, vector<byte> & eToByteArray) {
+vector<uint8_t> CramerShoupOnGroupElementEnc::calcAlpha(vector<uint8_t> & u1ToByteArray, vector<uint8_t> & u2ToByteArray, vector<uint8_t> & eToByteArray) {
 	//Concatenates u1, u2 and e into u1.
 	u1ToByteArray.insert(u1ToByteArray.end(), u2ToByteArray.begin(), u2ToByteArray.end());
 	u1ToByteArray.insert(u1ToByteArray.end(), eToByteArray.begin(), eToByteArray.end());
@@ -334,17 +334,17 @@ vector<byte> CramerShoupOnGroupElementEnc::calcAlpha(vector<byte> & u1ToByteArra
 	hash->update(u1ToByteArray, 0, u1ToByteArray.size());
 
 	//Gets the result of hashing the updated input.
-	vector<byte> alpha;
+	vector<uint8_t> alpha;
 	hash->hashFinal(alpha, 0);
 	return alpha;
 }
 
 /**
 * Generates a Plaintext suitable to CramerShoup encryption scheme from the given message.
-* @param text byte array to convert to a Plaintext object.
+* @param text uint8_t array to convert to a Plaintext object.
 * @throws IllegalArgumentException if the given message's length is greater than the maximum.
 */
-shared_ptr<Plaintext> CramerShoupOnGroupElementEnc::generatePlaintext(vector<byte> & text) {
+shared_ptr<Plaintext> CramerShoupOnGroupElementEnc::generatePlaintext(vector<uint8_t> & text) {
 	if ((int) text.size() > getMaxLengthOfByteArrayForPlaintext()) {
 		throw invalid_argument("the given text is too big for plaintext");
 	}
@@ -363,7 +363,7 @@ shared_ptr<Plaintext> CramerShoupOnGroupElementEnc::decrypt(AsymmetricCiphertext
 	/*
 	If cipher is not instance of CramerShoupCiphertext, throw IllegalArgumentException.
 	If private key is null, then cannot decrypt. Throw exception.
-	Convert u1, u2, e to byte[] using the dlogGroup
+	Convert u1, u2, e to uint8_t[] using the dlogGroup
 	Compute alpha - the result of computing the hash function on the concatenation u1+ u2+ e.
 	if u_1^(x1+y1*alpha) * u_2^(x2+y2*alpha) != v throw exception
 	Calculate m = e*((u1^z)^-1)   // equal to m = e/u1^z . We don't have a divide operation in DlogGroup so we calculate it in equivalent way
@@ -380,7 +380,7 @@ shared_ptr<Plaintext> CramerShoupOnGroupElementEnc::decrypt(AsymmetricCiphertext
 		throw invalid_argument("ciphertext should be instance of CramerShoupCiphertext");
 	}
 
-	//Converts the u1, u2 and e elements to byte[].
+	//Converts the u1, u2 and e elements to uint8_t[].
 	auto u1 = dlogGroup->mapAnyGroupElementToByteArray(ciphertext->getU1().get());
 	auto u2 = dlogGroup->mapAnyGroupElementToByteArray(ciphertext->getU2().get());
 	auto e = dlogGroup->mapAnyGroupElementToByteArray(ciphertext->getE().get());
@@ -406,7 +406,7 @@ shared_ptr<Plaintext> CramerShoupOnGroupElementEnc::decrypt(AsymmetricCiphertext
 * @param alpha parameter needs to validation.
 * @throws ScapiRuntimeException if the given cipher is not valid.
 */
-void CramerShoupOnGroupElementEnc::checkValidity(CramerShoupOnGroupElementCiphertext* cipher, vector<byte> & alpha) {
+void CramerShoupOnGroupElementEnc::checkValidity(CramerShoupOnGroupElementCiphertext* cipher, vector<uint8_t> & alpha) {
 
 	//Calculates u1^(x1+y1*alpha).
 	biginteger alphaBI = mp::abs(decodeBigInteger(alpha.data(), alpha.size()));
@@ -424,14 +424,14 @@ void CramerShoupOnGroupElementEnc::checkValidity(CramerShoupOnGroupElementCipher
 }
 
 /**
-* Generates a byte array from the given plaintext.
+* Generates a uint8_t array from the given plaintext.
 * This function should be used when the user does not know the specific type of the Asymmetric encryption he has,
-* and therefore he is working on byte array.
-* @param plaintext to generates byte array from. MUST be an instance of GroupElementPlaintext.
-* @return the byte array generated from the given plaintext.
+* and therefore he is working on uint8_t array.
+* @param plaintext to generates uint8_t array from. MUST be an instance of GroupElementPlaintext.
+* @return the uint8_t array generated from the given plaintext.
 * @throws IllegalArgumentException if the given plaintext is not an instance of GroupElementPlaintext.
 */
-vector<byte> CramerShoupOnGroupElementEnc::generateBytesFromPlaintext(Plaintext* plaintext) {
+vector<uint8_t> CramerShoupOnGroupElementEnc::generateBytesFromPlaintext(Plaintext* plaintext) {
 	auto plain = dynamic_cast<GroupElementPlaintext*>(plaintext);
 	if (plain == NULL) {
 		throw invalid_argument("plaintext should be an instance of GroupElementPlaintext");

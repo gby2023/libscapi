@@ -47,11 +47,11 @@ public:
 	
 	string getAlgorithm() override { return "DamgardJurik"; }
 
-	vector<byte> getEncoded() override { 
+	vector<uint8_t> getEncoded() override { 
 		int size = bytesCount(modulus);
-		byte* num = new byte[size];
+		uint8_t* num = new uint8_t[size];
 		encodeBigInteger(modulus, num, size);
-		vector<byte> out;
+		vector<uint8_t> out;
 		copy_byte_array_to_byte_vector(num, size, out, 0);
 		return out;
 	}
@@ -102,7 +102,7 @@ public:
 
 	string getAlgorithm() override { return "DamgardJurik"; }
 
-	vector<byte> getEncoded() override { throw NotImplementedException("");	}
+	vector<uint8_t> getEncoded() override { throw NotImplementedException("");	}
 
 	biginteger getT() {	return t; }
 
@@ -210,7 +210,7 @@ public:
 	string getAlgorithmName() override { return "DamgardJurik";	}
 
 	/**
-	* DamgardJurik encryption scheme has no limit of the byte array length to generate a plaintext from.
+	* DamgardJurik encryption scheme has no limit of the uint8_t array length to generate a plaintext from.
 	* @return false.
 	*/
 	bool hasMaxByteArrayLengthForPlaintext() override { return false; }
@@ -225,9 +225,9 @@ public:
 
 	/**
 	* Generates a Plaintext suitable to DamgardJurik encryption scheme from the given message.
-	* @param msg byte array to convert to a Plaintext object.
+	* @param msg uint8_t array to convert to a Plaintext object.
 	*/
-	shared_ptr<Plaintext> generatePlaintext(vector<byte> & text) override {
+	shared_ptr<Plaintext> generatePlaintext(vector<uint8_t> & text) override {
 		return make_shared<BigIntegerPlainText>(decodeBigInteger(text.data(), text.size()));
 	}
 
@@ -290,14 +290,14 @@ public:
 	shared_ptr<Plaintext> decrypt(AsymmetricCiphertext* cipher) override;
 
 	/**
-	* Generates a byte array from the given plaintext.
+	* Generates a uint8_t array from the given plaintext.
 	* This function should be used when the user does not know the specific type of the Asymmetric encryption he has,
-	* and therefore he is working on byte array.
-	* @param plaintext to generates byte array from. MUST be an instance of BigIntegerPlainText.
-	* @return the byte array generated from the given plaintext.
+	* and therefore he is working on uint8_t array.
+	* @param plaintext to generates uint8_t array from. MUST be an instance of BigIntegerPlainText.
+	* @return the uint8_t array generated from the given plaintext.
 	* @throws invalid_argument if the given plaintext is not an instance of BigIntegerPlainText.
 	*/
-	vector<byte> generateBytesFromPlaintext(Plaintext* plaintext) override;
+	vector<uint8_t> generateBytesFromPlaintext(Plaintext* plaintext) override;
 
 	/**
 	* This function takes an encryption of some plaintext (let's call it originalPlaintext) and returns a cipher that "looks" different but

@@ -91,14 +91,14 @@ protected:
      * @param srcArr source  array to shrink
      * @param targetArr output array - the shrinked array.
      */
-	void shrinkArray(int sourceElementSize, int targetElementSize, int iterations, byte* srcArr, byte* targetArr);
+	void shrinkArray(int sourceElementSize, int targetElementSize, int iterations, uint8_t* srcArr, uint8_t* targetArr);
 
     /**
      * Creates the array of indices to be the plaintext for the AES.
      * @param factor the number of blocks that should be filled
      * @return the created array
      */
-    byte* createCountersArray(int factor) const;
+    uint8_t* createCountersArray(int factor) const;
 
     /**
      * Expands the output to the required size using AES.
@@ -110,8 +110,8 @@ protected:
      * @param output the temporary array that holds the AES output
      * @param i the current OT index
      */
-    void expandOutput(int elementSize, byte * key, vector<byte> & output, int factor, const byte *counters,
-                                               EVP_CIPHER_CTX *aes, byte * aesOutput, int i) const;
+    void expandOutput(int elementSize, uint8_t * key, vector<uint8_t> & output, int factor, const uint8_t *counters,
+                                               EVP_CIPHER_CTX *aes, uint8_t * aesOutput, int i) const;
 };
 
 

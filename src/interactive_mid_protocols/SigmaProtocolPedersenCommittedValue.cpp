@@ -53,7 +53,7 @@ SigmaPedersenCommittedValueSimulator::SigmaPedersenCommittedValueSimulator(const
 }
 
 shared_ptr<SigmaSimulatorOutput> SigmaPedersenCommittedValueSimulator::simulate(SigmaCommonInput* input,
-        const vector<byte> & challenge) {
+        const vector<uint8_t> & challenge) {
 	
 	//Delegate the computation to the underlying Sigma Dlog simulator.
 	return dlogSim.simulate(convertInput(input).get(), challenge);
@@ -123,7 +123,7 @@ shared_ptr<SigmaProtocolMsg> SigmaPedersenCommittedValueProverComputation::compu
 * @return the computed message.
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 */
-shared_ptr<SigmaProtocolMsg> SigmaPedersenCommittedValueProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaPedersenCommittedValueProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 	//Delegates the computation to the underlying Sigma Dlog prover.
 	return sigmaDlog.computeSecondMsg(challenge);
 

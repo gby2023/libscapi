@@ -121,9 +121,9 @@ public:
 		vector<biginteger> & exponentiations) override;
 	shared_ptr<GroupElement> generateElement(bool bCheckMembership, vector<biginteger> & values) override;
 	shared_ptr<GroupElement> reconstructElement(bool bCheckMembership, GroupElementSendableData* data) override;
-	const vector<byte> decodeGroupElementToByteArray(GroupElement* groupElement) override;
-	shared_ptr<GroupElement> encodeByteArrayToGroupElement(const vector<unsigned char> & binaryString) override;
-	virtual const vector<byte>  mapAnyGroupElementToByteArray(GroupElement* groupElement) override;
+	const vector<uint8_t> decodeGroupElementToByteArray(GroupElement* groupElement) override;
+	shared_ptr<GroupElement> encodeByteArrayToGroupElement(const vector<uint8_t> & binaryString) override;
+	virtual const vector<uint8_t>  mapAnyGroupElementToByteArray(GroupElement* groupElement) override;
 };
 
 /**
@@ -158,7 +158,7 @@ public:
 	shared_ptr<GroupElement> simultaneousMultipleExponentiations(
 		vector<shared_ptr<GroupElement>> & groupElements, vector<biginteger> & exponentiations) override;
 
-	const vector<byte> mapAnyGroupElementToByteArray(GroupElement* groupElement) override;
+	const vector<uint8_t> mapAnyGroupElementToByteArray(GroupElement* groupElement) override;
 
 	shared_ptr<ECElement> getInfinity() override;
 
@@ -197,9 +197,9 @@ public:
 
 	shared_ptr<GroupElement> generateElement(bool bCheckMembership, vector<biginteger> & values) override;
 
-	shared_ptr<GroupElement> encodeByteArrayToGroupElement(const vector<unsigned char> & binaryString) override;
+	shared_ptr<GroupElement> encodeByteArrayToGroupElement(const vector<uint8_t> & binaryString) override;
 
-	const vector<unsigned char> decodeGroupElementToByteArray(GroupElement* groupElement) override;
+	const vector<uint8_t> decodeGroupElementToByteArray(GroupElement* groupElement) override;
 
 	shared_ptr<GroupElement> reconstructElement(bool bCheckMembership, GroupElementSendableData* data) override;
 	
@@ -237,9 +237,9 @@ public:
 	//shared_ptr<GroupElement> simultaneousMultipleExponentiations(
 		//vector<shared_ptr<GroupElement>> & groupElements, vector<biginteger> & exponentiations) override;
 
-	shared_ptr<GroupElement> encodeByteArrayToGroupElement(const vector<unsigned char> & binaryString) override;
+	shared_ptr<GroupElement> encodeByteArrayToGroupElement(const vector<uint8_t> & binaryString) override;
 
-	const vector<unsigned char> decodeGroupElementToByteArray(GroupElement* groupElement) override;
+	const vector<uint8_t> decodeGroupElementToByteArray(GroupElement* groupElement) override;
 
 	shared_ptr<GroupElement> reconstructElement(bool bCheckMembership, GroupElementSendableData* data) override;
 

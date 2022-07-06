@@ -53,26 +53,26 @@ class OTExtensionRandomizedSOutput: public OTBatchSOutput {
 
 protected:
 
-	vector<byte> r0Arr;
-	vector<byte> r1Arr;
+	vector<uint8_t> r0Arr;
+	vector<uint8_t> r1Arr;
 
 public:
 
     OTExtensionRandomizedSOutput(){}
-    OTExtensionRandomizedSOutput(const vector<byte> & r0Arr, const vector<byte> & r1Arr) : r0Arr(r0Arr), r1Arr(r1Arr) {}
+    OTExtensionRandomizedSOutput(const vector<uint8_t> & r0Arr, const vector<uint8_t> & r1Arr) : r0Arr(r0Arr), r1Arr(r1Arr) {}
 
 
     /**
 	 * @return the array that holds all the x0 for all the senders serially.
 	 */
-	vector<byte> getR0Arr() {
+	vector<uint8_t> getR0Arr() {
 		return r0Arr;
 	}
 	;
 	/**
 	 * @return the array that holds all the x1 for all the senders serially.
 	 */
-	vector<byte> getR1Arr() {
+	vector<uint8_t> getR1Arr() {
 		return r1Arr;
 	}
 };
@@ -85,24 +85,24 @@ class OTExtensionCorrelatedSOutput: public OTBatchSOutput {
 
 protected:
 
-	vector<byte> x0Arr;
-	vector<byte> x1Arr;
+	vector<uint8_t> x0Arr;
+	vector<uint8_t> x1Arr;
 
 public:
 
-	OTExtensionCorrelatedSOutput(const vector<byte> &x0Arr, const vector<byte> &x1Arr) : x0Arr(x0Arr), x1Arr(x1Arr){};
+	OTExtensionCorrelatedSOutput(const vector<uint8_t> &x0Arr, const vector<uint8_t> &x1Arr) : x0Arr(x0Arr), x1Arr(x1Arr){};
 
 	/**
 	 * @return the array that holds all the x0 for all the senders serially.
 	 */
-	vector<byte> getx0Arr() {
+	vector<uint8_t> getx0Arr() {
 		return x0Arr;
 	}
 	;
 	/**
 	 * @return the array that holds all the x1 for all the senders serially.
 	 */
-	vector<byte> getx1Arr() {
+	vector<uint8_t> getx1Arr() {
 		return x1Arr;
 	}
 };
@@ -112,7 +112,7 @@ class OTExtensionBristolRandomizedSOutput: public OTExtensionRandomizedSOutput {
 
 public:
 
-	OTExtensionBristolRandomizedSOutput(const vector<byte> & r0Arr, const vector<byte> & r1Arr) {
+	OTExtensionBristolRandomizedSOutput(const vector<uint8_t> & r0Arr, const vector<uint8_t> & r1Arr) {
 
 		this->r0Arr = move(r0Arr);
 		this->r1Arr = move(r1Arr);
@@ -146,11 +146,11 @@ public:
  */
 class OTExtensionGeneralSInput: public OTBatchSInput {
 private:
-	vector<byte> x0Arr; // An array that holds all the x0 for all the senders serially.
+	vector<uint8_t> x0Arr; // An array that holds all the x0 for all the senders serially.
 	// For optimization reasons, all the x0 inputs are held in one dimensional array one after the other
 	// rather than a two dimensional array.
 	// The size of each element can be calculated by x0ArrSize/numOfOts.
-	vector<byte> x1Arr; // An array that holds all the x1 for all the senders serially.
+	vector<uint8_t> x1Arr; // An array that holds all the x1 for all the senders serially.
 	int numOfOts; // Number of OTs in the OT extension.
 
 public:
@@ -161,7 +161,7 @@ public:
 	 * @param x0Arr holds all the x1 for all the senders serially.
 	 * @param numOfOts Number of OTs in the OT extension.
 	 */
-    OTExtensionGeneralSInput(const vector<byte> & x0Arr, const vector<byte> & x1Arr,
+    OTExtensionGeneralSInput(const vector<uint8_t> & x0Arr, const vector<uint8_t> & x1Arr,
 			int numOfOts) : x0Arr(x0Arr), x1Arr(x1Arr){
 		this->numOfOts = numOfOts;
 	}
@@ -169,14 +169,14 @@ public:
 	/**
 	 * @return the array that holds all the x0 for all the senders serially.
 	 */
-	vector<byte> & getX0Arr() {
+	vector<uint8_t> & getX0Arr() {
 		return x0Arr;
 	}
 	;
 	/**
 	 * @return the array that holds all the x1 for all the senders serially.
 	 */
-	vector<byte> & getX1Arr() {
+	vector<uint8_t> & getX1Arr() {
 		return x1Arr;
 	}
 	;
@@ -237,7 +237,7 @@ public:
  */
 class OTExtensionCorrelatedSInput: public OTBatchSInput {
 private:
-	vector<byte> deltaArr; // An array that holds all the delta of xo and x1.
+	vector<uint8_t> deltaArr; // An array that holds all the delta of xo and x1.
     // For optimization reasons, all the delta inputs are held in one dimensional array one after the other
     // rather than a two dimensional array.
     // The size of each element can be calculated by the delta size divided by the numOfOts.
@@ -247,12 +247,12 @@ private:
 public:
 	OTBatchSInputTypes getType() override {return OTBatchSInputTypes::OTExtensionCorrelatedSInput;};
 
-	OTExtensionCorrelatedSInput(const vector<byte>& deltaArr, int numOfOts): deltaArr(deltaArr), numOfOts(numOfOts){}
+	OTExtensionCorrelatedSInput(const vector<uint8_t>& deltaArr, int numOfOts): deltaArr(deltaArr), numOfOts(numOfOts){}
 
 	/**
 	 * @return the array that holds all the x0 for all the senders serially.
 	 */
-	vector<byte> getDeltaArr() { return deltaArr; }
+	vector<uint8_t> getDeltaArr() { return deltaArr; }
 
 	/**
 	 * @return the number of OT elements.
@@ -303,7 +303,7 @@ public:
  * All the concrete classes are the same and differ only in the name.
  * The reason a class is created for each version is due to the fact that a respective class is created for the sender and we wish to be consistent.
  * The name of the class determines the version of the OT extension we wish to run.
- * In all OT extension scenarios the receiver gets i bits. Each byte holds a bit for each OT in the OT extension protocol.
+ * In all OT extension scenarios the receiver gets i bits. Each uint8_t holds a bit for each OT in the OT extension protocol.
  */
 class OTExtensionRInput: public OTBatchRInput {
 public:
@@ -312,12 +312,12 @@ public:
 	 * @param sigmaArr An array of sigma for each OT.
 	 * @param elementSize The size of each element in the OT extension, in bits.
 	 */
-	OTExtensionRInput(const vector<byte> & sigmaArr, int elementSize) {
+	OTExtensionRInput(const vector<uint8_t> & sigmaArr, int elementSize) {
 		this->sigmaArr = sigmaArr;
 		this->elementSize = elementSize;
 	}
 	;
-	vector<byte> getSigmaArr() {
+	vector<uint8_t> getSigmaArr() {
 		return sigmaArr;
 	}
 	;
@@ -331,7 +331,7 @@ public:
 	;
 
 private:
-	vector<byte> sigmaArr; // Each byte holds a sigma bit for each OT in the OT extension protocol.
+	vector<uint8_t> sigmaArr; // Each uint8_t holds a sigma bit for each OT in the OT extension protocol.
 	int elementSize; // The size of each element in the ot extension. All elements must be of the same size.
 };
 
@@ -348,7 +348,7 @@ public:
 	 * @param sigmaArr An array of sigma for each OT.
 	 * @param elementSize The size of each element in the OT extension, in bits.
 	 */
-	OTExtensionGeneralRInput(const vector<byte> & sigmaArr, int elementSize) :
+	OTExtensionGeneralRInput(const vector<uint8_t> & sigmaArr, int elementSize) :
 		OTExtensionRInput(sigmaArr, elementSize) {
 	}
 
@@ -372,7 +372,7 @@ public:
 	 * @param sigmaArr An array of sigma for each OT.
 	 * @param elementSize The size of each element in the OT extension, in bits.
 	 */
-	OTExtensionCorrelatedRInput(const vector<byte> & sigmaArr, int elementSize) :
+	OTExtensionCorrelatedRInput(const vector<uint8_t> & sigmaArr, int elementSize) :
 		OTExtensionRInput(sigmaArr, elementSize) {
 	}
 
@@ -390,7 +390,7 @@ public:
 */
 class OTExtensionRandomizedRInput: public OTExtensionRInput{
 public:
-	OTExtensionRandomizedRInput(const vector<byte> & sigmaArr, int elementSize) : OTExtensionRInput(sigmaArr,elementSize) {}
+	OTExtensionRandomizedRInput(const vector<uint8_t> & sigmaArr, int elementSize) : OTExtensionRInput(sigmaArr,elementSize) {}
 	OTBatchRInputTypes getType() override {	return OTBatchRInputTypes::OTExtensionRandomizedRInput;}
 };
 
@@ -398,14 +398,14 @@ public:
 /**
  * Concrete implementation of OT receiver of bristol output.
  * In the bristol scenario, the receiver outputs xSigma as a bitvector.
- * This output class also can be viewed as the output of batch OT when xSigma is a concatenation of all xSigma byte array of all OTs.
+ * This output class also can be viewed as the output of batch OT when xSigma is a concatenation of all xSigma uint8_t array of all OTs.
  */
 class OTExtensionBristolROutput: public OTOnByteArrayROutput {
 
 public:
 	OTExtensionBristolROutput(const BitMatrix& receiverOutputMatrix) {
 
-		copy_byte_array_to_byte_vector((byte*)receiverOutputMatrix.squares.data(), receiverOutputMatrix.squares.size()*128*16, xSigma, 0);
+		copy_byte_array_to_byte_vector((uint8_t*)receiverOutputMatrix.squares.data(), receiverOutputMatrix.squares.size()*128*16, xSigma, 0);
 	}
 
 

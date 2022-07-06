@@ -28,7 +28,7 @@
 
 #include "../../include/primitives/Kdf.hpp"
 
-void HKDF::nextRounds(int outLen, const vector<byte> & iv, int hmacLength, vector<byte> & outBytes, vector<byte> & intermediateOutBytes) {
+void HKDF::nextRounds(int outLen, const vector<uint8_t> & iv, int hmacLength, vector<uint8_t> & outBytes, vector<uint8_t> & intermediateOutBytes) {
 	int rounds = (int)ceil((float)outLen / (float)hmacLength); // The smallest number so that  hmacLength * rounds >= outLen
 	int currentInBytesSize;	// The size of the CTXInfo and also the round.
 	if (iv.size() > 0)
@@ -37,7 +37,7 @@ void HKDF::nextRounds(int outLen, const vector<byte> & iv, int hmacLength, vecto
 		currentInBytesSize = hmacLength + 1; // The size without the CTXInfo and also the round;
 
 	//The result of the current computation.
-	vector<byte> currentInBytes(currentInBytesSize);
+	vector<uint8_t> currentInBytes(currentInBytesSize);
 
 	//For rounds 2 to t.
 	if (iv.size() > 0)
@@ -48,7 +48,7 @@ void HKDF::nextRounds(int outLen, const vector<byte> & iv, int hmacLength, vecto
 		// Copy the output of the last results.
 		memcpy(currentInBytes.data(), intermediateOutBytes.data(), intermediateOutBytes.size());
 		// Copy the round integer to the data array.
-		currentInBytes[currentInBytesSize - 1] = (byte)i;
+		currentInBytes[currentInBytesSize - 1] = (uint8_t)i;
 		
 		//Operates the hmac to get the round output.
 		this->hmac->computeBlock(currentInBytes, 0, currentInBytesSize, intermediateOutBytes, 0);
@@ -62,9 +62,9 @@ void HKDF::nextRounds(int outLen, const vector<byte> & iv, int hmacLength, vecto
 	}
 }
 
-void HKDF::firstRound(vector<byte>& outBytes, const vector<byte> & iv, vector<byte> & intermediateOutBytes, int outLength) {
+void HKDF::firstRound(vector<uint8_t>& outBytes, const vector<uint8_t> & iv, vector<uint8_t> & intermediateOutBytes, int outLength) {
 	// Round 1.
-	vector<byte> firstRoundInput; //Data for the creating K(1).
+	vector<uint8_t> firstRoundInput; //Data for the creating K(1).
 	int firstRoundSize;
 	if (iv.size() > 0) {
 		firstRoundSize = iv.size() + 1;
@@ -78,7 +78,7 @@ void HKDF::firstRound(vector<byte>& outBytes, const vector<byte> & iv, vector<by
 	}
 	
 	// Copy the integer with zero to the data array.
-	firstRoundInput[firstRoundSize - 1] = (byte)1;
+	firstRoundInput[firstRoundSize - 1] = (uint8_t)1;
 
 	// First computes the new key. The new key is the result of computing the hmac function.
 	// calculate K(1) and put it in intermediateOutBytes.
@@ -88,7 +88,7 @@ void HKDF::firstRound(vector<byte>& outBytes, const vector<byte> & iv, vector<by
 	outBytes.assign(intermediateOutBytes.begin(), intermediateOutBytes.begin() + outLength);
 }
 
-SecretKey HKDF::deriveKey(const vector<byte> & entropySource, int inOff, int inLen, int outLen, const vector<byte>& iv) {
+SecretKey HKDF::deriveKey(const vector<uint8_t> & entropySource, int inOff, int inLen, int outLen, const vector<uint8_t>& iv) {
 	//Check that the offset and length are correct.
 	if ((inOff > (int)entropySource.size()) || (inOff + inLen >  (int) entropySource.size()))
 		throw out_of_range("wrong offset for the given input buffer");
@@ -111,12 +111,12 @@ SecretKey HKDF::deriveKey(const vector<byte> & entropySource, int inOff, int inL
 	// a key from the same entropy source will be different in subsequent calls to this function (as long as the same instance of HKDF is used). 
 	string str_key = boost::algorithm::unhex(string("606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeaf"));
 	char const *c_key = str_key.c_str();
-	SecretKey key((byte*) c_key, strlen(c_key), "");
+	SecretKey key((uint8_t*) c_key, strlen(c_key), "");
 	hmac->setKey(key);
 	int hmacLength = hmac->getBlockSize(); // The size of the output of the hmac.
-	vector<byte> outBytes;				   // The output key.
-	vector<byte> roundKey;				   // PRK from the pseudocode.
-	vector<byte> intermediateOutBytes;	   // round result K(i) in the pseudocode
+	vector<uint8_t> outBytes;				   // The output key.
+	vector<uint8_t> roundKey;				   // PRK from the pseudocode.
+	vector<uint8_t> intermediateOutBytes;	   // round result K(i) in the pseudocode
 
 	// First computes the new key. The new key is the result of computing the hmac function.
 	//RoundKey is now K(0)

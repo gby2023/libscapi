@@ -17,10 +17,10 @@ private:
     EVP_CIPHER_CTX *_ctx;
 #endif
     bool _isIVToSet = true;
-    vector<byte> keyVec;
+    vector<uint8_t> keyVec;
     bool _isKeySet = false;  // Until setKey is called set to false.
     shared_ptr<PrgFromOpenSSLAES> random; //source of randomness used in key generation
-    vector<byte> iv;
+    vector<uint8_t> iv;
 
 public:
 
@@ -76,7 +76,7 @@ public:
     * @param msgLen the length of the message in bytes.
     * @return the return tag from the mac operation.
     */
-    vector<byte> mac(const vector<byte> &msg, int offset, int msgLen) override ;
+    vector<uint8_t> mac(const vector<uint8_t> &msg, int offset, int msgLen) override ;
 
     /**
     * Verifies that the given tag is valid for the given message.
@@ -86,15 +86,15 @@ public:
     * @param tag the tag to verify.
     * @return true if the tag is the result of computing mac on the message. false, otherwise.
     */
-    bool verify(const vector<byte> &msg, int offset, int msgLength, vector<byte>& tag) override ;
+    bool verify(const vector<uint8_t> &msg, int offset, int msgLength, vector<uint8_t>& tag) override ;
 
     /**
-    * Adds the byte array to the existing message to mac.
+    * Adds the uint8_t array to the existing message to mac.
     * @param msg the message to add.
     * @param offset the offset within the message array to take the bytes from.
     * @param msgLen the length of the message in bytes.
     */
-    void update(vector<byte> & msg, int offset, int msgLen) override ;
+    void update(vector<uint8_t> & msg, int offset, int msgLen) override ;
 
     /**
     * Completes the mac computation and puts the result tag in the tag array.
@@ -103,7 +103,7 @@ public:
     * @param msgLength the length of the message in bytes.
     * @param output - the result tag from the mac operation.
     */
-    void doFinal(vector<byte> & msg, int offset, int msgLength, vector<byte> & tag_res) override ;
+    void doFinal(vector<uint8_t> & msg, int offset, int msgLength, vector<uint8_t> & tag_res) override ;
 
 
 };

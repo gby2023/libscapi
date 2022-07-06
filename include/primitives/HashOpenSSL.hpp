@@ -65,19 +65,19 @@ public:
 	string getAlgorithmName() override;
 
 	/**
-	* Adds the byte vector to the existing message to hash.
-	* @param in input byte vector.
-	* @param inOffset the offset within the byte array.
+	* Adds the uint8_t vector to the existing message to hash.
+	* @param in input uint8_t vector.
+	* @param inOffset the offset within the uint8_t array.
 	* @param inLen the length. The number of bytes to take after the offset.
 	* */
-	void update(const vector<byte> &in, int inOffset, int inLen) override;
+	void update(const vector<uint8_t> &in, int inOffset, int inLen) override;
 
 	/**
 	* Completes the hash computation and puts the result in the out vector.
-	* @param out the output in byte vector.
+	* @param out the output in uint8_t vector.
 	* @param outOffset the offset which to put the result bytes from.
 	*/
-	void hashFinal(vector<byte> &out, int outOffset) override;
+	void hashFinal(vector<uint8_t> &out, int outOffset) override;
 };
 
 /************************************************************

@@ -205,7 +205,7 @@ bool Network::sync(bool first) {
     if (mPid == i)
       continue;
 
-    ret = send(i, 0, "0", 1); // Send byte for sync
+    ret = send(i, 0, "0", 1); // Send uint8_t for sync
     KCP_CHECK(ret, mCat + ".sync")
   }
 
@@ -214,7 +214,7 @@ bool Network::sync(bool first) {
 
   cnt = 0;
   while (cnt < mNumPeers - 1) {
-    char byte;
+    char uint8_t;
 
     for (int i = 0; i < mNumPeers; i++) {
       if (mPid == i)
@@ -223,19 +223,19 @@ bool Network::sync(bool first) {
       if (syncs[i])
         continue;
 
-      ret = recv(i, 0, &byte, 1);
+      ret = recv(i, 0, &uint8_t, 1);
       if (ret < 0) {
         continue;
       }
       else if (ret == 1) {
-        if (byte == '0') {
+        if (uint8_t == '0') {
           log4cpp::Category::getInstance(mCat + ".sync").infoStream() << "got sync from " << i;
           syncs[i] = true;
           ++cnt;
         }
         else {
           log4cpp::Category::getInstance(mCat + ".sync").warnStream()
-              << "and un recoginzed message (" << byte << ") was received from " << i;
+              << "and un recoginzed message (" << uint8_t << ") was received from " << i;
         }
       }
       else { // Should never happen

@@ -61,7 +61,7 @@ shared_ptr<SigmaProtocolMsg> SigmaANDProverComputation::computeFirstMsg(const sh
 	return make_shared<SigmaMultipleMsg>(firstMessages);
 }
 
-shared_ptr<SigmaProtocolMsg> SigmaANDProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaANDProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 	// create an array to hold all messages.
 	vector<shared_ptr<SigmaProtocolMsg>> secondMessages;
 	// compute all second messages and add them to the array list.
@@ -110,7 +110,7 @@ SigmaANDSimulator::SigmaANDSimulator(const vector<shared_ptr<SigmaSimulator>> & 
 }
 
 shared_ptr<SigmaSimulatorOutput> SigmaANDSimulator::simulate(SigmaCommonInput* input,
-	const vector<byte> & challenge) {
+	const vector<uint8_t> & challenge) {
 	if (!checkChallengeLength(challenge.size())) 
 		throw CheatAttemptException("the length of the given challenge is different from the soundness parameter");
 	
@@ -145,8 +145,8 @@ shared_ptr<SigmaSimulatorOutput> SigmaANDSimulator::simulate(SigmaCommonInput* i
 }
 
 shared_ptr<SigmaSimulatorOutput> SigmaANDSimulator::simulate(SigmaCommonInput* input) {
-	//Create a new byte array of size t/8, to get the required byte size and fill it with random values.
-	vector<byte> e(t / 8);
+	//Create a new uint8_t array of size t/8, to get the required uint8_t size and fill it with random values.
+	vector<uint8_t> e(t / 8);
 	random->getPRGBytes(e, 0, t / 8);
 	//modify the challenge to be positive.
 	e.data()[e.size() - 1] = e.data()[e.size() - 1] & 127;
@@ -182,7 +182,7 @@ void SigmaANDVerifierComputation::sampleChallenge() {
 		verifier->setChallenge(e);
 }
 
-void SigmaANDVerifierComputation::setChallenge(const vector<byte> & challenge) {
+void SigmaANDVerifierComputation::setChallenge(const vector<uint8_t> & challenge) {
 	e = challenge;
 	for (auto verifier : verifiers)
 		verifier->setChallenge(challenge);

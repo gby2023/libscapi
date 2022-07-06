@@ -47,17 +47,17 @@ public:
 	* Write data from @param data to the other party.
 	* Will write exactly @param size bytes
 	*/
-	virtual void write(const unsigned char * data, int size) = 0;
+	virtual void write(const uint8_t * data, int size) = 0;
 	/**
 	* Read exactly @param sizeToRead bytes int @param buffer
 	* Will block until all bytes are read.
 	*/
-	virtual size_t read(unsigned char* buffer, int sizeToRead) = 0;
-	virtual void write(std::string s) { write((const unsigned char *)s.c_str(), s.size()); };
-	virtual void writeWithSize(const unsigned char* data, int size);
+	virtual size_t read(uint8_t* buffer, int sizeToRead) = 0;
+	virtual void write(std::string s) { write((const uint8_t *)s.c_str(), s.size()); };
+	virtual void writeWithSize(const uint8_t* data, int size);
 	virtual int readSize();
-	virtual size_t readWithSizeIntoVector(std::vector<unsigned char> & targetVector);
-	virtual void writeWithSize(std::string s) { writeWithSize((const unsigned char*)s.c_str(), s.size()); };
+	virtual size_t readWithSizeIntoVector(std::vector<uint8_t> & targetVector);
+	virtual void writeWithSize(std::string s) { writeWithSize((const uint8_t*)s.c_str(), s.size()); };
 	virtual ~CommPartyBF() {};
 };
 
@@ -69,8 +69,8 @@ public:
 
 	void join(int sleepBetweenAttempts = 500, int timeout = 5000);
 
-	void write(const unsigned char* data, int size);
-	size_t read(unsigned char* data, int sizeToRead);
+	void write(const uint8_t* data, int size);
+	size_t read(uint8_t* data, int sizeToRead);
 
 private:
 	std::string m_self_addr, m_peer_addr;

@@ -66,7 +66,7 @@ public:
 	*
 	* @param value The value to set this {@code Wire} to. Must be either 0 or 1.
 	*/
-	Wire(byte value) {
+	Wire(uint8_t value) {
 		// Ensures that the Wire is only set to a legal value (i.e. 0 or 1)
 		if (value != 0 && value != 1)
 			throw invalid_argument("Wire value can only be 0 or 1");
@@ -76,13 +76,13 @@ public:
 	/**
 	* @return the value (0 or 1) that this {@code Wire} is set to.
 	*/
-	byte getValue() const { return value; };
+	uint8_t getValue() const { return value; };
 	
 private:
 	/**
 	* The value that this wire carries. It can be set to either 0 or 1
 	*/
-	byte value;
+	uint8_t value;
 };
 
 /**

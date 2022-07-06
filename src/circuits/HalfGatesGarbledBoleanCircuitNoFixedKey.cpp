@@ -113,7 +113,7 @@ void HalfGatesGarbledBoleanCircuitNoFixedKey::createCircuitMemory(const char* fi
 
 
 void HalfGatesGarbledBoleanCircuitNoFixedKey::garble(block *emptyBothInputKeys, block *emptyBothOutputKeys,
-        vector<byte> & emptyTranslationTable, block seed){
+        vector<uint8_t> & emptyTranslationTable, block seed){
 
 	this->seed = seed;
 
@@ -162,8 +162,8 @@ void HalfGatesGarbledBoleanCircuitNoFixedKey::garble(block *emptyBothInputKeys, 
 			plainText[3] = _mm_set_epi32(0, 0, 0, i + numberOfGates);
 
 			//create the plaintext which is the ks4_ec4
-			intrin_sequential_ks4_enc4((const unsigned char*)plainText, (unsigned char*)cipherText,
-			        4, (unsigned char*) KEY, (unsigned char*)keys, nullptr);
+			intrin_sequential_ks4_enc4((const uint8_t*)plainText, (uint8_t*)cipherText,
+			        4, (uint8_t*) KEY, (uint8_t*)keys, nullptr);
 
 			//for more information, go to the pseudocode of the paper, page 9
 			if (wire1SignalBit == 0){
@@ -221,14 +221,14 @@ void HalfGatesGarbledBoleanCircuitNoFixedKey::garble(block *emptyBothInputKeys, 
 void HalfGatesGarbledBoleanCircuitNoFixedKey::initAesEncryptionsAndInputKeys(block* emptyBothInputKeys){
 
 	//create the aes with the seed as the key. This will be used for encrypting the input keys
-	AES_set_encrypt_key((const unsigned char *)&seed, 128, &aesSeedKey);
+	AES_set_encrypt_key((const uint8_t *)&seed, 128, &aesSeedKey);
 
 	*deltaFreeXor = ZERO_BLOCK;
 	AES_ecb_encrypt(deltaFreeXor, &aesSeedKey);
 	AES_ecb_encrypt(deltaFreeXor, &aesSeedKey);
 
 	//set the last bit of the first char to 1
-	*((unsigned char *)(deltaFreeXor)) |= 1;
+	*((uint8_t *)(deltaFreeXor)) |= 1;
 
 
 	AES_ecb_encrypt_chunk_in_out(indexArray,
@@ -236,10 +236,10 @@ void HalfGatesGarbledBoleanCircuitNoFixedKey::initAesEncryptionsAndInputKeys(blo
 		numberOfInputs,
 		&aesSeedKey);
 
-	/*AES_ECB_encrypt((const unsigned char *)indexArray,
-		(unsigned char *)encryptedChunkKeys,
+	/*AES_ECB_encrypt((const uint8_t *)indexArray,
+		(uint8_t *)encryptedChunkKeys,
 		SIZE_OF_BLOCK * (numberOfInputs),
-		(const unsigned char *)aesSeedKey->rd_key,
+		(const uint8_t *)aesSeedKey->rd_key,
 		aesSeedKey->rounds);
 		*/
 
@@ -294,8 +294,8 @@ void  HalfGatesGarbledBoleanCircuitNoFixedKey::compute(block * singleWiresInputK
 			plaintext[1] = _mm_set_epi32(0, 0, 0, i + numberOfGates);
 
 
-			intrin_sequential_ks2_enc2((const unsigned char*)plaintext, (unsigned char*)ciphertext, 2,
-			        (unsigned char*)KEY, (unsigned char*)keys, nullptr);
+			intrin_sequential_ks2_enc2((const uint8_t*)plaintext, (uint8_t*)ciphertext, 2,
+			        (uint8_t*)KEY, (uint8_t*)keys, nullptr);
 
 			
 			//check the pseudo code of the paper, page 9.
@@ -395,8 +395,8 @@ bool HalfGatesGarbledBoleanCircuitNoFixedKey::internalVerify(block *bothInputKey
 			plainText[3] = _mm_set_epi32(0, 0, 0, i + numberOfGates);
 
 			//create the plaintext which is the ks4_ec4
-			intrin_sequential_ks4_enc4((const unsigned char*)plainText,(unsigned char*)cipherText, 4,
-			        (unsigned char*)KEY, (unsigned char*)keys, nullptr);
+			intrin_sequential_ks4_enc4((const uint8_t*)plainText,(uint8_t*)cipherText, 4,
+			        (uint8_t*)KEY, (uint8_t*)keys, nullptr);
 
 			//T0 = AES(a0, i) XOR AES(a0, i) XOR lsb(a0)deltaFreeXor
 

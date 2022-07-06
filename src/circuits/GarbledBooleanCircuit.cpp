@@ -127,17 +127,17 @@ int* GarbledBooleanCircuit::readInputsFromFile(char* fileName){
 	return inputs;
 }
 
-tuple<block*, block*, vector<unsigned char> > GarbledBooleanCircuit::garble(block *seed)
+tuple<block*, block*, vector<uint8_t> > GarbledBooleanCircuit::garble(block *seed)
 {
 	block *allInputWireValues = (block *)_aligned_malloc(sizeof(block) * 2 * numberOfInputs, SIZE_OF_BLOCK);
 	block *allOutputWireValues = (block *)_aligned_malloc(sizeof(block) * 2 * numberOfOutputs, SIZE_OF_BLOCK);
-	vector<unsigned char> translationTable;
+	vector<uint8_t> translationTable;
 
 	if (seed == nullptr) {
 
 		block seedLocl;
 
-		if (!RAND_bytes((byte *)&seedLocl, 16)) 
+		if (!RAND_bytes((uint8_t *)&seedLocl, 16)) 
 			throw runtime_error("key generation failed");
 		seed = &seedLocl;
 	}
@@ -191,7 +191,7 @@ vector<int> GarbledBooleanCircuit::getInputWireIndices(int partyNumber) {
 }
 
 
-int GarbledBooleanCircuit::getRowTruthTableResult(int i, int j, unsigned char truthTable){
+int GarbledBooleanCircuit::getRowTruthTableResult(int i, int j, uint8_t truthTable){
 
 	//get the row of the table starting from 0
 	int rowNumber = 2*i + j;
@@ -218,7 +218,7 @@ int GarbledBooleanCircuit::integerPow(int p) {
 }
 
 
-void GarbledBooleanCircuit::translate(block *outputKeys, unsigned char* answer){
+void GarbledBooleanCircuit::translate(block *outputKeys, uint8_t* answer){
 
 	
 	for(int i=0; i<numberOfOutputs;i++){
@@ -234,7 +234,7 @@ void GarbledBooleanCircuit::translate(block *outputKeys, unsigned char* answer){
 }
 
 
-void GarbledBooleanCircuit::setTranslationTable(vector<unsigned char> translationTable) {
+void GarbledBooleanCircuit::setTranslationTable(vector<uint8_t> translationTable) {
 
 	this->translationTable = translationTable;
 }
@@ -295,8 +295,8 @@ bool GarbledBooleanCircuit::verifyTranslationTable(block * bothWireOutputKeys)
 		block zeroBlock = bothWireOutputKeys[2*i];
 		block oneBlock = bothWireOutputKeys[2*i+1];
 
-		unsigned char translatedZeroValue = translationTable[i] ^ getSignalBitOf(zeroBlock);
-		unsigned char translatedOneValue = translationTable[i] ^ getSignalBitOf(oneBlock);
+		uint8_t translatedZeroValue = translationTable[i] ^ getSignalBitOf(zeroBlock);
+		uint8_t translatedOneValue = translationTable[i] ^ getSignalBitOf(oneBlock);
 
 		//Verify that the translatedZeroValue is actually 0 and that translatedOneValue is indeed 1
 		if (translatedZeroValue != 0 || translatedOneValue != 1) {

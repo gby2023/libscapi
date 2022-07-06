@@ -66,19 +66,19 @@ public:
 	virtual int getHashedMsgSize()=0;
 
 	/**
-	* Adds the byte vector to the existing message to hash.
-	* @param in input byte vector.
-	* @param inOffset the offset within the byte array.
+	* Adds the uint8_t vector to the existing message to hash.
+	* @param in input uint8_t vector.
+	* @param inOffset the offset within the uint8_t array.
 	* @param inLen the length. The number of bytes to take after the offset.
 	* */
-	virtual void update(const vector<byte> &in, int inOffset, int inLen)=0;
+	virtual void update(const vector<uint8_t> &in, int inOffset, int inLen)=0;
 
 	/**
 	* Completes the hash computation and puts the result in the out vector.
-	* @param out the output in byte vector.
+	* @param out the output in uint8_t vector.
 	* @param outOffset the offset which to put the result bytes from.
 	*/
-	virtual void hashFinal(vector<byte> &out, int outOffset)=0;
+	virtual void hashFinal(vector<uint8_t> &out, int outOffset)=0;
 
 	/**
 	* Factory method. Create concrete instance of the give algorithm name in the default implementation. 

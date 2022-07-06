@@ -82,7 +82,7 @@ SigmaDJEncryptedValueProverInput::SigmaDJEncryptedValueProverInput(DamgardJurikP
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 * @throws IllegalArgumentException if input is not the expected.
 */
-shared_ptr<SigmaSimulatorOutput> SigmaDJEncryptedValueSimulator::simulate(SigmaCommonInput* input, const vector<byte> & challenge) {
+shared_ptr<SigmaSimulatorOutput> SigmaDJEncryptedValueSimulator::simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge) {
 	
 	//Delegates the computation to the underlying SigmaDJEncryptedZeroSimulator.
 	return djSim.simulate(checkAndCreateUnderlyingInput(input).get(), challenge);
@@ -187,7 +187,7 @@ shared_ptr<SigmaProtocolMsg> SigmaDJEncryptedValueProverComputation::computeFirs
 * @return the computed message.
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 */
-shared_ptr<SigmaProtocolMsg> SigmaDJEncryptedValueProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaDJEncryptedValueProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 	//Delegates the computation to the underlying sigmaDamgardJurik prover.
 	return sigmaDamgardJurik.computeSecondMsg(challenge);
 }
@@ -212,7 +212,7 @@ void SigmaDJEncryptedValueVerifierComputation::sampleChallenge() {
 * Sets the given challenge.
 * @param challenge
 */
-void SigmaDJEncryptedValueVerifierComputation::setChallenge(const vector<byte> & challenge) {
+void SigmaDJEncryptedValueVerifierComputation::setChallenge(const vector<uint8_t> & challenge) {
 
 	//Delegates to the underlying sigmaDamgardJurik verifier.
 	sigmaDamgardJurik.setChallenge(challenge);
@@ -223,7 +223,7 @@ void SigmaDJEncryptedValueVerifierComputation::setChallenge(const vector<byte> &
 * Returns the sampled challenge.
 * @return the challenge.
 */
-vector<byte> SigmaDJEncryptedValueVerifierComputation::getChallenge() {
+vector<uint8_t> SigmaDJEncryptedValueVerifierComputation::getChallenge() {
 	//Delegates to the underlying sigmaDamgardJurik verifier.
 	return sigmaDamgardJurik.getChallenge();
 }

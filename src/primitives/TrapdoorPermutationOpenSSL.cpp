@@ -208,11 +208,11 @@ biginteger OpenSSLRSAPermutation::computeRSA(biginteger & elementP) {
 	// Seed the random geneartor.
 	RAND_poll(); // reseeds using hardware state (clock, interrupts, etc).
 	int size = RSA_size(_rsa.get());
-	vector<byte> ret(size); //will hold the output
+	vector<uint8_t> ret(size); //will hold the output
 	
 	//convert the element into bytes vector.
 	size_t encodedSize = bytesCount(elementP);
-	vector<byte> encodedBi(encodedSize);
+	vector<uint8_t> encodedBi(encodedSize);
 	encodeBigInteger(elementP, encodedBi.data(), encodedSize);
 
 	//Encrypt the array
@@ -246,11 +246,11 @@ shared_ptr<TPElement> OpenSSLRSAPermutation::invert(TPElement * tpEl) {
 #else
 	int size = RSA_size(_rsa.get());
 #endif
-	vector<byte> ret(size); //Will hold the output
+	vector<uint8_t> ret(size); //Will hold the output
 
 	//Convert the element to bytes vector.
 	size_t encodedSize = bytesCount(elementP);
-	vector<byte> encodedBi(encodedSize);
+	vector<uint8_t> encodedBi(encodedSize);
 	encodeBigInteger(elementP, encodedBi.data(), encodedSize);
 	
 	// Invert the RSA permutation on the given bytes.

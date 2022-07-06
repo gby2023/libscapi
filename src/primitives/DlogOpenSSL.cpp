@@ -251,11 +251,11 @@ int OpenSSLDlogZpSafePrime::calcK(const biginteger & p) {
 	int bitsInp = NumberOfBits(p);
 	// Any string of length k has a numeric value that is less than (p-1)/2 - 1.
 	int k = (bitsInp - 3) / 8;
-	// The actual k that we allow is one byte less. This will give us an extra byte to pad the binary string passed to encode to a group element with a 01 byte
-	// and at decoding we will remove that extra byte. This way, even if the original string translates to a negative BigInteger the encode and decode functions
+	// The actual k that we allow is one uint8_t less. This will give us an extra uint8_t to pad the binary string passed to encode to a group element with a 01 uint8_t
+	// and at decoding we will remove that extra uint8_t. This way, even if the original string translates to a negative BigInteger the encode and decode functions
 	// always work with positive numbers. The encoding will be responsible for padding and the decoding will be responsible for removing the pad.
 	k--;
-	// For technical reasons of how we chose to do the padding for encoding and decoding (the least significant byte of the encoded string contains the size of the 
+	// For technical reasons of how we chose to do the padding for encoding and decoding (the least significant uint8_t of the encoded string contains the size of the 
 	// the original binary string sent for encoding, which is used to remove the padding when decoding) k has to be <= 255 bytes so that the size can be encoded in the padding.
 	if (k > 255) {
 		k = 255;
@@ -289,7 +289,7 @@ bool OpenSSLDlogZpSafePrime::isGenerator() {
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
     return validateElement(_dlog->g);
 #else
-    BIGNUM **p, **q, **g;
+    BIGNUM **p=nullptr, **q=nullptr, **g=nullptr;
     DH_get0_pqg(_dlog.get(), (const BIGNUM**)p, (const BIGNUM**)q, (const BIGNUM**)g);
     return validateElement(*g);
 #endif
@@ -311,7 +311,7 @@ bool OpenSSLDlogZpSafePrime::validateGroup() {
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 	if (BN_is_word(_dlog->g, DH_GENERATOR_2))
 #else
-    BIGNUM **p, **q, **g;
+    BIGNUM **p=nullptr, **q=nullptr, **g=nullptr;
     DH_get0_pqg(_dlog.get(), (const BIGNUM**)p, (const BIGNUM**)q, (const BIGNUM**)g);
     if (BN_is_word(*g, DH_GENERATOR_2))
 #endif
@@ -454,7 +454,7 @@ shared_ptr<GroupElement> OpenSSLDlogZpSafePrime::reconstructElement(bool bCheckM
 }
 
 shared_ptr<GroupElement> OpenSSLDlogZpSafePrime::encodeByteArrayToGroupElement(
-	const vector<unsigned char> & binaryString) {
+	const vector<uint8_t> & binaryString) {
 
 	// any string of length up to k has numeric value that is less than (p-1)/2 - 1.
 	// if longer than k then throw exception.
@@ -463,12 +463,12 @@ shared_ptr<GroupElement> OpenSSLDlogZpSafePrime::encodeByteArrayToGroupElement(
 		throw length_error("The binary array to encode is too long.");
 	}
 
-	//Pad the binaryString with a x01 byte in the most significant byte to ensure that the 
+	//Pad the binaryString with a x01 uint8_t in the most significant uint8_t to ensure that the 
 	//encoding and decoding always work with positive numbers.
-	list<unsigned char> newString(binaryString.begin(), binaryString.end());
+	list<uint8_t> newString(binaryString.begin(), binaryString.end());
 	newString.push_front(1);
 
-	std::shared_ptr<byte> bstr(new byte[bs_size + 1], std::default_delete<byte[]>());
+	std::shared_ptr<uint8_t> bstr(new uint8_t[bs_size + 1], std::default_delete<uint8_t[]>());
 	for (auto it = newString.begin(); it != newString.end(); ++it) {
 		int index = std::distance(newString.begin(), it);
 		bstr.get()[index] = *it;
@@ -485,7 +485,7 @@ shared_ptr<GroupElement> OpenSSLDlogZpSafePrime::encodeByteArrayToGroupElement(
 	return element;
 }
 
-const vector<byte> OpenSSLDlogZpSafePrime::decodeGroupElementToByteArray(GroupElement* groupElement) {
+const vector<uint8_t> OpenSSLDlogZpSafePrime::decodeGroupElementToByteArray(GroupElement* groupElement) {
 	OpenSSLZpSafePrimeElement * zp_element = dynamic_cast<OpenSSLZpSafePrimeElement *>(groupElement);
 	if (!(zp_element))
 		throw invalid_argument("element type doesn't match the group type");
@@ -504,22 +504,22 @@ const vector<byte> OpenSSLDlogZpSafePrime::decodeGroupElementToByteArray(GroupEl
 	goodRoot -= 1;
 
 	int len = bytesCount(goodRoot);
-	std::shared_ptr<byte> output(new byte[len], std::default_delete<byte[]>());
+	std::shared_ptr<uint8_t> output(new uint8_t[len], std::default_delete<uint8_t[]>());
 	encodeBigInteger(goodRoot, output.get(), len);
-	vector<byte> res;
+	vector<uint8_t> res;
 
-	// Remove the padding byte at the most significant position (that was added while encoding)
+	// Remove the padding uint8_t at the most significant position (that was added while encoding)
 	for (int i = 1; i < len; ++i)
 		res.push_back(output.get()[i]);
 	return res;
 }
 
-const vector<byte> OpenSSLDlogZpSafePrime::mapAnyGroupElementToByteArray(GroupElement* groupElement) {
+const vector<uint8_t> OpenSSLDlogZpSafePrime::mapAnyGroupElementToByteArray(GroupElement* groupElement) {
 	OpenSSLZpSafePrimeElement * zp_element = dynamic_cast<OpenSSLZpSafePrimeElement *>(groupElement);
 	if (!(zp_element))
 		throw invalid_argument("element type doesn't match the group type");
 	string res = zp_element->getElementValue().str();
-	return vector<unsigned char>(res.begin(), res.end());
+	return vector<uint8_t>(res.begin(), res.end());
 }
 
 
@@ -693,9 +693,9 @@ shared_ptr<GroupElement> OpenSSLDlogEC::simultaneousMultipleExponentiations(
 	return createPoint(result);
 }
 
-const vector<byte> OpenSSLDlogEC::mapAnyGroupElementToByteArray(GroupElement* groupElement) {
+const vector<uint8_t> OpenSSLDlogEC::mapAnyGroupElementToByteArray(GroupElement* groupElement) {
 	//This function simply returns an array which is the result of concatenating 
-	//the byte array representation of x with the byte array representation of y.
+	//the uint8_t array representation of x with the uint8_t array representation of y.
 	ECElement * element = dynamic_cast<ECElement*>(groupElement);
 	if (!(element))
 		throw invalid_argument("element type doesn't match the group type");
@@ -705,11 +705,11 @@ const vector<byte> OpenSSLDlogEC::mapAnyGroupElementToByteArray(GroupElement* gr
 
 	int xBytesSize = bytesCount(x);
 	int yBytesSize = bytesCount(y);
-	shared_ptr<byte> result(new byte[xBytesSize + yBytesSize], default_delete<byte[]>());
+	shared_ptr<uint8_t> result(new uint8_t[xBytesSize + yBytesSize], default_delete<uint8_t[]>());
 	encodeBigInteger(x, result.get(), xBytesSize);
 	encodeBigInteger(y, result.get()+xBytesSize, yBytesSize);
 	
-	return vector<byte>(result.get(), result.get() + xBytesSize + yBytesSize - 1);
+	return vector<uint8_t>(result.get(), result.get() + xBytesSize + yBytesSize - 1);
 }
 
 shared_ptr<ECElement> OpenSSLDlogEC::getInfinity() {
@@ -799,7 +799,7 @@ void OpenSSLDlogECFp::createCurve(const biginteger & p, const biginteger & a, co
 int OpenSSLDlogECFp::calcK(biginteger & p){
 	int bitsInp = NumberOfBits(p);
 	int k = floor((0.4 * bitsInp) / 8) - 1;
-	//For technical reasons of how we chose to do the padding for encoding and decoding (the least significant byte of the encoded string contains the size of the 
+	//For technical reasons of how we chose to do the padding for encoding and decoding (the least significant uint8_t of the encoded string contains the size of the 
 	//the original binary string sent for encoding, which is used to remove the padding when decoding) k has to be <= 255 bytes so that the size can be encoded in the padding.
 	if (k > 255) {
 		k = 255;
@@ -909,15 +909,15 @@ shared_ptr<GroupElement> OpenSSLDlogECFp::generateElement(bool bCheckMembership,
 	return shared_ptr<OpenSSLECFpPoint>(point);
 }
 
-shared_ptr<GroupElement> OpenSSLDlogECFp::encodeByteArrayToGroupElement(const vector<unsigned char> & binaryString) {
+shared_ptr<GroupElement> OpenSSLDlogECFp::encodeByteArrayToGroupElement(const vector<uint8_t> & binaryString) {
 	//Pseudo-code:
 	/*If the length of binaryString exceeds k then return null.
 
 	Let L be the length in bytes of p
 
-	Choose a random byte array r of length L � k � 2 bytes
+	Choose a random uint8_t array r of length L � k � 2 bytes
 
-	Prepare a string newString of the following form: r || binaryString || binaryString.length (where || denotes concatenation) (i.e., the least significant byte of newString is the length of binaryString in bytes)
+	Prepare a string newString of the following form: r || binaryString || binaryString.length (where || denotes concatenation) (i.e., the least significant uint8_t of newString is the length of binaryString in bytes)
 
 	Convert the result to a BigInteger (bIString)
 
@@ -937,7 +937,7 @@ shared_ptr<GroupElement> OpenSSLDlogECFp::encodeByteArrayToGroupElement(const ve
 	int l = bytesCount(p);
 
 	//std::shared_ptr<char> randomArray(new char[l - k - 2], default_delete<char[]>());
-	vector<byte> randomArray(l - k - 2);
+	vector<uint8_t> randomArray(l - k - 2);
 	std::shared_ptr<char> newString(new char[l - k - 1 + len], default_delete<char[]>());
 	//copy the given string into the right place within the new string and put it length at the end of the new string.
 	memcpy(newString.get() + l - k - 2, binaryString.data(), len);
@@ -953,12 +953,12 @@ shared_ptr<GroupElement> OpenSSLDlogECFp::encodeByteArrayToGroupElement(const ve
 	bool success = 0;
 	BIGNUM * x = BN_new();
 	do {
-		//RAND_bytes((unsigned char*)randomArray.get() +1, l - k - 3);
+		//RAND_bytes((uint8_t*)randomArray.get() +1, l - k - 3);
 		random->getPRGBytes(randomArray, 1, l - k - 3);
 		memcpy(newString.get(), randomArray.data(), l - k - 2);
 
 		//Convert the result to a BigInteger (bIString)
-		if (NULL == (x = BN_bin2bn((unsigned char*)newString.get(), l - k - 1 + len, NULL))) break;
+		if (NULL == (x = BN_bin2bn((uint8_t*)newString.get(), l - k - 1 + len, NULL))) break;
 
 		//Try to create a point aith the generated x value.
 		//if failed, go back to choose a random r etc.
@@ -976,7 +976,7 @@ shared_ptr<GroupElement> OpenSSLDlogECFp::encodeByteArrayToGroupElement(const ve
 	return createPoint(point);
 }
 
-const vector<unsigned char> OpenSSLDlogECFp::decodeGroupElementToByteArray(GroupElement* groupElement) {
+const vector<uint8_t> OpenSSLDlogECFp::decodeGroupElementToByteArray(GroupElement* groupElement) {
 	auto point = dynamic_cast<OpenSSLECFpPoint*>(groupElement);
 	// Checks that the element is the correct object.
 	if (point == NULL) {
@@ -984,18 +984,18 @@ const vector<unsigned char> OpenSSLDlogECFp::decodeGroupElementToByteArray(Group
 	}
 	
 	int size = bytesCount(point->getX());
-	shared_ptr<byte> xByteArray(new byte[size], default_delete<byte[]>());
+	shared_ptr<uint8_t> xByteArray(new uint8_t[size], default_delete<uint8_t[]>());
 	auto tmp = biginteger_to_opensslbignum(point->getX());
 	BN_bn2bin(tmp, xByteArray.get());
 	BN_free(tmp);
 	
-	//The original size is placed in the last byte of x.
+	//The original size is placed in the last uint8_t of x.
 	int bOriginalSize = (int)(xByteArray.get()[size - 1]);
-	std::shared_ptr<byte> b2(new byte[bOriginalSize], std::default_delete<byte[]>());
+	std::shared_ptr<uint8_t> b2(new uint8_t[bOriginalSize], std::default_delete<uint8_t[]>());
 
-	//Copy the original byte array.
+	//Copy the original uint8_t array.
 	memcpy(b2.get(), xByteArray.get() + size - 1 - bOriginalSize, bOriginalSize);
-	return vector<byte>(b2.get(), b2.get()+ bOriginalSize);
+	return vector<uint8_t>(b2.get(), b2.get()+ bOriginalSize);
 }
 
 shared_ptr<GroupElement> OpenSSLDlogECFp::reconstructElement(bool bCheckMembership, GroupElementSendableData* data) {
@@ -1238,7 +1238,7 @@ shared_ptr<GroupElement> OpenSSLDlogECF2m::generateElement(bool bCheckMembership
  * Currently we don't support this conversion.</B> It will be implemented in the future. 
  * Meanwhile we return null.
 */
-shared_ptr<GroupElement> OpenSSLDlogECF2m::encodeByteArrayToGroupElement(const vector<unsigned char> & binaryString) {
+shared_ptr<GroupElement> OpenSSLDlogECF2m::encodeByteArrayToGroupElement(const vector<uint8_t> & binaryString) {
 
 
     shared_ptr<EC_POINT> point(EC_POINT_new(curve.get()), EC_POINT_free);
@@ -1258,13 +1258,13 @@ shared_ptr<GroupElement> OpenSSLDlogECF2m::encodeByteArrayToGroupElement(const v
 * Currently we don't support this conversion.</B> It will be implemented in the future.
 * Meanwhile we return empty vector.
 */
-const vector<unsigned char> OpenSSLDlogECF2m::decodeGroupElementToByteArray(GroupElement* groupElement) {
+const vector<uint8_t> OpenSSLDlogECF2m::decodeGroupElementToByteArray(GroupElement* groupElement) {
 	auto point = dynamic_cast<OpenSSLECF2mPoint*>(groupElement);
 	// Checks that the element is the correct object.
 	if (point == NULL)
 		throw invalid_argument("element type doesn't match the group type");
 
-    vector<byte> vec(100);
+    vector<uint8_t> vec(100);
     EC_POINT_is_on_curve(curve.get(), point->getPoint().get(), ctx.get());
 
     int size = EC_POINT_point2oct(curve.get(),

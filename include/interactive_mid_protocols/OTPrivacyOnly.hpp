@@ -163,8 +163,8 @@ protected:
 };
 
 /**
-* Concrete class for OT Privacy assuming DDH sender ON BYTE ARRAY.
-* This class derived from OTPrivacyOnlyDDHSenderAbs and implements the functionality related to the byte array inputs. 
+* Concrete class for OT Privacy assuming DDH sender ON uint8_t ARRAY.
+* This class derived from OTPrivacyOnlyDDHSenderAbs and implements the functionality related to the uint8_t array inputs. 
 *
 * For more information see Protocol 7.2.1 page 179 of <i>Efficient Secure Two-Party Protocols</i> by Hazay-Lindell.
 * The pseudo code of this protocol can be found in Protocol 4.2 of pseudo codes document at https://github.com/cryptobiu/scapi/blob/master/doc/old/SDD_docs/SDK_Pseudocode.docx
@@ -272,7 +272,7 @@ protected:
 	* @param message received from the sender
 	* @return OTROutput contains xSigma
 	*/
-	virtual shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & beta) = 0;
+	virtual shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & beta) = 0;
 
 private:
 
@@ -289,7 +289,7 @@ private:
 	* @param beta random value sampled by the protocol
 	* @return OTRSemiHonestMessage contains the tuple (h0, h1).
 	*/
-	OTRGroupElementQuadMsg computeTuple(byte sigma, biginteger & beta);
+	OTRGroupElementQuadMsg computeTuple(uint8_t sigma, biginteger & beta);
 
 	/**
 	* Runs the following line from the protocol:
@@ -364,7 +364,7 @@ protected:
 	* @return OTROutput contains xSigma
 	* @throws CheatAttemptException
 	*/
-	shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & beta) override;
+	shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & beta) override;
 
 public:
 
@@ -380,8 +380,8 @@ public:
 };
 
 /**
-* Concrete class for OT Privacy assuming DDH receiver ON BYTE ARRAY.
-* This class derived from OTPrivacyOnlyDDHReceiverAbs and implements the functionality related to the byte array inputs. 
+* Concrete class for OT Privacy assuming DDH receiver ON uint8_t ARRAY.
+* This class derived from OTPrivacyOnlyDDHReceiverAbs and implements the functionality related to the uint8_t array inputs. 
 *
 * For more information see Protocol 7.2.1 page 179 of <i>Efficient Secure Two-Party Protocols</i> by Hazay-Lindell.
 * The pseudo code of this protocol can be found in Protocol 4.2 of pseudo codes document at https://github.com/cryptobiu/scapi/blob/master/doc/old/SDD_docs/SDK_Pseudocode.docx
@@ -399,7 +399,7 @@ private:
 	*	   REPORT ERROR"
 	* @throws CheatAttemptException if there was a cheat attempt during the execution of the protocol.
 	*/
-	void checkReceivedTuple(GroupElement* w0, GroupElement* w1, vector<byte>& c0, vector<byte>& c1);
+	void checkReceivedTuple(GroupElement* w0, GroupElement* w1, vector<uint8_t>& c0, vector<uint8_t>& c1);
 
 protected:
 
@@ -417,7 +417,7 @@ protected:
 	* @return OTROutput contains xSigma
 	* @throws CheatAttemptException
 	*/
-	shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & beta) override;
+	shared_ptr<OTROutput> getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & beta) override;
 
 public:
 	/**

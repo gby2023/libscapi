@@ -373,25 +373,25 @@ public:
 	* k can be obtained by calling getMaxLengthOfByteArrayForEncoding() and it is calculated upon construction of this group; it depends on the length in bits of p.<p>
 	* The encoding-decoding functionality is not a bijection, that is, it is a 1-1 function but is not onto.
 	* Therefore, any string of length in bytes up to k can be encoded to a group element but not every group element can be decoded to a binary string in the group of binary strings of length up to 2^k.<p>
-	* Thus, the right way to use this functionality is first to encode a byte array and then to decode it, and not the opposite.
+	* Thus, the right way to use this functionality is first to encode a uint8_t array and then to decode it, and not the opposite.
 	*
-	* @param binaryString the byte array to encode
+	* @param binaryString the uint8_t array to encode
 	* @return the encoded group Element <B> or null </B>if element could not be encoded
 	*/
 	virtual shared_ptr<GroupElement> encodeByteArrayToGroupElement(
-		const vector<unsigned char> & binaryString) = 0;
+		const vector<uint8_t> & binaryString) = 0;
 
 	/**
-	* This function decodes a group element to a byte array. This function is guaranteed to work properly ONLY if the group element was obtained as a result of
+	* This function decodes a group element to a uint8_t array. This function is guaranteed to work properly ONLY if the group element was obtained as a result of
 	* encoding a binary string of length in bytes up to k.<p>
 	* This is because the encoding-decoding functionality is not a bijection, that is, it is a 1-1 function but is not onto.
 	* Therefore, any string of length in bytes up to k can be encoded to a group element but not any group element can be decoded
 	* to a binary sting in the group of binary strings of length up to 2^k.
 	*
 	* @param groupElement the element to decode
-	* @return the decoded byte array
+	* @return the decoded uint8_t array
 	*/
-	virtual const vector<unsigned char> decodeGroupElementToByteArray(GroupElement* groupElement) = 0;
+	virtual const vector<uint8_t> decodeGroupElementToByteArray(GroupElement* groupElement) = 0;
 
 
 	/**
@@ -407,11 +407,11 @@ public:
 	};
 	
 	/**
-	* This function maps a group element of this dlog group to a byte array.<p>
-	* This function does not have an inverse function, that is, it is not possible to re-construct the original group element from the resulting byte array.
-	* @return a byte array representation of the given group element
+	* This function maps a group element of this dlog group to a uint8_t array.<p>
+	* This function does not have an inverse function, that is, it is not possible to re-construct the original group element from the resulting uint8_t array.
+	* @return a uint8_t array representation of the given group element
 	*/
-	virtual const vector<byte> mapAnyGroupElementToByteArray(GroupElement* groupElement) = 0;
+	virtual const vector<uint8_t> mapAnyGroupElementToByteArray(GroupElement* groupElement) = 0;
 };
 
 /**

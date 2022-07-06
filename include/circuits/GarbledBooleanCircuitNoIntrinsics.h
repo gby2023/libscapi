@@ -34,13 +34,13 @@ class GarbledBooleanCircuitNoIntrinsics
 {
 
 private:
-    vector<byte> deltaFreeXor;//This is used to get the second garbled value in freeXor optimization. The second garbled value is the XOR
+    vector<uint8_t> deltaFreeXor;//This is used to get the second garbled value in freeXor optimization. The second garbled value is the XOR
     //of the first key and the delta. The delta is chosen at random.
     //We use a pointer since new with 32 bit does not 16-align the variable by default.
 
 
-    vector<byte> encryptedChunkKeys;//The result of chunk encrypting indexArray.
-    vector<byte> indexArray;//An array that holds the number 0 to the number of nonXorGates and is calculated in advence.
+    vector<uint8_t> encryptedChunkKeys;//The result of chunk encrypting indexArray.
+    vector<uint8_t> indexArray;//An array that holds the number 0 to the number of nonXorGates and is calculated in advence.
     //The purpuse of this array is that we can calculate. this array and all the keys of the circuit in advence using ecb mode
     //with one chuck gaining pipelining
 
@@ -55,13 +55,13 @@ private:
     * emptyBothOutputKeys : An empty block array that will be filled with both output keys generated in garble.
     * emptyTranslationTable : An empty int array that will be filled with 0/1 signal bits that we chosen in random in this function.
     */
-    void garble(byte * emptyBothInputKeys, byte * emptyBothOutputKeys, std::vector<unsigned char> & emptyTranslationTable, byte* seed);
+    void garble(uint8_t * emptyBothInputKeys, uint8_t * emptyBothOutputKeys, std::vector<uint8_t> & emptyTranslationTable, uint8_t* seed);
 
     /*
     * This function inits the keys for all the wires in the circuit and initializes the two aes encryptions (seed and fixedKey as keys). It also choses
     * the input keys at random using the aes with seed. It also creates memory for the translation table.
     */
-    void initAesEncryptionsAndAllKeys(byte* emptyBothInputKeys);
+    void initAesEncryptionsAndAllKeys(uint8_t* emptyBothInputKeys);
 
 protected:
 
@@ -88,19 +88,19 @@ protected:
     std::vector<int> inputIndices;//The indices of the input wires.
     std::vector<int> outputIndices;//The indices of the output wires.
 
-    byte* seed;//The seed is used to create the garbled value via AES. The seed is the key of the AES that generates random values.
+    uint8_t* seed;//The seed is used to create the garbled value via AES. The seed is the key of the AES that generates random values.
 
     /*
       * We store the garbled tables in a one dimensional array of GarbleTable.
     * GarbleTable is an array of blocks(128 bit variable), the garbled in the array corresponds to the gate
       * Each table of each gate is a one dimensional array of bytes rather than an array of ciphertexts.
-      * This is for time/space efficiency reasons: If a single garbled table is an array of ciphertext that holds a byte array the space
+      * This is for time/space efficiency reasons: If a single garbled table is an array of ciphertext that holds a uint8_t array the space
       * stored by java is big. The main array holds references for each item (4 bytes). Each array in java has an overhead of 12 bytes.
       * Thus the garbled table with ciphertexts has at least (12+4)*number of rows overhead.
       * If we store the array as one dimensional array we only have 12 bytes overhead for the entire table and thus this is the way we
       * store the garbled tables.
       */
-    byte* garbledTables;
+    uint8_t* garbledTables;
 
 
     GarbledGate *garbledGates;//An array that holds the garbled gates. This is fiiled by the derived classes according to the derived class needs
@@ -112,7 +112,7 @@ protected:
      * privacy and/or correctness will not be preserved. Therefore, we only reveal the signal bit, and the other
      * possible value for the wire is not stored on the translation table.
      */
-    std::vector<byte> translationTable;
+    std::vector<uint8_t> translationTable;
 
     /*
     /two aes encryption schemes that will be used in all the derived classes
@@ -125,8 +125,8 @@ protected:
     //these values in construction, the performance is better. Allocating the memory consumes negligible time, but using
     //values of these array without some initialization (in our case using memset) causes a lot of cache misses and thus
     //performance decrease. We make sure to delete these values in the destructor.
-    byte* garbledWires;
-    byte* computedWires;
+    uint8_t* garbledWires;
+    uint8_t* computedWires;
 
     SecretKey aesFixedKey;//We use a pointer since new with 32 bit does not 16-align the variable by default
 
@@ -146,10 +146,10 @@ protected:
     /**
     * returns the signal bit if a block (128 bit). This bit the 8'th bit of the 128 bits
     */
-    unsigned char getSignalBitOf(byte* x) {return *x & 1;};
+    uint8_t getSignalBitOf(uint8_t* x) {return *x & 1;};
 
 
-    //unsigned char getSignalBitOf(block x) { return _mm_extract_epi16(x,  0) % 2; };
+    //uint8_t getSignalBitOf(block x) { return _mm_extract_epi16(x,  0) % 2; };
     /**
     * This is a simple function that returns the results of 2^p where p=0,1,2,3. Pow of c++ is not used since it uses double casted to int
     * and this is time consuming. Since we only have 4 options and efficiency is important we use this naive function. Using shifts is also
@@ -160,12 +160,12 @@ protected:
     /*
     * This functions gets a truth tables represented as a decimal number between 0-15 and returns the result of row i,j.
     */
-    int getRowTruthTableResult(int i, int j, unsigned char truthTable);
+    int getRowTruthTableResult(int i, int j, uint8_t truthTable);
 
     /*
     * This function does the same as the above function getRowTruthTableResult. The difference is that it uses shifts.
     */
-    int getRowTruthTableResultShifts(int rowNumber, unsigned char truthTable){ return (truthTable & (1 << (3 - rowNumber))) >> (3 - rowNumber); };
+    int getRowTruthTableResultShifts(int rowNumber, uint8_t truthTable){ return (truthTable & (1 << (3 - rowNumber))) >> (3 - rowNumber); };
 
     /*
     * In some cases it is important that the output keys of each wire will not all have the same fixed delta xor
@@ -177,7 +177,7 @@ protected:
     * that decrypts these identity gates by turning the flag isNonXorOutputsRequired to true.
     * Garble calls this function only when this flag is true.
     */
-//    void garbleOutputWiresToNoFixedDelta(byte *deltaFreeXor, int nonXorIndex, byte *emptyBothOutputKeys);
+//    void garbleOutputWiresToNoFixedDelta(uint8_t *deltaFreeXor, int nonXorIndex, uint8_t *emptyBothOutputKeys);
 
     /*
     * In some cases it is important that the output keys of each wire will not all have the same fixed delta xor
@@ -187,7 +187,7 @@ protected:
     *
     * This function computes the identity gates that the garbeler had created.
     */
-//    void computeOutputWiresToNoFixedDelta(int nonXorIndex, byte * Output);
+//    void computeOutputWiresToNoFixedDelta(int nonXorIndex, uint8_t * Output);
 
     /*
     * In some cases it is important that the output keys of each wire will not all have the same fixed delta xor
@@ -200,7 +200,7 @@ protected:
     * The last verification will be done in verifyTranslationTable that makes sure that the new outputs with no fixed delta
     * have signal bits matching the corresponding bit in the translation table.
     */
-//    void verifyOutputWiresToNoFixedDelta(byte *bothOutputsKeys);
+//    void verifyOutputWiresToNoFixedDelta(uint8_t *bothOutputsKeys);
 
 public:
     GarbledBooleanCircuitNoIntrinsics(const char* fileName, bool isNonXorOutputsRequired=false);
@@ -217,9 +217,9 @@ public:
 	* return values in the tuple:
 	* block * : A block array that will be filled with both input keys generated in garble.
 	* block * : An empty block array that will be filled with both output keys generated in garble.
-	* byte : An char array that will be filled with 0/1 signal bits that we chosen in random in this function.
+	* uint8_t : An char array that will be filled with 0/1 signal bits that we chosen in random in this function.
 	*/
-    std::tuple<byte*, byte*, std::vector<byte> > garble(byte *seed = nullptr);
+    std::tuple<uint8_t*, uint8_t*, std::vector<uint8_t> > garble(uint8_t *seed = nullptr);
 
 
     /**
@@ -227,7 +227,7 @@ public:
      * It returns a the garbled values keys for the output wires. This output can be translated via the translate() method
      * if the translation table is set.
      */
-    void compute(byte *singleWiresInputKeys,byte * Output);
+    void compute(uint8_t *singleWiresInputKeys,uint8_t * Output);
 
     /**
      * The verify method is used in the case of malicious adversaries.
@@ -238,7 +238,7 @@ public:
      * the first garbled value is the 0 encoding, that is the 0 garbled value, and the second value is the 1 encoding.
      * returns:  true, if this GarbledBooleanCircuitNoIntrinsics is a garbling the given keys, false otherwise.
      */
-    bool verify(byte *bothInputKeys);
+    bool verify(uint8_t *bothInputKeys);
 
     /**
      * This function does the last part of the verify function. It gets both keys of each output wire and checks that
@@ -248,7 +248,7 @@ public:
      * @param allOutputWireValues both keys of each output wire.
      * @return {@code true} if the given keys match the translation table ,{@code false} if not.
      */
-    bool verifyTranslationTable(byte * emptyBothWireOutputKeys);
+    bool verifyTranslationTable(uint8_t * emptyBothWireOutputKeys);
 
     /**
      * This is a virtual function that is implemented in the derived classes due to many changes in each derived class.
@@ -261,7 +261,7 @@ public:
      *
      * returns : true if this GarbledBooleanCircuitNoIntrinsics is a garbling the given keys, false otherwise.
      */
-    bool internalVerify(byte *bothWiresInputKeys, byte *emptyBothWireOutputKeys);
+    bool internalVerify(uint8_t *bothWiresInputKeys, uint8_t *emptyBothWireOutputKeys);
 
 
     /**
@@ -288,7 +288,7 @@ public:
      * outputKeys : An array that contains a single garbled value for each output wire.
      * return: An array of chars with values 0/1
      */
-    void translate(byte *outputKeys, unsigned char* answer);
+    void translate(uint8_t *outputKeys, uint8_t* answer);
 
 
     /**
@@ -298,14 +298,14 @@ public:
      * and needs the translation table as well to complete the computation of the circuit.
      * returns : the translation table of the circuit..
      */
-    std::vector<byte> getTranslationTable() { return translationTable; };
+    std::vector<uint8_t> getTranslationTable() { return translationTable; };
 
     /**
      * Sets the translation table of the circuit.
      * This is necessary when the garbled tables were set and we would like to compute the circuit later on.
      * translationTable : This value should match the garbled tables of the circuit.
      */
-    void setTranslationTable(std::vector<unsigned char> & translationTable);
+    void setTranslationTable(std::vector<uint8_t> & translationTable);
 
     /**
      * The garbled tables are stored in the circuit for all the gates. This method returns the garbled tables which is a GarbledTable array
@@ -320,13 +320,13 @@ public:
      * get/setGarbledTable() are used to retrieve/set the garbled tables.
      *
      */
-    byte* getGarbledTables() { return garbledTables;};
-    void setGarbledTables(byte* garbledTables);
+    uint8_t* getGarbledTables() { return garbledTables;};
+    void setGarbledTables(uint8_t* garbledTables);
 
     /**
     * Checks if two blocks have the same value.
     */
-    bool equalBlocks(byte* a, byte* b);
+    bool equalBlocks(uint8_t* a, uint8_t* b);
 
 
     /**

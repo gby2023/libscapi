@@ -49,18 +49,18 @@ public:
 };
 
 /**
-* Concrete class for vector<byte> random value.
+* Concrete class for vector<uint8_t> random value.
 *
 */
 class ByteArrayRandomValue : public RandomValue {
 	friend class boost::serialization::access;
 private:
-	vector<byte> r;
+	vector<uint8_t> r;
 public:
 	ByteArrayRandomValue(){}	// for cereal
 
-	ByteArrayRandomValue(vector<byte> & r) { this->r = r; }
-	vector<byte> getR() { return r; };
+	ByteArrayRandomValue(vector<uint8_t> & r) { this->r = r; }
+	vector<uint8_t> getR() { return r; };
 
 	template<class Archive>
 	void serialize(Archive & ar, const unsigned int version)

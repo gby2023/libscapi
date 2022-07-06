@@ -80,16 +80,16 @@ public:
 	virtual string getAlgorithmName() = 0;
 
 	/**
-	* There are some encryption schemes that have a limit of the byte array that can be passed to the generatePlaintext.
+	* There are some encryption schemes that have a limit of the uint8_t array that can be passed to the generatePlaintext.
 	* This function indicates whether or not there is a limit.
 	* Its helps the user know if he needs to pass an array with specific length or not.
-	* @return true if this encryption scheme has a maximum byte array length to generate a plaintext from; false, otherwise.
+	* @return true if this encryption scheme has a maximum uint8_t array length to generate a plaintext from; false, otherwise.
 	*/
 	virtual bool hasMaxByteArrayLengthForPlaintext() = 0;
 
 	/**
-	* Returns the maximum size of the byte array that can be passed to generatePlaintext function.
-	* This is the maximum size of a byte array that can be converted to a Plaintext object suitable to this encryption scheme.
+	* Returns the maximum size of the uint8_t array that can be passed to generatePlaintext function.
+	* This is the maximum size of a uint8_t array that can be converted to a Plaintext object suitable to this encryption scheme.
 	* @throws runtime_error if this encryption scheme has no limit on the plaintext input.
 	*/
 	virtual int getMaxLengthOfByteArrayForPlaintext() = 0;
@@ -99,10 +99,10 @@ public:
 	* A Plaintext object is needed in order to use the encrypt function. Each encryption scheme might generate a different type of Plaintext
 	* according to what it needs for encryption. The encryption function receives as argument an object of type Plaintext in order to allow a protocol
 	* holding the encryption scheme to be oblivious to the exact type of data that needs to be passed for encryption.
-	* @param text byte array to convert to a Plaintext object.
+	* @param text uint8_t array to convert to a Plaintext object.
 	* @throws invalid_argument if the given message's length is greater than the maximum.
 	*/
-	virtual shared_ptr<Plaintext> generatePlaintext(vector<byte> & text) = 0;
+	virtual shared_ptr<Plaintext> generatePlaintext(vector<uint8_t> & text) = 0;
 
 	/**
 	* Reconstructs a suitable AsymmetricCiphertext from data that was probably obtained via a Channel or any other means of sending data
@@ -146,13 +146,13 @@ public:
 	virtual shared_ptr<Plaintext> decrypt(AsymmetricCiphertext* cipher) = 0;
 
 	/**
-	* Generates a byte array from the given plaintext.
+	* Generates a uint8_t array from the given plaintext.
 	* This function should be used when the user does not know the specific type of the Asymmetric encryption he has,
-	* and therefore he is working on byte array.
-	* @param plaintext to generates byte array from.
-	* @return the byte array generated from the given plaintext.
+	* and therefore he is working on uint8_t array.
+	* @param plaintext to generates uint8_t array from.
+	* @return the uint8_t array generated from the given plaintext.
 	*/
-	virtual vector<byte> generateBytesFromPlaintext(Plaintext* plaintext) = 0;
+	virtual vector<uint8_t> generateBytesFromPlaintext(Plaintext* plaintext) = 0;
 
 	/**
 	* Generates public and private keys for this asymmetric encryption.

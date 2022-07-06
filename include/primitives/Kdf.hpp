@@ -40,14 +40,14 @@ class KeyDerivationFunction {
 public:
 	/**
 	* Generates a new secret key from the given entropy and iv.
-	* @param entropySource the byte vector that is the seed for the key generation
+	* @param entropySource the uint8_t vector that is the seed for the key generation
 	* @param inOff the offset within the entropySource to take the bytes from
 	* @param inLen the length of the seed
 	* @param outLen the required output key length
 	* @param iv info for the key generation
 	* @return SecretKey the derivated key.
 	*/
-	virtual SecretKey deriveKey(const vector<byte> & entropySource, int inOff, int inLen, int outLen, const vector<byte>& iv = vector<byte>()) = 0;
+	virtual SecretKey deriveKey(const vector<uint8_t> & entropySource, int inOff, int inLen, int outLen, const vector<uint8_t>& iv = vector<uint8_t>()) = 0;
 };
 
 /**
@@ -70,7 +70,7 @@ private:
 	* @param outBytes the result of the overall computation
 	* @param intermediateOutBytes round result K(i) in the pseudocode
 	*/
-	void nextRounds(int outLen, const vector<byte> & iv, int hmacLength, vector<byte> & outBytes, vector<byte> & intermediateOutBytes);
+	void nextRounds(int outLen, const vector<uint8_t> & iv, int hmacLength, vector<uint8_t> & outBytes, vector<uint8_t> & intermediateOutBytes);
 	
 	/**
 	* First round of HKDF algorithm. The pseudo code:
@@ -80,7 +80,7 @@ private:
 	* @param outLength the size of the output of the hmac.
 	* @param outBytes the result of the overall computation
 	*/
-	void firstRound(vector<byte>& outBytes, const vector<byte> & iv, vector<byte> & intermediateOutBytes, int outLength);
+	void firstRound(vector<uint8_t>& outBytes, const vector<uint8_t> & iv, vector<uint8_t> & intermediateOutBytes, int outLength);
 
 public:
 	HKDF(const shared_ptr<Hmac> & hmac = make_shared<OpenSSLHMAC>()) { this->hmac = hmac; };
@@ -100,5 +100,5 @@ public:
 	*
 	* Note that this function is thread safe!
 	*/
-	SecretKey deriveKey(const vector<byte> & entropySource, int inOff, int inLen, int outLen, const vector<byte>& iv = vector<byte>()) override;
+	SecretKey deriveKey(const vector<uint8_t> & entropySource, int inOff, int inLen, int outLen, const vector<uint8_t>& iv = vector<uint8_t>()) override;
 };

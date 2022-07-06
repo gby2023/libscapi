@@ -139,7 +139,7 @@ SigmaDJProductSimulator::SigmaDJProductSimulator(int t, int lengthParameter, con
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 * @throws IllegalArgumentException if the given input is not an instance of SigmaDJProductCommonInput.
 */
-shared_ptr<SigmaSimulatorOutput> SigmaDJProductSimulator::simulate(SigmaCommonInput* input, const vector<byte> & challenge) {
+shared_ptr<SigmaSimulatorOutput> SigmaDJProductSimulator::simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge) {
 	/*
 	* SAMPLE random values z1 <- ZN, z2 <- Z*n, z3 <- Z*n
 	* COMPUTE a1 = (1+n)^z1*(z2^N/c1^e) mod N' AND a2 = c2^z1/(z3^N*c3^e) mod N'
@@ -203,8 +203,8 @@ shared_ptr<SigmaSimulatorOutput> SigmaDJProductSimulator::simulate(SigmaCommonIn
 * @throws IllegalArgumentException if the given input is not an instance of SigmaDJProductInput.
 */
 shared_ptr<SigmaSimulatorOutput> SigmaDJProductSimulator::simulate(SigmaCommonInput* input) { 
-	//Create a new byte array of size t/8, to get the required byte size.
-	vector<byte> e(t / 8);
+	//Create a new uint8_t array of size t/8, to get the required uint8_t size.
+	vector<uint8_t> e(t / 8);
 	random->getPRGBytes(e, 0, t / 8);
 	//modify the challenge to be positive.
 	e.data()[e.size() - 1] = e.data()[e.size() - 1] & 127;
@@ -227,7 +227,7 @@ bool SigmaDJProductSimulator::checkSoundnessParam(const biginteger & modulus) {
 * Checks if the given challenge length is equal to the soundness parameter.
 * @return true if the challenge length is t; false, otherwise.
 */
-bool SigmaDJProductSimulator::checkChallengeLength(const vector<byte> & challenge) {
+bool SigmaDJProductSimulator::checkChallengeLength(const vector<uint8_t> & challenge) {
 	//If the challenge's length is equal to t, return true. else, return false.
 	return ((int) challenge.size() == (t / 8) ? true : false);
 }
@@ -308,7 +308,7 @@ shared_ptr<SigmaProtocolMsg> SigmaDJProductProverComputation::computeFirstMsg(co
 * @return the computed message.
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 */
-shared_ptr<SigmaProtocolMsg> SigmaDJProductProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaDJProductProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 
 	//check the challenge validity.
 	if (!checkChallengeLength(challenge)) {
@@ -356,7 +356,7 @@ bool SigmaDJProductProverComputation::checkSoundnessParam(const biginteger & mod
 * Checks if the given challenge length is equal to the soundness parameter.
 * @return true if the challenge length is t; false, otherwise.
 */
-bool SigmaDJProductProverComputation::checkChallengeLength(const vector<byte> & challenge) {
+bool SigmaDJProductProverComputation::checkChallengeLength(const vector<uint8_t> & challenge) {
 	//If the challenge's length is equal to t, return true. else, return false.
 	return ((int) challenge.size() == (t / 8) ? true : false);
 }

@@ -42,7 +42,7 @@ using IpAddress = boost_ip::address;
 using tcp = boost_ip::tcp;
 using namespace std;
 
-typedef unsigned char byte;
+// typedef uint8_t uint8_t;
 
 
 class TimeoutException : public logic_error
@@ -123,17 +123,17 @@ public:
 	* Will write exactly @param size bytes
 	*
 	*/
-	virtual size_t write(const byte* data, int size, int peer = -1, int protocol = -1) = 0;
+	virtual size_t write(const uint8_t* data, int size, int peer = -1, int protocol = -1) = 0;
 	/**
 	* Read exactly @param sizeToRead bytes int @param buffer
 	* Will block until all bytes are read.
 	*/
-	virtual size_t read(byte* buffer, int sizeToRead, int peer = -1, int protocol = -1) = 0;
-	virtual void write(string s) { write((const byte *)s.c_str(), s.size()); };
-	virtual void writeWithSize(const byte* data, int size);
+	virtual size_t read(uint8_t* buffer, int sizeToRead, int peer = -1, int protocol = -1) = 0;
+	virtual void write(string s) { write((const uint8_t *)s.c_str(), s.size()); };
+	virtual void writeWithSize(const uint8_t* data, int size);
 	virtual int readSize();
-	virtual size_t readWithSizeIntoVector(vector<byte> & targetVector);
-	virtual void writeWithSize(string s) { writeWithSize((const byte*)s.c_str(), s.size()); };
+	virtual size_t readWithSizeIntoVector(vector<uint8_t> & targetVector);
+	virtual void writeWithSize(string s) { writeWithSize((const uint8_t*)s.c_str(), s.size()); };
 	virtual ~CommParty() {};
 
 	// accumulate the number of send/receive bytes
@@ -155,8 +155,8 @@ public:
 		this->role = role;
 	};
 	int join(int sleepBetweenAttempts = 500, int timeout = 5000, bool first = true) override;
-    size_t write(const byte* data, int size, int peer = -1, int protocol = -1) override;
-	size_t read(byte* data, int sizeToRead, int peer = -1, int protocol = -1) override {
+    size_t write(const uint8_t* data, int size, int peer = -1, int protocol = -1) override;
+	size_t read(uint8_t* data, int sizeToRead, int peer = -1, int protocol = -1) override {
 	    bytesIn += sizeToRead;
 		return boost::asio::read(socketForRead(), boost::asio::buffer(data, sizeToRead));
 	}

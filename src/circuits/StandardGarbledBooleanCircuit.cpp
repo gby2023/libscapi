@@ -92,7 +92,7 @@ void StandardGarbledBooleanCircuit::createCircuitMemory(const char* fileName, bo
 
 }
 
-void StandardGarbledBooleanCircuit::garble(block *emptyBothInputKeys, block *emptyBothOutputKeys, vector<unsigned char> & emptyTranslationTable, block seed){
+void StandardGarbledBooleanCircuit::garble(block *emptyBothInputKeys, block *emptyBothOutputKeys, vector<uint8_t> & emptyTranslationTable, block seed){
 	
 	this->seed = seed;
 
@@ -231,7 +231,7 @@ void StandardGarbledBooleanCircuit::initAesEncryptionsAndAllKeys(block* emptyBot
 	translationTable.reserve(numberOfOutputs);
 
 	///create the aes with the seed as the key. This will be used for encrypting the input keys
-	AES_set_encrypt_key((const unsigned char *)&seed, 128, &aesSeedKey);
+	AES_set_encrypt_key((const uint8_t *)&seed, 128, &aesSeedKey);
 
 	
 	//encrypt all the keys in one call with large arrays

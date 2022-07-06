@@ -125,7 +125,7 @@ void MPCCommunication::printNetworkStats(vector<shared_ptr<ProtocolPartyData>> &
                                      {"numberOfParties", to_string(parties.size() + 1)} } ;
 
     json partyData = json::array();
-    for (int idx = 0; idx < parties.size(); idx++) {
+    for (int idx = (parties.size() - 1); idx>=0; idx--) {
         if(partyID == idx) continue;
 
         json commData = json::object();
@@ -152,4 +152,4 @@ void MPCCommunication::printNetworkStats(vector<shared_ptr<ProtocolPartyData>> &
     catch (exception& e) {
         cout << "Exception thrown : " << e.what() << endl;
     }
-}
+    }

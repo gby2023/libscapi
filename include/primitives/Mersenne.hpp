@@ -504,7 +504,7 @@ public:
 
         m64[0] = low00;
 
-        unsigned char c1 = 0, c2 = 0;
+        uint8_t c1 = 0, c2 = 0;
         c1 = _addcarry_u64(c1, high00, low01, &m64[1]);
         c2 = _addcarry_u64(c2, m64[1], low10, &m64[1]);
         //m64[1] = high00+low01+low10;
@@ -584,10 +584,10 @@ public:
     FieldType stringToElement(const string &str);
 
 
-    void elementToBytes(unsigned char* output,FieldType &element);
+    void elementToBytes(uint8_t* output,FieldType &element);
 
-    FieldType bytesToElement(unsigned char* elemenetInBytes);
-    void elementVectorToByteVector(vector<FieldType> &elementVector, vector<byte> &byteVector);
+    FieldType bytesToElement(uint8_t* elemenetInBytes);
+    void elementVectorToByteVector(vector<FieldType> &elementVector, vector<uint8_t> &byteVector);
 
     FieldType* GetZero();
     FieldType* GetOne();

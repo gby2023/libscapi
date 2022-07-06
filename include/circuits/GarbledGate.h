@@ -26,7 +26,7 @@
 */
 
 #pragma once
-
+#include <cstdint>
 
 /**
  * The GarbledGate class is a software representation of a circuit's gate, that is the structure of the boolean circuit and not the actuall values assigned.
@@ -40,6 +40,6 @@ struct GarbledGate
 	int input0;//the 0-wire index 
 	int input1;//the 1-wire index
 	int output;//the output index
-	unsigned char truthTable; //the truth table of this gate. This will be a number from 0 to 15.
-	unsigned char truthTableBits[4];//We keep this duplicate information to increase performance
+	uint8_t truthTable; //the truth table of this gate. This will be a number from 0 to 15.
+	uint8_t truthTableBits[4];//We keep this duplicate information to increase performance
 };

@@ -127,7 +127,7 @@ HalfGatesGarbledBooleanCircuit::~HalfGatesGarbledBooleanCircuit(void)
 }
 
 void HalfGatesGarbledBooleanCircuit::garble(block *emptyBothInputKeys, block *emptyBothOutputKeys,
-        vector<unsigned char> & emptyTranslationTable, block seed){
+        vector<uint8_t> & emptyTranslationTable, block seed){
 
 	this->seed = seed;
 
@@ -267,7 +267,7 @@ void HalfGatesGarbledBooleanCircuit::initAesEncryptionsAndAllKeys(block* emptyBo
 	
 
 	///create the aes with the seed as the key. This will be used for encrypting the input keys
-	AES_set_encrypt_key((const unsigned char *)&seed, 128, &aesSeedKey);
+	AES_set_encrypt_key((const uint8_t *)&seed, 128, &aesSeedKey);
 
 	//create the delta for the free Xor. Encrypt zero twice. We get a good enough random delta by encrypting twice
 	deltaFreeXor = ZERO_BLOCK;
@@ -275,7 +275,7 @@ void HalfGatesGarbledBooleanCircuit::initAesEncryptionsAndAllKeys(block* emptyBo
 	AES_ecb_encrypt(&deltaFreeXor, &aesSeedKey);
 
 	//set the last bit of the first char to 1
-	*((unsigned char *)(&deltaFreeXor)) |= 1;
+	*((uint8_t *)(&deltaFreeXor)) |= 1;
 
 	AES_ecb_encrypt_chunk_in_out(indexArray,
 		encryptedChunkKeys,

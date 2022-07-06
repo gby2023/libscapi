@@ -211,7 +211,7 @@ public:
 	* @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 	* @throws IllegalArgumentException if the given input is not an instance of SigmaPedersenCTKnowledgeCommonInput.
 	*/
-	shared_ptr<SigmaSimulatorOutput> simulate(SigmaCommonInput* input, const vector<byte> & challenge)  override;
+	shared_ptr<SigmaSimulatorOutput> simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge)  override;
 
 	/**
 	* Computes the simulator computation with randomly chosen challenge.
@@ -294,7 +294,7 @@ public:
 	* @return the computed message.
 	* @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 	*/
-	shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<byte> & challenge) override;
+	shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<uint8_t> & challenge) override;
 
 	/**
 	* Returns the simulator that matches this sigma protocol prover.
@@ -326,7 +326,7 @@ class SigmaPedersenCmtKnowledgeVerifierComputation : public SigmaVerifierComputa
 private:
 	shared_ptr<DlogGroup> dlog;			// Underlying DlogGroup.
 	int t; 								//Soundness parameter in BITS.
-	vector<byte> e;						//The challenge.
+	vector<uint8_t> e;						//The challenge.
 	shared_ptr<PrgFromOpenSSLAES> random;
 
 	/**
@@ -362,13 +362,13 @@ public:
 	* Sets the given challenge.
 	* @param challenge
 	*/
-	void setChallenge(const vector<byte> & challenge) override { e = challenge; }
+	void setChallenge(const vector<uint8_t> & challenge) override { e = challenge; }
 
 	/**
 	* Returns the sampled challenge.
 	* @return the challenge.
 	*/
-	vector<byte> getChallenge() override { return e; }
+	vector<uint8_t> getChallenge() override { return e; }
 
 	/**
 	* Computes the varification of the protocol.<p>

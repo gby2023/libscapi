@@ -29,7 +29,7 @@ OTOneSidedSimDDHSenderAbs::OTOneSidedSimDDHSenderAbs(const shared_ptr<CommParty>
 * @throws ClassNotFoundException
 */
 OTRGroupElementQuadMsg OTOneSidedSimDDHSenderAbs::waitForMessageFromReceiver(CommParty* channel) {
-	vector<byte> raw_msg;
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 
 	// create an empty OTRGroupElementPairMsg and initialize it with the received data. 
@@ -329,7 +329,7 @@ OTOneSidedSimDDHReceiverAbs::OTOneSidedSimDDHReceiverAbs(const shared_ptr<CommPa
 * @param gAlpha g^alpha
 * @return OTRPrivacyOnlyMessage contains the tuple (x, y, z0, z1).
 */
-OTRGroupElementQuadMsg OTOneSidedSimDDHReceiverAbs::computeTuple(byte sigma, biginteger & alpha, biginteger & beta, GroupElement* gAlpha) {
+OTRGroupElementQuadMsg OTOneSidedSimDDHReceiverAbs::computeTuple(uint8_t sigma, biginteger & alpha, biginteger & beta, GroupElement* gAlpha) {
 	//Sample random value gamma in [0, . . . , q-1]
 	biginteger gamma = getRandomInRange(0, qMinusOne, random.get());
 
@@ -400,7 +400,7 @@ shared_ptr<OTROutput> OTOneSidedSimDDHReceiverAbs::transfer(CommParty* channel, 
 		throw invalid_argument("input should contain sigma.");
 	}
 
-	byte sigma = in->getSigma();
+	uint8_t sigma = in->getSigma();
 
 	//The given sigma should be 0 or 1.
 	if ((sigma != 0) && (sigma != 1)) {
@@ -492,8 +492,8 @@ void OTOneSidedSimDDHOnGroupElementReceiver::checkReceivedTuple(GroupElement* w0
 * @return OTROutput contains xSigma
 * @throws CheatAttemptException
 */
-shared_ptr<OTROutput> OTOneSidedSimDDHOnGroupElementReceiver::getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & beta) {
-	vector<byte> raw_msg;
+shared_ptr<OTROutput> OTOneSidedSimDDHOnGroupElementReceiver::getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & beta) {
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 
 	// create an empty OTRGroupElementPairMsg and initialize it with the received data. 
@@ -542,7 +542,7 @@ shared_ptr<OTROutput> OTOneSidedSimDDHOnGroupElementReceiver::getMsgAndComputeXS
 * @param c1
 * @throws CheatAttemptException if there was a cheat attempt during the execution of the protocol.
 */
-void OTOneSidedSimDDHOnByteArrayReceiver::checkReceivedTuple(GroupElement* w0, GroupElement* w1, vector<byte> & c0, vector<byte> & c1) {
+void OTOneSidedSimDDHOnByteArrayReceiver::checkReceivedTuple(GroupElement* w0, GroupElement* w1, vector<uint8_t> & c0, vector<uint8_t> & c1) {
 
 	if (!(dlog->isMember(w0))) {
 		throw new CheatAttemptException("w0 element is not a member in the current DlogGroup");
@@ -570,8 +570,8 @@ void OTOneSidedSimDDHOnByteArrayReceiver::checkReceivedTuple(GroupElement* w0, G
 * @return OTROutput contains xSigma
 * @throws CheatAttemptException
 */
-shared_ptr<OTROutput> OTOneSidedSimDDHOnByteArrayReceiver::getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & beta) {
-	vector<byte> raw_msg;
+shared_ptr<OTROutput> OTOneSidedSimDDHOnByteArrayReceiver::getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & beta) {
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 
 	// create an empty OTRGroupElementPairMsg and initialize it with the received data. 
@@ -581,7 +581,7 @@ shared_ptr<OTROutput> OTOneSidedSimDDHOnByteArrayReceiver::getMsgAndComputeXSigm
 	//Reconstruct the group elements from the given message.
 	auto w0 = dlog->reconstructElement(false, msg.getW0().get());
 	auto w1 = dlog->reconstructElement(false, msg.getW1().get());
-	//Get the byte arrays from the given message.
+	//Get the uint8_t arrays from the given message.
 	auto c0 = msg.getC0();
 	auto c1 = msg.getC1();
 
@@ -589,7 +589,7 @@ shared_ptr<OTROutput> OTOneSidedSimDDHOnByteArrayReceiver::getMsgAndComputeXSigm
 	checkReceivedTuple(w0.get(), w1.get(), c0, c1);
 
 	shared_ptr<GroupElement> kSigma;
-	vector<byte> cSigma;
+	vector<uint8_t> cSigma;
 
 	//If sigma = 0, compute w0^beta and set cSigma to c0.
 	if (sigma == 0) {

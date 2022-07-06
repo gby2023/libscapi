@@ -49,7 +49,7 @@ shared_ptr<SigmaDlogCommonInput> SigmaElGamalCmtKnowledgeSimulator::convertInput
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 * @throws IllegalArgumentException if the given input is not an instance of SigmaElGamalCTKnowledgeCommonInput.
 */
-shared_ptr<SigmaSimulatorOutput> SigmaElGamalCmtKnowledgeSimulator::simulate(SigmaCommonInput* input, const vector<byte> & challenge) {
+shared_ptr<SigmaSimulatorOutput> SigmaElGamalCmtKnowledgeSimulator::simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge) {
 	//Converts the input to an input object of the underlying simulator.
 	//Delegates the computation to the underlying Sigma Dlog prover.
 	return dlogSim.simulate(convertInput(input).get(), challenge);
@@ -115,7 +115,7 @@ shared_ptr<SigmaProtocolMsg> SigmaElGamalCmtKnowledgeProverComputation::computeF
 * @return the computed message.
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 */
-shared_ptr<SigmaProtocolMsg> SigmaElGamalCmtKnowledgeProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaElGamalCmtKnowledgeProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 	//Delegates the computation to the underlying Sigma Dlog prover.
 	return sigmaDlog.computeSecondMsg(challenge);
 }

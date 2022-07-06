@@ -336,22 +336,22 @@ shared_ptr<Plaintext> DamgardJurikEnc::decrypt(AsymmetricCiphertext* cipher) {
 }
 
 /**
-* Generates a byte array from the given plaintext.
+* Generates a uint8_t array from the given plaintext.
 * This function should be used when the user does not know the specific type of the Asymmetric encryption he has,
-* and therefore he is working on byte array.
-* @param plaintext to generates byte array from. MUST be an instance of BigIntegerPlainText.
-* @return the byte array generated from the given plaintext.
+* and therefore he is working on uint8_t array.
+* @param plaintext to generates uint8_t array from. MUST be an instance of BigIntegerPlainText.
+* @return the uint8_t array generated from the given plaintext.
 * @throws IllegalArgumentException if the given plaintext is not an instance of BigIntegerPlainText.
 */
-vector<byte> DamgardJurikEnc::generateBytesFromPlaintext(Plaintext* plaintext) {
+vector<uint8_t> DamgardJurikEnc::generateBytesFromPlaintext(Plaintext* plaintext) {
 	auto plain = dynamic_cast<BigIntegerPlainText*>(plaintext);
 	if (plain == NULL) {
 		throw invalid_argument("the given plaintext should be an instance of BigIntegerPlainText");
 	}
 	int size = bytesCount(plain->getX());
-	byte* num = new byte[size];
+	uint8_t* num = new uint8_t[size];
 	encodeBigInteger(plain->getX(), num, size);
-	vector<byte> out;
+	vector<uint8_t> out;
 	copy_byte_array_to_byte_vector(num, size, out, 0);
 	return out;
 }

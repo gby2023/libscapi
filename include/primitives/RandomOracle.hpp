@@ -51,7 +51,7 @@ public:
 	* @param outLen required output length IN BYTES.
 	* @return a string with the required length.
 	*/
-	virtual void compute(const vector<byte> & input, int inOffset, int inLen, vector<byte> & output, int outLen) = 0;
+	virtual void compute(const vector<uint8_t> & input, int inOffset, int inLen, vector<uint8_t> & output, int outLen) = 0;
 };
 
 /**
@@ -72,7 +72,7 @@ public:
 	* @param outLen required output length IN BYTES.
 	* @return a string with the required length.
 	*/
-	void compute(const vector<byte> & input, int inOffset, int inLen, vector<byte> & output, int outLen) override;
+	void compute(const vector<uint8_t> & input, int inOffset, int inLen, vector<uint8_t> & output, int outLen) override;
 	string getAlgorithmName() override { return "HashBasedRO"; };
 };
 
@@ -94,6 +94,6 @@ public:
 	* @param outLen required output length IN BYTES.
 	* @return a string with the required length.
 	*/
-	void compute(const vector<byte> & input, int inOffset, int inLen, vector<byte> & output, int outLen) override;
+	void compute(const vector<uint8_t> & input, int inOffset, int inLen, vector<uint8_t> & output, int outLen) override;
 	string getAlgorithmName() override { return "HKDFBasedRO"; };
 };

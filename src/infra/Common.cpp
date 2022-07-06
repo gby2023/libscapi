@@ -50,7 +50,7 @@ int NumberOfBits(const biginteger & bi) {
 	return find_log2_floor(bis)+ 1;
 }
 
-void gen_random_bytes_vector(vector<byte> &v, const int len, PrgFromOpenSSLAES* random) {
+void gen_random_bytes_vector(vector<uint8_t> &v, const int len, PrgFromOpenSSLAES* random) {
 	static const char alphanum[] =
 		"0123456789"
 		"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -61,17 +61,17 @@ void gen_random_bytes_vector(vector<byte> &v, const int len, PrgFromOpenSSLAES* 
 }
 
 /**
-* Copies all byte from source vector to dest starting from some index in dest.
+* Copies all uint8_t from source vector to dest starting from some index in dest.
 * Assuming dest is already initialized.
 */
-void copy_byte_vector_to_byte_array(const vector<byte> &source_vector, byte * dest, int beginIndex) {
+void copy_byte_vector_to_byte_array(const vector<uint8_t> &source_vector, uint8_t * dest, int beginIndex) {
 	for (auto it = source_vector.begin(); it != source_vector.end(); ++it) {
 		int index = std::distance(source_vector.begin(), it) + beginIndex;
 		dest[index] = *it;
 	}
 }
 
-void copy_byte_array_to_byte_vector(const byte* src, int src_len, vector<byte>& target_vector, int beginIndex)
+void copy_byte_array_to_byte_vector(const uint8_t* src, int src_len, vector<uint8_t>& target_vector, int beginIndex)
 {
 	if ((int) target_vector.size() < beginIndex + src_len)
 		target_vector.resize(beginIndex + src_len);
@@ -94,9 +94,9 @@ size_t bytesCount(const biginteger & raw_value)
 	if (value.sign() < 0)
 		value = ~value;
 	size_t length = 0;
-	byte lastByte;
+	uint8_t lastByte;
 	do {
-		lastByte = value.convert_to<byte>();
+		lastByte = value.convert_to<uint8_t>();
 		value >>= 8;
 		length++;
 	} while (!value.is_zero());
@@ -105,7 +105,7 @@ size_t bytesCount(const biginteger & raw_value)
 	return length;
 }
 
-void encodeBigInteger(const biginteger & raw_value, byte* output, size_t length)
+void encodeBigInteger(const biginteger & raw_value, uint8_t* output, size_t length)
 {
 #ifdef _WIN32
 	auto value = raw_value;
@@ -117,20 +117,20 @@ void encodeBigInteger(const biginteger & raw_value, byte* output, size_t length)
 		*output = 0;
 	else if (value.sign() > 0)
 		while (length-- > 0) {
-			*(output++) = value.convert_to<byte>();
+			*(output++) = value.convert_to<uint8_t>();
 			value >>= 8;
 		}
 	else {
 		value = ~value;
 		while (length-- > 0) {
-			*(output++) = ~value.convert_to<byte>();
+			*(output++) = ~value.convert_to<uint8_t>();
 			value >>= 8;
 		}
 	}
 }
 
 
-void fastEncodeBigInteger(const biginteger & value, byte* output, size_t length){
+void fastEncodeBigInteger(const biginteger & value, uint8_t* output, size_t length){
 
 
 	mpz_export((void*)output, NULL, -1, length, 0, 0, value.backend().data());
@@ -154,13 +154,13 @@ const vector<string> explode(const string& s, const char& c)
 }
 
 
-biginteger decodeBigInteger(const byte* input, size_t length)
+biginteger decodeBigInteger(const uint8_t* input, size_t length)
 {
 	biginteger result(0);
 	int bits = -8;
 	while (length-- > 1)
 		result |= (biginteger) *(input++) << (bits += 8);
-	byte a = *(input++);
+	uint8_t a = *(input++);
 	result |= (biginteger) a << (bits += 8);
 	if (a >= 0x80)
 		result |= (biginteger) - 1 << (bits + 8);
@@ -175,7 +175,7 @@ biginteger decodeBigInteger(const byte* input, size_t length)
 }
 
 
-biginteger fastDecodeBigInteger(const byte* input, size_t length){
+biginteger fastDecodeBigInteger(const uint8_t* input, size_t length){
 
 	biginteger output;
     mpz_import(output.backend().data(), 1, -1, length, 0, 0, (void*)input);
@@ -195,7 +195,7 @@ biginteger convert_hex_to_biginteger(const string & input) {
 	return biginteger(str);
 }
 
-string hexStr(vector<byte> const & data)
+string hexStr(vector<uint8_t> const & data)
 {
 	string res;
 	boost::algorithm::hex(data.begin(), data.end(), back_inserter(res));
@@ -226,7 +226,7 @@ std::chrono::time_point<std::chrono::system_clock> scapi_now() {
 
 biginteger getRandomInRange(const biginteger & min, const biginteger & max, PrgFromOpenSSLAES* random) {
 	int bytesNum = bytesCount(max);
-	vector<byte> out(bytesNum);
+	vector<uint8_t> out(bytesNum);
 	random->getPRGBytes(out, 0, bytesNum);
 	biginteger num = abs(decodeBigInteger(out.data(), out.size()));
 	num = num % (max + 1 - min); // max + 1 because max also can be chosen.
@@ -235,7 +235,7 @@ biginteger getRandomInRange(const biginteger & min, const biginteger & max, PrgF
 
 biginteger fastGetRandomInRange(const biginteger & max, PrgFromOpenSSLAES* random, int length){
 
-    vector<byte> out(length + 5);
+    vector<uint8_t> out(length + 5);
     random->getPRGBytes(out, 0, length + 5);
     biginteger num = fastDecodeBigInteger(out.data(), out.size());
     num = num % max + 1; // max + 1 because max also can be chosen.
@@ -252,7 +252,7 @@ biginteger getRandomPrime(int numBytes, int certainty, PrgFromOpenSSLAES* random
 	return p;
 }
 
-void print_byte_array(byte * arr, int len, string message)
+void print_byte_array(uint8_t * arr, int len, string message)
 {
 	cout << message << endl;
 	for (int i = 0; i < len; i++)

@@ -96,7 +96,7 @@ OTPrivacyOnlyDDHSenderAbs::OTPrivacyOnlyDDHSenderAbs(const shared_ptr<PrgFromOpe
 * @throws ClassNotFoundException
 */
 OTRGroupElementQuadMsg OTPrivacyOnlyDDHSenderAbs::waitForMessageFromReceiver(CommParty* channel) {
-	vector<byte> raw_msg;
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 
 	// create an empty OTRGroupElementPairMsg and initialize it with the received data. 
@@ -246,7 +246,7 @@ shared_ptr<OTSMsg> OTPrivacyOnlyDDHOnByteArraySender::computeTuple(OTSInput* inp
 * @param beta random value sampled by the protocol
 * @return OTRSemiHonestMessage contains the tuple (h0, h1).
 */
-OTRGroupElementQuadMsg OTPrivacyOnlyDDHReceiverAbs::computeTuple(byte sigma, biginteger & beta) {
+OTRGroupElementQuadMsg OTPrivacyOnlyDDHReceiverAbs::computeTuple(uint8_t sigma, biginteger & beta) {
 
 	//Sample random values.
 	biginteger alpha = getRandomInRange(0, qMinusOne, random.get());
@@ -350,7 +350,7 @@ shared_ptr<OTROutput> OTPrivacyOnlyDDHReceiverAbs::transfer(CommParty* channel, 
 		throw invalid_argument("input should contain sigma.");
 	}
 
-	byte sigma = in->getSigma();
+	uint8_t sigma = in->getSigma();
 	//The given sigma should be 0 or 1.
 	if ((sigma != 0) && (sigma != 1)) {
 		throw invalid_argument("Sigma should be 0 or 1");
@@ -409,8 +409,8 @@ void OTPrivacyOnlyDDHOnGroupElementReceiver::checkReceivedTuple(GroupElement* w0
 * @return OTROutput contains xSigma
 * @throws CheatAttemptException
 */
-shared_ptr<OTROutput> OTPrivacyOnlyDDHOnGroupElementReceiver::getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & beta)  {
-	vector<byte> raw_msg;
+shared_ptr<OTROutput> OTPrivacyOnlyDDHOnGroupElementReceiver::getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & beta)  {
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 
 	// create an empty OTRGroupElementPairMsg and initialize it with the received data. 
@@ -459,7 +459,7 @@ shared_ptr<OTROutput> OTPrivacyOnlyDDHOnGroupElementReceiver::getMsgAndComputeXS
 * @param w0
 * @throws CheatAttemptException if there was a cheat attempt during the execution of the protocol.
 */
-void OTPrivacyOnlyDDHOnByteArrayReceiver::checkReceivedTuple(GroupElement* w0, GroupElement* w1, vector<byte>& c0, vector<byte>& c1) {
+void OTPrivacyOnlyDDHOnByteArrayReceiver::checkReceivedTuple(GroupElement* w0, GroupElement* w1, vector<uint8_t>& c0, vector<uint8_t>& c1) {
 
 	if (!(dlog->isMember(w0))) {
 		throw CheatAttemptException("w0 element is not a member in the current DlogGroup");
@@ -487,8 +487,8 @@ void OTPrivacyOnlyDDHOnByteArrayReceiver::checkReceivedTuple(GroupElement* w0, G
 * @return OTROutput contains xSigma
 * @throws CheatAttemptException
 */
-shared_ptr<OTROutput> OTPrivacyOnlyDDHOnByteArrayReceiver::getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & beta) {
-	vector<byte> raw_msg;
+shared_ptr<OTROutput> OTPrivacyOnlyDDHOnByteArrayReceiver::getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & beta) {
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 
 	// create an empty OTRGroupElementPairMsg and initialize it with the received data. 
@@ -499,7 +499,7 @@ shared_ptr<OTROutput> OTPrivacyOnlyDDHOnByteArrayReceiver::getMsgAndComputeXSigm
 	auto w0 = dlog->reconstructElement(false, msg->getW0().get());
 	auto w1 = dlog->reconstructElement(false, msg->getW1().get());
 
-	//Get the byte arrays from the given message.
+	//Get the uint8_t arrays from the given message.
 	auto c0 = msg->getC0();
 	auto c1 = msg->getC1();
 
@@ -507,7 +507,7 @@ shared_ptr<OTROutput> OTPrivacyOnlyDDHOnByteArrayReceiver::getMsgAndComputeXSigm
 	checkReceivedTuple(w0.get(), w1.get(), c0, c1);
 
 	shared_ptr<GroupElement> kSigma;
-	vector<byte> cSigma;
+	vector<uint8_t> cSigma;
 
 	//If sigma = 0, compute w0^beta and set cSigma to c0.
 	if (sigma == 0) {
@@ -528,7 +528,7 @@ shared_ptr<OTROutput> OTPrivacyOnlyDDHOnByteArrayReceiver::getMsgAndComputeXSigm
 
 	//Xores the result from the kdf with vSigma.
 	for (int i = 0; i<len; i++) {
-		xSigma[i] = (byte)(cSigma[i] ^ xSigma[i]);
+		xSigma[i] = (uint8_t)(cSigma[i] ^ xSigma[i]);
 	}
 
 	//Create and return the output containing xSigma

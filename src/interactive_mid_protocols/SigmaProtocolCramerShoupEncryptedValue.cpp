@@ -84,7 +84,7 @@ SigmaCramerShoupEncryptedValueSimulator::SigmaCramerShoupEncryptedValueSimulator
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 * @throws IllegalArgumentException if input is not the expected.
 */
-shared_ptr<SigmaSimulatorOutput> SigmaCramerShoupEncryptedValueSimulator::simulate(SigmaCommonInput* input, const vector<byte> & challenge) {
+shared_ptr<SigmaSimulatorOutput> SigmaCramerShoupEncryptedValueSimulator::simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge) {
 
 	//Delegates the computation to the underlying Sigma DHExtended simulator.
 	return dhSim.simulate(checkAndCreateUnderlyingInput(input).get(), challenge);
@@ -147,7 +147,7 @@ shared_ptr<SigmaDHExtendedCommonInput> SigmaCramerShoupEncryptedValueSimulator::
 }
 
 /**
-* Receives three byte arrays and calculates the hash function on their concatenation.
+* Receives three uint8_t arrays and calculates the hash function on their concatenation.
 * @param u1ToByteArray
 * @param u2ToByteArray
 * @param eToByteArray
@@ -169,7 +169,7 @@ biginteger SigmaCramerShoupEncryptedValueSimulator::calcW(const shared_ptr<Group
 	hash->update(u1ToByteArray, 0, u1ToByteArray.size());
 
 	//Gets the result of hashing the updated input.
-	vector<byte> alpha;
+	vector<uint8_t> alpha;
 	hash->hashFinal(alpha, 0);
 
 	return decodeBigInteger(alpha.data(), alpha.size());
@@ -208,7 +208,7 @@ biginteger SigmaCramerShoupEncryptedValueProverComputation::calcW(const shared_p
 	hash->update(u1ToByteArray, 0, u1ToByteArray.size());
 
 	//Gets the result of hashing the updated input.
-	vector<byte> alpha;
+	vector<uint8_t> alpha;
 	hash->hashFinal(alpha, 0);
 
 	return decodeBigInteger(alpha.data(), alpha.size());
@@ -271,7 +271,7 @@ shared_ptr<SigmaProtocolMsg> SigmaCramerShoupEncryptedValueProverComputation::co
 * @return the computed message.
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 */
-shared_ptr<SigmaProtocolMsg> SigmaCramerShoupEncryptedValueProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaCramerShoupEncryptedValueProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 	//Delegates the computation to the underlying Sigma DHExtended prover.
 	return sigmaDH.computeSecondMsg(challenge);
 }
@@ -309,7 +309,7 @@ biginteger SigmaCramerShoupEncryptedValueVerifierComputation::calcW(const shared
 	hash->update(u1ToByteArray, 0, u1ToByteArray.size());
 
 	//Gets the result of hashing the updated input.
-	vector<byte> alpha;
+	vector<uint8_t> alpha;
 	hash->hashFinal(alpha, 0);
 
 	return decodeBigInteger(alpha.data(), alpha.size());

@@ -1396,7 +1396,7 @@ constexpr T static_const<T>::value;
 Produces a stream of std::char_traits<char>::int_type characters from a
 std::istream, a buffer, or some other input type.  Accepts the return of exactly
 one non-EOF character for future input.  The int_type characters returned
-consist of all valid char values as positive values (typically unsigned char),
+consist of all valid char values as positive values (typically uint8_t),
 plus an EOF value outside that range, specified by the value of the function
 std::char_traits<char>::eof().  This value is typically -1, but could be any
 arbitrary value which is not a valid char value.

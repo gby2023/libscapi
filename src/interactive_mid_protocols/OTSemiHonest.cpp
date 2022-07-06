@@ -97,7 +97,7 @@ OTSemiHonestDDHSenderAbs::OTSemiHonestDDHSenderAbs(const shared_ptr<PrgFromOpenS
 * @throws IOException if failed to receive a message.
 */
 shared_ptr<OTRGroupElementPairMsg> OTSemiHonestDDHSenderAbs::waitForMessageFromReceiver(CommParty* channel) {
-	vector<byte> raw_msg;
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 
 	// create an empty OTRGroupElementPairMsg and initialize it with the received data. 
@@ -257,9 +257,9 @@ shared_ptr<OTSMsg> OTSemiHonestDDHOnByteArraySender::computeTuple(OTSInput* inpu
 *			2.	If sigma = 1 then h0 = h and h1 = g^alpha <p>
 *		SEND (h0,h1) to S<p>
 *		WAIT for the message (u, v0,v1) from S<p>
-*		COMPUTE kSigma = (u)^alpha							- in byte array scenario<p>
+*		COMPUTE kSigma = (u)^alpha							- in uint8_t array scenario<p>
 *			 OR (kSigma)^(-1) = u^(-alpha)					- in GroupElement scenario<p>
-*		OUTPUT  xSigma = vSigma XOR KDF(|cSigma|,kSigma)	- in byte array scenario<p>
+*		OUTPUT  xSigma = vSigma XOR KDF(|cSigma|,kSigma)	- in uint8_t array scenario<p>
 *			 OR xSigma = vSigma * (kSigma)^(-1)" 			- in GroupElement scenario<p>
 */
 shared_ptr<OTROutput> OTSemiHonestDDHReceiverAbs::transfer(CommParty* channel, OTRInput* input){
@@ -365,7 +365,7 @@ void OTSemiHonestDDHReceiverAbs::sendTupleToSender(CommParty* channel, OTRGroupE
 * @return OTROutput contains xSigma
 */
 shared_ptr<OTROutput> OTSemiHonestDDHOnGroupElementReceiver::getMsgAndComputeXSigma(CommParty* channel, bool sigma, biginteger & alpha) {
-	vector<byte> raw_msg;
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 
 	// create an empty OTRGroupElementPairMsg and initialize it with the received data. 
@@ -403,7 +403,7 @@ shared_ptr<OTROutput> OTSemiHonestDDHOnGroupElementReceiver::getMsgAndComputeXSi
 * @return OTROutput contains xSigma
 */
 shared_ptr<OTROutput> OTSemiHonestDDHOnByteArrayReceiver::getMsgAndComputeXSigma(CommParty* channel, bool sigma, biginteger & alpha) {
-	vector<byte> raw_msg;
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 
 	// create an empty OTRGroupElementPairMsg and initialize it with the received data. 
@@ -416,7 +416,7 @@ shared_ptr<OTROutput> OTSemiHonestDDHOnByteArrayReceiver::getMsgAndComputeXSigma
 	auto kBytes = dlog->mapAnyGroupElementToByteArray(kSigma.get());
 
 	//Get v0 or v1 according to sigma.
-	vector<byte> vSigma;
+	vector<uint8_t> vSigma;
 	if (sigma == 0) {
 		vSigma = msg.getV0();
 	}

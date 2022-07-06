@@ -58,7 +58,7 @@ void OTExtensionBristolBase::transfer(int nOTs, const BitVector& receiverInput) 
 
 }
 
-void OTExtensionBristolBase::shrinkArray(int sourceElementSize, int targetElementSize, int numOfElements, byte* srcArr, byte* targetArr){
+void OTExtensionBristolBase::shrinkArray(int sourceElementSize, int targetElementSize, int numOfElements, uint8_t* srcArr, uint8_t* targetArr){
 
     //for each element, copy the required bytes.
     for(int i=0; i<numOfElements; i++){
@@ -121,39 +121,39 @@ shared_ptr<OTBatchSOutput> OTExtensionBristolSender::transfer(OTBatchSInput * in
 
         /* Convert the result of the transfer function to the required size */
         int size = elementSize / 8 * nOTsReal;
-        vector<byte> aesX0(size);
-        vector<byte> aesX1(size);
+        vector<uint8_t> aesX0(size);
+        vector<uint8_t> aesX1(size);
 
         //There is no need to change the element size, copy only the required OTs
         if (elementSize == 128){
-            copy_byte_array_to_byte_vector((byte*) pOtExt->senderOutputMatrices[0].squares.data(), nOTsReal*16, aesX0, 0);
-            copy_byte_array_to_byte_vector((byte*) pOtExt->senderOutputMatrices[1].squares.data(), nOTsReal*16, aesX1, 0);
+            copy_byte_array_to_byte_vector((uint8_t*) pOtExt->senderOutputMatrices[0].squares.data(), nOTsReal*16, aesX0, 0);
+            copy_byte_array_to_byte_vector((uint8_t*) pOtExt->senderOutputMatrices[1].squares.data(), nOTsReal*16, aesX1, 0);
 
         //The required size is smaller than the output. Shrink x0 and x1.
         } else if (elementSize < 128) {
 
-            shrinkArray(128, elementSize, nOTsReal, (byte*) pOtExt->senderOutputMatrices[0].squares.data(), aesX0.data());
-            shrinkArray(128, elementSize, nOTsReal, (byte*) pOtExt->senderOutputMatrices[1].squares.data(), aesX1.data());
+            shrinkArray(128, elementSize, nOTsReal, (uint8_t*) pOtExt->senderOutputMatrices[0].squares.data(), aesX0.data());
+            shrinkArray(128, elementSize, nOTsReal, (uint8_t*) pOtExt->senderOutputMatrices[1].squares.data(), aesX1.data());
 
         //The required size is bigger than the output. Expand x0 and x1.
         } else {
 
-            byte * counters = createCountersArray(factor);
+            uint8_t * counters = createCountersArray(factor);
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
             auto aes = new EVP_CIPHER_CTX();
 #else
             auto aes = EVP_CIPHER_CTX_new();
 #endif
-            auto output = new byte[factor * 16];
+            auto output = new uint8_t[factor * 16];
             for (int i=0; i < nOTsReal; i++){
                 //Expand the x0[i] to the required size.
                 //Put the result in x0.
-                expandOutput(elementSize, (byte*) &pOtExt->senderOutputMatrices[0].squares[i/128].rows[i % 128],
+                expandOutput(elementSize, (uint8_t*) &pOtExt->senderOutputMatrices[0].squares[i/128].rows[i % 128],
                              aesX0, factor, counters, aes, output, i);
 
                 //Expand the x0[i] to the required size.
                 //Put the result in x0.
-                expandOutput(elementSize, (byte*) &pOtExt->senderOutputMatrices[1].squares[i/128].rows[i % 128],
+                expandOutput(elementSize, (uint8_t*) &pOtExt->senderOutputMatrices[1].squares[i/128].rows[i % 128],
                              aesX1, factor, counters, aes, output, i);
             }
             delete [] counters;
@@ -193,8 +193,8 @@ shared_ptr<OTBatchSOutput> OTExtensionBristolSender::transfer(OTBatchSInput * in
 
 			auto delta = ((OTExtensionCorrelatedSInput *)input)->getDeltaArr();
 
-            vector<byte> newX1(size);
-            byte* newDelta = new byte[size];
+            vector<uint8_t> newX1(size);
+            uint8_t* newDelta = new uint8_t[size];
 
             //X0 = x0
             //X1 - delta ^ x0
@@ -224,15 +224,15 @@ shared_ptr<OTBatchSOutput> OTExtensionBristolSender::transfer(OTBatchSInput * in
 }
 
 
-void OTExtensionBristolBase::expandOutput(int elementSize, byte * key, vector<byte> & output, int factor, const byte *counters,
-                                           EVP_CIPHER_CTX *aes, byte * aesOutput, int i) const {
+void OTExtensionBristolBase::expandOutput(int elementSize, uint8_t * key, vector<uint8_t> & output, int factor, const uint8_t *counters,
+                                           EVP_CIPHER_CTX *aes, uint8_t * aesOutput, int i) const {
     //init the aes prp with the given key
     EVP_CIPHER_CTX_init(aes);
     EVP_EncryptInit(aes, EVP_aes_128_ecb(), key, nullptr);
 
     //Compute AES on the counters array
     int outLength;
-    EVP_EncryptUpdate(aes, aesOutput, &outLength, (byte *)counters, factor * 16);
+    EVP_EncryptUpdate(aes, aesOutput, &outLength, (uint8_t *)counters, factor * 16);
 
     //Copy the result to the given location
     memcpy(output.data() + i*elementSize/8, aesOutput, elementSize/8);
@@ -241,8 +241,8 @@ void OTExtensionBristolBase::expandOutput(int elementSize, byte * key, vector<by
     EVP_CIPHER_CTX_cleanup(aes);
 }
 
-byte* OTExtensionBristolBase::createCountersArray(int factor) const {//Create the array of indices to be the plaintext for the AES
-    auto counters = new byte[factor * 16];
+uint8_t* OTExtensionBristolBase::createCountersArray(int factor) const {//Create the array of indices to be the plaintext for the AES
+    auto counters = new uint8_t[factor * 16];
     //assign zero to the array of indices which are set as the plaintext.
     memset(counters, 0, 16 * factor);
     long *countersArray = (long *)counters;
@@ -292,15 +292,15 @@ shared_ptr<OTBatchROutput> OTExtensionBristolReceiver::transfer(OTBatchRInput * 
         auto elementSize = (((OTExtensionRInput*)input)->getElementSize());
 
         /* Convert the result of the transfer function to the required size */
-        vector<byte> aesOutput(nOTsReal * elementSize / 8);
+        vector<uint8_t> aesOutput(nOTsReal * elementSize / 8);
 
         //There is no need to change the element size, copy only the required OTs.
         if (elementSize == 128){
-            copy_byte_array_to_byte_vector((byte*) pOtExt->receiverOutputMatrix.squares.data(), nOTsReal*16, aesOutput, 0);
+            copy_byte_array_to_byte_vector((uint8_t*) pOtExt->receiverOutputMatrix.squares.data(), nOTsReal*16, aesOutput, 0);
 
         //The required size is smaller than the output. Shrink it.
         } else if (elementSize <= 128) {
-            shrinkArray(128, elementSize, nOTsReal, (byte*) pOtExt->receiverOutputMatrix.squares.data(), aesOutput.data());
+            shrinkArray(128, elementSize, nOTsReal, (uint8_t*) pOtExt->receiverOutputMatrix.squares.data(), aesOutput.data());
 
         //The required size is bigger than the output. Expand it.
         } else {
@@ -314,12 +314,12 @@ shared_ptr<OTBatchROutput> OTExtensionBristolReceiver::transfer(OTBatchRInput * 
 #else
             auto aes = EVP_CIPHER_CTX_new();
 #endif
-            auto outputArr = new byte[16 * factor];
+            auto outputArr = new uint8_t[16 * factor];
 
             for (int i=0; i < (int) nOTsReal; i++){
 
                 //Expand the output to the required size.
-                expandOutput(elementSize, (byte*) &pOtExt->receiverOutputMatrix.squares[i/128].rows[i % 128], aesOutput,
+                expandOutput(elementSize, (uint8_t*) &pOtExt->receiverOutputMatrix.squares[i/128].rows[i % 128], aesOutput,
                              factor, counters, aes, outputArr, i);
             }
             delete [] counters;
@@ -338,8 +338,8 @@ shared_ptr<OTBatchROutput> OTExtensionBristolReceiver::transfer(OTBatchRInput * 
 			}
 
             //Read x0 and x1 from the sender
-			byte* x0Arr = new byte[size];
-            byte* x1Arr = new byte[size];
+			uint8_t* x0Arr = new uint8_t[size];
+            uint8_t* x1Arr = new uint8_t[size];
 
 			channel->read(x0Arr, size);
 			channel->read(x1Arr, size);
@@ -366,7 +366,7 @@ shared_ptr<OTBatchROutput> OTExtensionBristolReceiver::transfer(OTBatchRInput * 
 				throw runtime_error("In order to execute a correlated ot extension the channel must be given");
 			}
 
-			byte* delta = new byte[size];
+			uint8_t* delta = new uint8_t[size];
 
 			channel->read(delta, size);
 

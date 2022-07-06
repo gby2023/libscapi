@@ -78,8 +78,8 @@ public:
 	
 	/**
 	* Computes the function using the secret key.
-	* The user supplies the input byte vector and the offset from which to take the data from.
-	* The user also supplies the output byte vector as well as the offset.
+	* The user supplies the input uint8_t vector and the offset from which to take the data from.
+	* The user also supplies the output uint8_t vector as well as the offset.
 	* The computeBlock function will put the output in the output vector starting at the offset. 
 	* This function is suitable for block ciphers where the input/output length is known in advance.
 	* @param inBytes input bytes to compute
@@ -87,7 +87,7 @@ public:
 	* @param outBytes output bytes. The resulted bytes of compute
 	* @param outOff output offset in the outBytes array to put the result from
 	*/
-	virtual void computeBlock(const vector<byte> & inBytes, int inOff, vector<byte> &outBytes, int outOff)=0;
+	virtual void computeBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t> &outBytes, int outOff)=0;
 	
 	/**
 	* Computes the function using the secret key.
@@ -101,7 +101,7 @@ public:
 	* @param outOff output offset in the outBytes array to put the result from
 	* @param outLen the length of the output array
 	*/
-	virtual void computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte> &outBytes, int outOff, int outLen)=0;
+	virtual void computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t> &outBytes, int outOff, int outLen)=0;
 	
 	/**
 	* Computes the function using the secret key.
@@ -115,7 +115,7 @@ public:
 	* @param outBytes output bytes. The resulted bytes of compute.
 	* @param outOffset output offset in the outBytes vector to put the result from
 	*/
-	virtual void computeBlock(const vector<byte> & inBytes, int inOffset, int inLen, vector<byte> &outBytes, int outOffset)=0;
+	virtual void computeBlock(const vector<uint8_t> & inBytes, int inOffset, int inLen, vector<uint8_t> &outBytes, int outOffset)=0;
 
 	/**
 	* Factory method. Create concrete instance of the give algorithm name in the default implementation.
@@ -146,7 +146,7 @@ public:
 	* @param outBytes output bytes. The resulted bytes of invert
 	* @param outOff output offset in the outBytes array to put the result from
 	*/
-	virtual void invertBlock(const vector<byte> & inBytes, int inOff, vector<byte>& outBytes, int outOff)=0;
+	virtual void invertBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t>& outBytes, int outOff)=0;
 	
 	/**
 	* Inverts the permutation using the given key. 
@@ -158,7 +158,7 @@ public:
 	* @param outOff output offset in the outBytes array to put the result from
 	* @param len the length of the input and the output
 	*/
-	virtual void invertBlock(const vector<byte> & inBytes, int inOff, vector<byte>& outBytes, int outOff, int len) = 0;
+	virtual void invertBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t>& outBytes, int outOff, int len) = 0;
 };
 
 /**
@@ -213,7 +213,7 @@ public:
 	* @param outOff output offset in the outBytes array to put the result from
 	* @param outLen output array length
 	*/
-	virtual void computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte>& outBytes, int outOff, int outLen) override;
+	virtual void computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t>& outBytes, int outOff, int outLen) override;
 	
 	/**
 	* Computes the function using the secret key. <p>
@@ -230,7 +230,7 @@ public:
 	* @param outBytes output bytes. The resulted bytes of compute
 	* @param outOff output offset in the outBytes array to put the result from
 	*/
-	virtual void computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte>& outBytes, int outOff) override;
+	virtual void computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t>& outBytes, int outOff) override;
 	
 	/**
 	* Inverts the permutation using the given key. <p>
@@ -246,7 +246,7 @@ public:
 	* @param outOff output offset in the outBytes array to put the result from
 	* @param len the length of the input and the output.
 	*/
-	virtual void invertBlock(const vector<byte> & inBytes, int inOff, vector<byte>& outBytes, int outOff, int len) override;
+	virtual void invertBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t>& outBytes, int outOff, int len) override;
 	using PseudorandomFunction::computeBlock;
 	using PseudorandomPermutation::invertBlock;
 };
@@ -310,14 +310,14 @@ public:
 	/**
 	* Since both input and output variables are varying this function should not be called.
 	*/
-	void computeBlock(const vector<byte> & inBytes, int inOff, vector<byte> & outBytes, int outOff) override{
+	void computeBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t> & outBytes, int outOff) override{
 		throw runtime_error("Only compute that gets lengths of I/O should be called for Varying Prf");
 	}
 	
 	/**
 	* Since both input and output variables are varying this function should not be call.
 	*/
-	void computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte> & outBytes, int outOff) override{
+	void computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t> & outBytes, int outOff) override{
 		throw runtime_error("Only compute that gets lengths of I/O should be called for Varying Prf");
 	}
 	
@@ -372,7 +372,7 @@ public:
 	* @param outOff - output offset in the outBytes array to put the result from
 	* @param outLen - the length of the output array in bytes
 	*/
-	void computeBlock (const vector<byte> & inBytes, int inOff, int inLen, vector<byte> & outBytes, int outOff, int outLen) override;
+	void computeBlock (const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t> & outBytes, int outOff, int outLen) override;
 };
 
 /**
@@ -396,7 +396,7 @@ public:
 	* Since this is a prp varying, this function should not normally be called.
 	* If the user still wants to use this function, throws an exception.
 	*/
-	void computeBlock(const vector<byte> & inBytes, int inOff, vector<byte>& outBytes, int outOff) override;
+	void computeBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t>& outBytes, int outOff) override;
 	
 	/**
 	* Computes the function using the secret key.
@@ -409,12 +409,12 @@ public:
 	* @param outOff output offset in the outBytes array to put the result from
 	* @param outLen output array length
 	*/
-	void computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte>& outBytes, int outOff, int outLen) override;
+	void computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t>& outBytes, int outOff, int outLen) override;
 
 	/**
 	* Throws an exception. The other invert block function that gets length should be called.
 	*/
-	void invertBlock(const vector<byte> & inBytes, int inOff, vector<byte>& outBytes, int outOff) override;
+	void invertBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t>& outBytes, int outOff) override;
 
 	SecretKey generateKey(AlgorithmParameterSpec & keyParams) override { return prfVaryingIOLength->generateKey(keyParams); };
 	SecretKey generateKey(int keySize) override { return prfVaryingIOLength->generateKey(keySize); };
@@ -437,7 +437,7 @@ public:
 	LubyRackoffPrpFromPrfVarying(string prfVaryingIOLengthName);
 	LubyRackoffPrpFromPrfVarying(const shared_ptr<PrfVaryingIOLength> & prfVaryingIOLength);
 
-	void computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte>& outBytes, int outOff) override;
+	void computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t>& outBytes, int outOff) override;
 	/**
 	* Inverts LubyRackoff permutation using the given key. <p>
 	* Since LubyRackoff permutation can also have varying input and output length
@@ -456,7 +456,7 @@ public:
 	* @param outOff output offset in the outBytes array to put the result from
 	* @param len the length of the input and the output
 	*/
-	void invertBlock(const vector<byte> & inBytes, int inOff, vector<byte>& outBytes, int outOff, int len) override;
+	void invertBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t>& outBytes, int outOff, int len) override;
 	string getAlgorithmName() override { return "LUBY_RACKOFF_PRP_FROM_PRF_VARYING"; };
 	int getBlockSize() override { throw runtime_error("prp varying has no fixed block size"); };
 };

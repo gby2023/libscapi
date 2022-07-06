@@ -90,7 +90,7 @@ public:
 
 	string getAlgorithm() override { return "CramerShoup"; }
 
-	vector<byte> getEncoded() override { throw UnsupportedOperationException("cannot decode a group element to byte array"); }
+	vector<uint8_t> getEncoded() override { throw UnsupportedOperationException("cannot decode a group element to uint8_t array"); }
 
 	shared_ptr<GroupElement> getC() { return c;	}
 
@@ -127,7 +127,7 @@ public:
 
 	string getAlgorithm() override { return "CramerShoup"; }
 
-	vector<byte> getEncoded() { throw NotImplementedException(""); }
+	vector<uint8_t> getEncoded() { throw NotImplementedException(""); }
  
 	biginteger getPrivateExp1() { return x1; }
 
@@ -240,10 +240,10 @@ private:
 
  
 	/**
-	* Recieves three byte arrays and calculates the hash function on their concatenation.
+	* Recieves three uint8_t arrays and calculates the hash function on their concatenation.
 	* @return the result of hash(u1ToByteArray+u2ToByteArray+eToByteArray)
 	*/
-	vector<byte> calcAlpha(vector<byte> & u1ToByteArray, vector<byte> & u2ToByteArray, vector<byte> & eToByteArray);
+	vector<uint8_t> calcAlpha(vector<uint8_t> & u1ToByteArray, vector<uint8_t> & u2ToByteArray, vector<uint8_t> & eToByteArray);
 
 	/**
 	* calculate the v value of the encryption.
@@ -252,7 +252,7 @@ private:
 	* @param alpha the value returned from the hash calculation.
 	* @return the calculated value v.
 	*/
-	shared_ptr<GroupElement> calcV(const biginteger & r, vector<byte> & alpha);
+	shared_ptr<GroupElement> calcV(const biginteger & r, vector<uint8_t> & alpha);
 
 	/**
 	* This function is called from the decrypt function. It Validates that the given cipher is correct.
@@ -261,7 +261,7 @@ private:
 	* @param alpha parameter needs to validation.
 	* @throws runtime_error if the given cipher is not valid.
 	*/
-	void checkValidity(CramerShoupOnGroupElementCiphertext* cipher, vector<byte> & alpha);
+	void checkValidity(CramerShoupOnGroupElementCiphertext* cipher, vector<uint8_t> & alpha);
  
 public:
 	/**
@@ -363,23 +363,23 @@ public:
 	shared_ptr<AsymmetricCiphertext> encrypt(const shared_ptr<Plaintext> & plaintext, const biginteger & r) override; 
 
 	/**
-	* Cramer-Shoup on GroupElement encryption scheme has a limit of the byte array length to generate a plaintext from.
+	* Cramer-Shoup on GroupElement encryption scheme has a limit of the uint8_t array length to generate a plaintext from.
 	* @return true.
 	*/
 	bool hasMaxByteArrayLengthForPlaintext() override { return true; }
 
 	/**
-	* Returns the maximum size of the byte array that can be passed to generatePlaintext function.
-	* This is the maximum size of a byte array that can be converted to a Plaintext object suitable to this encryption scheme.
+	* Returns the maximum size of the uint8_t array that can be passed to generatePlaintext function.
+	* This is the maximum size of a uint8_t array that can be converted to a Plaintext object suitable to this encryption scheme.
 	*/
 	int getMaxLengthOfByteArrayForPlaintext() override { return dlogGroup->getMaxLengthOfByteArrayForEncoding(); }
 
 	/**
 	* Generates a Plaintext suitable to CramerShoup encryption scheme from the given message.
-	* @param text byte array to convert to a Plaintext object.
+	* @param text uint8_t array to convert to a Plaintext object.
 	* @throws invalid_argument if the given message's length is greater than the maximum.
 	*/
-	shared_ptr<Plaintext> generatePlaintext(vector<byte> & text) override; 
+	shared_ptr<Plaintext> generatePlaintext(vector<uint8_t> & text) override; 
 
 	/**
 	* Decrypts the given ciphertext using this Cramer-Shoup encryption scheme.
@@ -391,14 +391,14 @@ public:
 	shared_ptr<Plaintext> decrypt(AsymmetricCiphertext* cipher) override; 
 
 	/**
-	* Generates a byte array from the given plaintext.
+	* Generates a uint8_t array from the given plaintext.
 	* This function should be used when the user does not know the specific type of the Asymmetric encryption he has,
-	* and therefore he is working on byte array.
-	* @param plaintext to generates byte array from. MUST be an instance of GroupElementPlaintext.
-	* @return the byte array generated from the given plaintext.
+	* and therefore he is working on uint8_t array.
+	* @param plaintext to generates uint8_t array from. MUST be an instance of GroupElementPlaintext.
+	* @return the uint8_t array generated from the given plaintext.
 	* @throws invalid_argument if the given plaintext is not an instance of GroupElementPlaintext.
 	*/
-	vector<byte> generateBytesFromPlaintext(Plaintext* plaintext) override;
+	vector<uint8_t> generateBytesFromPlaintext(Plaintext* plaintext) override;
 
 	/**
 	* @see edu.biu.scapi.midLayer.asymmetricCrypto.encryption.AsymmetricEnc#reconstructCiphertext(edu.biu.scapi.midLayer.ciphertext.AsymmetricCiphertextSendableData)

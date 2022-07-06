@@ -44,7 +44,7 @@ void GarbledBooleanCircuitFixedKey::createCircuit(const char* fileName, bool isF
 
 
 	//create the round keys for the fixed key.
-	AES_set_encrypt_key((const unsigned char *)&fixedKey, 128, &aesFixedKey);
+	AES_set_encrypt_key((const uint8_t *)&fixedKey, 128, &aesFixedKey);
 
 	GarbledBooleanCircuit::createCircuit(fileName, isFreeXor, isNonXorOutputsRequired);
 
@@ -220,11 +220,11 @@ void GarbledBooleanCircuitFixedKey::verifyOutputWiresToNoFixedDelta(block *bothO
 
 		//build the garbled wires of the identity gates, note that the wire with signal bit 0 stays the same
 		if (getSignalBitOf(bothOutputsKeys[2 * i]) == 0){
-			*((unsigned char *)(&encryptedChunkKeys[i])) |= 1;
+			*((uint8_t *)(&encryptedChunkKeys[i])) |= 1;
 			bothOutputsKeys[2 * i + 1] = encryptedChunkKeys[i];
 		}
 		else{
-			*((unsigned char *)(&encryptedChunkKeys[i])) &= 0;
+			*((uint8_t *)(&encryptedChunkKeys[i])) &= 0;
 			bothOutputsKeys[2 * i] = encryptedChunkKeys[i];
 		}
 
@@ -262,11 +262,11 @@ void GarbledBooleanCircuitFixedKey::garbleOutputWiresToNoFixedDelta(block *delta
 		//build the garbled wires of the identity gates
 		if (getSignalBitOf(garbledWires[outputIndices[i]]) == 0){
 			garbledWires[lastWireIndex + 1 + 2 * i] = garbledWires[outputIndices[i]];
-			*((unsigned char *)(&encryptedChunkKeys[i])) |= 1;
+			*((uint8_t *)(&encryptedChunkKeys[i])) |= 1;
 			garbledWires[lastWireIndex + 1 + 2 * i + 1] = encryptedChunkKeys[i];
 		}
 		else{
-			*((unsigned char *)(&encryptedChunkKeys[i])) &= 0;
+			*((uint8_t *)(&encryptedChunkKeys[i])) &= 0;
 			garbledWires[lastWireIndex + 1 + 2 * i] = encryptedChunkKeys[i];
 			garbledWires[lastWireIndex + 1 + 2 * i + 1] = garbledWires[outputIndices[i]];
 		}

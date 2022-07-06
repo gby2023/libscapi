@@ -63,9 +63,9 @@ public:
 	* return values in the tuple:
 	* block * : A block array that will be filled with both input keys generated in garble.
 	* block * : An empty block array that will be filled with both output keys generated in garble.
-	* byte : An char array that will be filled with 0/1 signal bits that we chosen in random in this function.
+	* uint8_t : An char array that will be filled with 0/1 signal bits that we chosen in random in this function.
 	*/
-	 std::tuple<block*, block*, std::vector<byte> > garble(block *seed = nullptr);
+	 std::tuple<block*, block*, std::vector<uint8_t> > garble(block *seed = nullptr);
 
 
 	/**
@@ -141,7 +141,7 @@ protected:
   	 * We store the garbled tables in a one dimensional array of GarbleTable. 
 	 * GarbleTable is an array of blocks(128 bit variable), the garbled in the array corresponds to the gate 
   	 * Each table of each gate is a one dimensional array of bytes rather than an array of ciphertexts. 
-  	 * This is for time/space efficiency reasons: If a single garbled table is an array of ciphertext that holds a byte array the space
+  	 * This is for time/space efficiency reasons: If a single garbled table is an array of ciphertext that holds a uint8_t array the space
   	 * stored by java is big. The main array holds references for each item (4 bytes). Each array in java has an overhead of 12 bytes. 
   	 * Thus the garbled table with ciphertexts has at least (12+4)*number of rows overhead.
   	 * If we store the array as one dimensional array we only have 12 bytes overhead for the entire table and thus this is the way we 
@@ -159,7 +159,7 @@ protected:
 	 * privacy and/or correctness will not be preserved. Therefore, we only reveal the signal bit, and the other
 	 * possible value for the wire is not stored on the translation table.
 	 */
-	 std::vector<byte> translationTable;
+	 std::vector<uint8_t> translationTable;
 
 	/*
 	/two aes encryption schemes that will be used in all the derived classes
@@ -211,7 +211,7 @@ public:
 	 * outputKeys : An array that contains a single garbled value for each output wire. 
 	 * return: An array of chars with values 0/1
 	 */
-	void translate(block *ouyputKeys, unsigned char* answer);
+	void translate(block *ouyputKeys, uint8_t* answer);
 
 
 	/**
@@ -221,14 +221,14 @@ public:
      * and needs the translation table as well to complete the computation of the circuit.
      * returns : the translation table of the circuit..
 	 */
-	std::vector<byte> getTranslationTable() { return translationTable; };
+	std::vector<uint8_t> getTranslationTable() { return translationTable; };
 
 	/**
 	 * Sets the translation table of the circuit. 
 	 * This is necessary when the garbled tables were set and we would like to compute the circuit later on. 
 	 * translationTable : This value should match the garbled tables of the circuit.
 	 */
-	void setTranslationTable(std::vector<unsigned char> translationTable);
+	void setTranslationTable(std::vector<uint8_t> translationTable);
 	
 	/**
 	 * The garbled tables are stored in the circuit for all the gates. This method returns the garbled tables which is a GarbledTable array 
@@ -284,10 +284,10 @@ public:
 		/**
 		* returns the signal bit if a block (128 bit). This bit the 8'th bit of the 128 bits
 		*/
-		unsigned char getSignalBitOf(block x) {return *((unsigned char *) (&x)) & 1;};
+		uint8_t getSignalBitOf(block x) {return *((uint8_t *) (&x)) & 1;};
 
 
-		//unsigned char getSignalBitOf(block x) { return _mm_extract_epi16(x,  0) % 2; };
+		//uint8_t getSignalBitOf(block x) { return _mm_extract_epi16(x,  0) % 2; };
 		/**
 		* This is a simple function that returns the results of 2^p where p=0,1,2,3. Pow of c++ is not used since it uses double casted to int 
 		* and this is time consuming. Since we only have 4 options and efficiency is important we use this naive function. Using shifts is also 
@@ -298,18 +298,18 @@ public:
 		/*
 		* This functions gets a truth tables represented as a decimal number between 0-15 and returns the result of row i,j.
 		*/
-		int getRowTruthTableResult(int i, int j, unsigned char truthTable);
+		int getRowTruthTableResult(int i, int j, uint8_t truthTable);
 
 		/*
 		* This function does the same as the above function getRowTruthTableResult. The difference is that it uses shifts.
 		*/
-		int getRowTruthTableResultShifts(int rowNumber, unsigned char truthTable){ return (truthTable & (1 << (3 - rowNumber))) >> (3 - rowNumber); };
+		int getRowTruthTableResultShifts(int rowNumber, uint8_t truthTable){ return (truthTable & (1 << (3 - rowNumber))) >> (3 - rowNumber); };
 
 		/*
 		*
 		*Sets the signal of wire1 to be the complement of wire0.
 		*/
-		void setSignalBit(block *wire0, block *wire1){ *((unsigned char *)(wire1)) = *((unsigned char *)(wire0)) ^ 1; };
+		void setSignalBit(block *wire0, block *wire1){ *((uint8_t *)(wire1)) = *((uint8_t *)(wire0)) ^ 1; };
 		
 
 		private:
@@ -325,6 +325,6 @@ public:
 		* emptyBothOutputKeys : An empty block array that will be filled with both output keys generated in garble.
 		* emptyTranslationTable : An empty int array that will be filled with 0/1 signal bits that we chosen in random in this function.
 		*/
-		virtual void garble(block * emptyBothInputKeys, block * emptyBothOutputKeys, std::vector<unsigned char> & emptyTranslationTable, block seed) = 0;
+		virtual void garble(block * emptyBothInputKeys, block * emptyBothOutputKeys, std::vector<uint8_t> & emptyTranslationTable, block seed) = 0;
 		
 };

@@ -85,7 +85,7 @@ SigmaDHSimulator::SigmaDHSimulator(const shared_ptr<DlogGroup> & dlog, int t, co
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 * @throws IllegalArgumentException if the given input is not an instance of SigmaDHCommonInput.
 */
-shared_ptr<SigmaSimulatorOutput> SigmaDHSimulator::simulate(SigmaCommonInput* input, const vector<byte> & challenge) {
+shared_ptr<SigmaSimulatorOutput> SigmaDHSimulator::simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge) {
 	//check the challenge validity.
 	if (!checkChallengeLength(challenge.size())) {
 		throw CheatAttemptException("the length of the given challenge is differ from the soundness parameter");
@@ -123,8 +123,8 @@ shared_ptr<SigmaSimulatorOutput> SigmaDHSimulator::simulate(SigmaCommonInput* in
 * @throws IllegalArgumentException if the given input is not an instance of SigmaDHInput.
 */
 shared_ptr<SigmaSimulatorOutput> SigmaDHSimulator::simulate(SigmaCommonInput* input) {
-	//Create a new byte array of size t/8, to get the required byte size and fill it with random values.
-	vector<byte> e(t / 8);
+	//Create a new uint8_t array of size t/8, to get the required uint8_t size and fill it with random values.
+	vector<uint8_t> e(t / 8);
 	random->getPRGBytes(e, 0, t / 8);
 
 	//Call the other simulate function with the given input and the sampled e.
@@ -201,7 +201,7 @@ shared_ptr<SigmaProtocolMsg> SigmaDHProverComputation::computeFirstMsg(const sha
 * @return the computed message.
 * @throws CheatAttemptException if the length of the received challenge is not equal to the soundness parameter.
 */
-shared_ptr<SigmaProtocolMsg> SigmaDHProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaDHProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 
 	//check the challenge validity.
 	if (!checkChallengeLength(challenge.size())) {

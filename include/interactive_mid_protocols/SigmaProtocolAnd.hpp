@@ -70,7 +70,7 @@ public:
 	* @param challenge
 	* @return SigmaMultipleMsg contains z1, ..., zm.
 	*/
-	shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<byte> & challenge) override;
+	shared_ptr<SigmaProtocolMsg> computeSecondMsg(const vector<uint8_t> & challenge) override;
 	/**
 	* Returns the simulator that matches this sigma protocol prover.
 	* @return SigmaANDSimulator
@@ -120,7 +120,7 @@ public:
 	* @return the output of the computation - (a, e, z).
 	*/
 	shared_ptr<SigmaSimulatorOutput> simulate(SigmaCommonInput* input, 
-		const vector<byte> & challenge) override;
+		const vector<uint8_t> & challenge) override;
 	/**
 	* Computes the simulator computation with a randomly chosen challenge.
 	* @param input MUST be an instance of SigmaANDCommonInput.
@@ -175,9 +175,9 @@ public:
 	*/
 	void sampleChallenge() override;
 
-	void setChallenge(const vector<byte> & challenge) override;
+	void setChallenge(const vector<uint8_t> & challenge) override;
 
-	vector<byte> getChallenge() override { return e; };
+	vector<uint8_t> getChallenge() override { return e; };
 	/**
 	* Computes the verification of the protocol.<p>
 	* 	"ACC IFF all verifier checks are ACC".
@@ -191,7 +191,7 @@ public:
 private:
 	vector<shared_ptr<SigmaVerifierComputation>> verifiers;	// underlying Sigma protocol's verifier to the AND calculation
 	int len;										// number of underlying verifiers
-	vector<byte>  e;								// the challenge
+	vector<uint8_t>  e;								// the challenge
 	int t;											// soundness parameter
 	shared_ptr<PrgFromOpenSSLAES> random;							// prg
 };

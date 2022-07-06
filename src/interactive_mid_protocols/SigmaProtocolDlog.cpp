@@ -35,7 +35,7 @@ bool check_soundness(int t, const shared_ptr<DlogGroup> & dlog) {
 	return (soundness < q);
 }
 
-bool checkChallengeLength(const vector<byte> & challenge, int t) {
+bool checkChallengeLength(const vector<uint8_t> & challenge, int t) {
 	// if the challenge's length is equal to t, return true. else, return false.
 	biginteger e = abs(decodeBigInteger(challenge.data(), challenge.size()));
 	return (e >= 0) && (e < mp::pow(biginteger(2), t));
@@ -56,7 +56,7 @@ SigmaDlogSimulator::SigmaDlogSimulator(const shared_ptr<DlogGroup> & dlog, int t
 }
 
 shared_ptr<SigmaSimulatorOutput> SigmaDlogSimulator::simulate(SigmaCommonInput* input,
-	const vector<byte> & challenge) {
+	const vector<uint8_t> & challenge) {
 	//check the challenge validity.
 	if (!checkChallengeLength(challenge, t))
 		throw CheatAttemptException(
@@ -80,8 +80,8 @@ shared_ptr<SigmaSimulatorOutput> SigmaDlogSimulator::simulate(SigmaCommonInput* 
 }
 
 shared_ptr<SigmaSimulatorOutput> SigmaDlogSimulator::simulate(SigmaCommonInput* input) {
-	//Create a new byte array of size t/8, to get the required byte size and fill it with random values.
-	vector<byte> e(t / 8);
+	//Create a new uint8_t array of size t/8, to get the required uint8_t size and fill it with random values.
+	vector<uint8_t> e(t / 8);
 	random->getPRGBytes(e, 0, t / 8);
 
 	// call the other simulate function with the given input and the sampled e.
@@ -117,7 +117,7 @@ shared_ptr<SigmaProtocolMsg> SigmaDlogProverComputation::computeFirstMsg(const s
 
 }
 
-shared_ptr<SigmaProtocolMsg> SigmaDlogProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaDlogProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 	if (!checkChallengeLength(challenge, t)) // check the challenge validity.
 		throw CheatAttemptException(
 			"the length of the given challenge is different from the soundness parameter");
@@ -156,11 +156,11 @@ SigmaDlogVerifierComputation::SigmaDlogVerifierComputation(const shared_ptr<Dlog
 void SigmaDlogVerifierComputation::sampleChallenge() {
 	biginteger e_number = getRandomInRange(0, mp::pow(biginteger(2), t) - 1, random.get());
 	int eSize = bytesCount(e_number);
-	// create a new byte array of size t/8, to get the required byte size.
-	shared_ptr<byte> e = std::shared_ptr<byte>(new byte[eSize], std::default_delete<byte[]>());
+	// create a new uint8_t array of size t/8, to get the required uint8_t size.
+	shared_ptr<uint8_t> e = std::shared_ptr<uint8_t>(new uint8_t[eSize], std::default_delete<uint8_t[]>());
 	encodeBigInteger(e_number, e.get(), eSize);
 	
-	//Create a new byte array of size t/8, to get the required byte size.
+	//Create a new uint8_t array of size t/8, to get the required uint8_t size.
 	copy_byte_array_to_byte_vector(e.get(), eSize, this->e, 0);
 
 }

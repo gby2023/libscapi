@@ -62,8 +62,8 @@ public:
 
 	/**
 	* Computes the function using the secret key.
-	* The user supplies the input byte vector and the offset from which to take the data from.
-	* The user also supplies the output byte vector as well as the offset.
+	* The user supplies the input uint8_t vector and the offset from which to take the data from.
+	* The user also supplies the output uint8_t vector as well as the offset.
 	* The computeBlock function will put the output in the output vector starting at the offset. 
 	* This function is suitable for block ciphers where the input/output length is known in advance.
 	* @param inBytes input bytes to compute
@@ -71,7 +71,7 @@ public:
 	* @param outBytes output bytes. The resulted bytes of compute
 	* @param outOff output offset in the outBytes array to put the result from
 	*/
-	void computeBlock(const vector<byte> & inBytes, int inOff, vector<byte> &outBytes, int outOff) override;
+	void computeBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t> &outBytes, int outOff) override;
 
 	/**
 	* Computes the function using the secret key.
@@ -85,7 +85,7 @@ public:
 	* @param outOff output offset in the outBytes array to put the result from
 	* @param outLen the length of the output array
 	*/
-	void computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte> &outBytes, int outOff, int outLen) override;
+	void computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t> &outBytes, int outOff, int outLen) override;
 
 	/**
 	* Computes the function using the secret key. 
@@ -99,7 +99,7 @@ public:
 	* @param outBytes output bytes. The resulted bytes of compute.
 	* @param outOffset output offset in the outBytes vector to put the result from
 	*/
-	void computeBlock(const vector<byte> & inBytes, int inOffset, int inLen, vector<byte> &outBytes, int outOffset) override;
+	void computeBlock(const vector<uint8_t> & inBytes, int inOffset, int inLen, vector<uint8_t> &outBytes, int outOffset) override;
 	
 	/**
 	* Computes the permutation on the given vector.
@@ -110,7 +110,7 @@ public:
 	* @param inBytes input bytes to compute.
 	* @param outBytes output bytes. The resulted bytes of compute.
 	*/
-	void optimizedCompute(const vector<byte> & inBytes, vector<byte> &outBytes);
+	void optimizedCompute(const vector<uint8_t> & inBytes, vector<uint8_t> &outBytes);
 
 	/**
 	* Inverts the permutation using the given key. 
@@ -121,7 +121,7 @@ public:
 	* @param outBytes output bytes. The resulted bytes of invert
 	* @param outOff output offset in the outBytes array to put the result from
 	*/
-	void invertBlock(const vector<byte> & inBytes, int inOff, vector<byte>& outBytes, int outOff) override;
+	void invertBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t>& outBytes, int outOff) override;
 	
 	/**
 	* Inverts the permutation on the given vector.
@@ -132,7 +132,7 @@ public:
 	* @param inBytes input bytes to invert.
 	* @param outBytes output bytes. The inverted bytes.
 	*/
-	void optimizedInvert(const vector<byte> & inBytes, vector<byte> &outBytes);
+	void optimizedInvert(const vector<uint8_t> & inBytes, vector<uint8_t> &outBytes);
 
 	/**
 	* Inverts the permutation using the given key.
@@ -144,7 +144,7 @@ public:
 	* @param outOff output offset in the outBytes array to put the result from
 	* @param len the length of the input and the output
 	*/
-	void invertBlock(const vector<byte> & inBytes, int inOff, vector<byte>& outBytes, int outOff, int len) override;
+	void invertBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t>& outBytes, int outOff, int len) override;
 	virtual ~OpenSSLPRP();
 };
 /**
@@ -212,8 +212,8 @@ public:
 	
 	/**
 	* Computes the function using the secret key.
-	* The user supplies the input byte vector and the offset from which to take the data from.
-	* The user also supplies the output byte vector as well as the offset.
+	* The user supplies the input uint8_t vector and the offset from which to take the data from.
+	* The user also supplies the output uint8_t vector as well as the offset.
 	* The computeBlock function will put the output in the output vector starting at the offset.
 	* This function is suitable for block ciphers where the input/output length is known in advance.
 	* @param inBytes input bytes to compute
@@ -221,7 +221,7 @@ public:
 	* @param outBytes output bytes. The resulted bytes of compute
 	* @param outOff output offset in the outBytes array to put the result from
 	*/
-	void computeBlock(const vector<byte> & inBytes, int inOff, vector<byte> &outBytes, int outOff) override;
+	void computeBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t> &outBytes, int outOff) override;
 	
 	/**
 	* Computes the function using the secret key.
@@ -235,7 +235,7 @@ public:
 	* @param outOff output offset in the outBytes array to put the result from
 	* @param outLen the length of the output array
 	*/
-	void computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte> &outBytes, int outOff, int outLen) override;
+	void computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t> &outBytes, int outOff, int outLen) override;
 	
 	/**
 	* Computes the function using the secret key.
@@ -249,7 +249,7 @@ public:
 	* @param outBytes output bytes. The resulted bytes of compute.
 	* @param outOffset output offset in the outBytes vector to put the result from
 	*/
-	void computeBlock(const vector<byte> & inBytes, int inOffset, int inLen, vector<byte> &outBytes, int outOffset) override;
+	void computeBlock(const vector<uint8_t> & inBytes, int inOffset, int inLen, vector<uint8_t> &outBytes, int outOffset) override;
 	
 	SecretKey generateKey(AlgorithmParameterSpec & keyParams) override {
 		throw NotImplementedException("To generate a key for this HMAC object use the generateKey(int keySize) function");
@@ -258,10 +258,10 @@ public:
 	SecretKey generateKey(int keySize) override;
 	
 	int getMacSize() override { return getBlockSize(); };
-	virtual vector<byte> mac(const vector<byte> &msg, int offset, int msgLen) override;
-	virtual bool verify(const vector<byte> &msg, int offset, int msgLength, vector<byte>& tag) override;
-	virtual void update(vector<byte> & msg, int offset, int msgLen) override;
-	virtual void doFinal(vector<byte> & msg, int offset, int msgLength, vector<byte> & tag_res) override;
+	virtual vector<uint8_t> mac(const vector<uint8_t> &msg, int offset, int msgLen) override;
+	virtual bool verify(const vector<uint8_t> &msg, int offset, int msgLength, vector<uint8_t>& tag) override;
+	virtual void update(vector<uint8_t> & msg, int offset, int msgLen) override;
+	virtual void doFinal(vector<uint8_t> & msg, int offset, int msgLength, vector<uint8_t> & tag_res) override;
 	~OpenSSLHMAC();
 };
 

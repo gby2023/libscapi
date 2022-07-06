@@ -99,7 +99,7 @@ public:
 	* @throws IllegalStateException if no secret key was set.
 	* @throws invalid_argument if the given plaintext does not match this encryption scheme.
 	*/
-	virtual shared_ptr<SymmetricCiphertext> encrypt(Plaintext* plaintext, vector<byte> & iv) = 0;
+	virtual shared_ptr<SymmetricCiphertext> encrypt(Plaintext* plaintext, vector<uint8_t> & iv) = 0;
 
 	/**
 	* This function performs the decryption of a ciphertext returning the corresponding decrypted plaintext.

@@ -37,28 +37,28 @@ public:
 	* Returns the name of the algorithm associated with this key.
 	*/
 	virtual string getAlgorithm()=0;
-	virtual vector<byte> getEncoded()=0;
+	virtual vector<uint8_t> getEncoded()=0;
 	virtual ~Key() {};
 };
 
 class SecretKey : Key {
 	friend class boost::serialization::access;
 private:
-	vector<byte> key;
+	vector<uint8_t> key;
 	string algorithm;
 
 public:
 	SecretKey() {};
-	SecretKey(byte * keyBytes, int keyLen, string algorithm) {
+	SecretKey(uint8_t * keyBytes, int keyLen, string algorithm) {
 		copy_byte_array_to_byte_vector(keyBytes, keyLen, this->key, 0);
 		this->algorithm = algorithm;
 	}
-	SecretKey(const vector<byte> & key, string algorithm) {
+	SecretKey(const vector<uint8_t> & key, string algorithm) {
 		this->key = key;
 		this->algorithm = algorithm;
 	};
 	string getAlgorithm() override { return algorithm; };
-	vector<byte> getEncoded() override { return key; };
+	vector<uint8_t> getEncoded() override { return key; };
 	virtual ~SecretKey() {};
 	
 	template<class Archive>
@@ -102,7 +102,7 @@ public:
 	RSAPublicKey(biginteger mod, biginteger pubExp) : RSAKey(mod) { publicExponent = pubExp; };
 	biginteger getPublicExponent() { return publicExponent; };
 	string getAlgorithm() override { return "RSA"; };
-	vector<byte> getEncoded() override { throw NotImplementedException(""); };
+	vector<uint8_t> getEncoded() override { throw NotImplementedException(""); };
 };
 
 class RSAPrivateKey : public RSAKey, public PrivateKey {
@@ -112,7 +112,7 @@ public:
 	RSAPrivateKey(biginteger mod, biginteger privExp) : RSAKey(mod) { privateExponent = privExp; };
 	biginteger getPrivateExponent() { return privateExponent; };
 	string getAlgorithm() override { return "RSA"; };
-	vector<byte> getEncoded() override { throw NotImplementedException(""); };
+	vector<uint8_t> getEncoded() override { throw NotImplementedException(""); };
 };
 
 class RSAPrivateCrtKey : public RSAPrivateKey {

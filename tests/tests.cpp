@@ -53,6 +53,7 @@
 #include "../include/interactive_mid_protocols/SigmaProtocol.hpp"
 #include "../include/primitives/Mersenne.hpp"
 #include <ctype.h>
+#include <cstdint>
 #ifdef __x86_64__
 #include <smmintrin.h>
 #elif __aarch64__
@@ -93,24 +94,24 @@ TEST_CASE("Common methods", "[boost, common, math, log, bitLength, helper]") {
 
 	SECTION("gen_random_bytes_vector")
 	{
-		vector<byte> v, v2;
+		vector<uint8_t> v, v2;
 		auto prg = get_seeded_prg();
 		gen_random_bytes_vector(v, 10, prg.get());
 		gen_random_bytes_vector(v2, 10, prg.get());
 		REQUIRE(v.size() == 10);
-		for (byte b : v)
+		for (uint8_t b : v)
 			REQUIRE(isalnum(b));
 		string string1(v.begin(), v.end());
 		string string2(v2.begin(), v2.end());
 		REQUIRE(string1 != string2);
 	}
 
-	SECTION("copy byte vector to byte array")
+	SECTION("copy uint8_t vector to uint8_t array")
 	{
-		vector<byte> v;
+		vector<uint8_t> v;
 		auto prg = get_seeded_prg();
 		gen_random_bytes_vector(v, 20, prg.get());
-		byte * vb = new byte[40];
+		uint8_t * vb = new uint8_t[40];
 		int index;
 		copy_byte_vector_to_byte_array(v, vb, 0);
 		copy_byte_vector_to_byte_array(v, vb, 20);
@@ -124,21 +125,21 @@ TEST_CASE("Common methods", "[boost, common, math, log, bitLength, helper]") {
 	}
 
 
-	SECTION("copy byte array to byte vector")
+	SECTION("copy uint8_t array to uint8_t vector")
 	{
 		
-		byte src[10] = { 0xb1, 0xb2, 0xb3, 0xb4,  0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xc1 };
-		vector<byte> target;
+		uint8_t src[10] = { 0xb1, 0xb2, 0xb3, 0xb4,  0xb5, 0xb6, 0xb7, 0xb8, 0xb9, 0xc1 };
+		vector<uint8_t> target;
 		copy_byte_array_to_byte_vector(src, 10, target, 0);
 		int i = 0;
 		REQUIRE(target.size() == 10);
-		for (byte & b : target) 
+		for (uint8_t & b : target) 
 			REQUIRE(src[i++] == b);
 		target.clear();
 		copy_byte_array_to_byte_vector(src + 5, 5, target, 0);
 		i = 5;
 		REQUIRE(target.size() == 5);
-		for (byte & b : target)
+		for (uint8_t & b : target)
 			REQUIRE(src[i++] == b);
 		target.clear();
 		copy_byte_array_to_byte_vector(src, 5, target, 5);
@@ -153,7 +154,7 @@ TEST_CASE("Common methods", "[boost, common, math, log, bitLength, helper]") {
 		copy_byte_array_to_byte_vector(src, 10, target, 0);
 		REQUIRE(target.size() == 10);
 		i = 0;
-		for (byte & b : target)
+		for (uint8_t & b : target)
 			REQUIRE(src[i++] == b);
 	}
 
@@ -380,12 +381,12 @@ void test_encode_decode(shared_ptr<DlogGroup> dg)
 	REQUIRE(k > 0);
 
 	auto prg = get_seeded_prg();
-	vector<byte> v;
+	vector<uint8_t> v;
 	v.reserve(k);
 	gen_random_bytes_vector(v, k, prg.get());
 
 	auto ge = dg->encodeByteArrayToGroupElement(v);
-	vector<byte> res = dg->decodeGroupElementToByteArray(ge.get());
+	vector<uint8_t> res = dg->decodeGroupElementToByteArray(ge.get());
 	
 	for (int i = 0; i < k; i++) {
 		REQUIRE(v[i] == res[i]);
@@ -447,7 +448,7 @@ void  test_field(FieldType elem1){
 
 
     //check element to bytes and vice versa
-    byte * outBuytes = new byte[field.getElementSizeInBytes()];
+    uint8_t * outBuytes = new uint8_t[field.getElementSizeInBytes()];
     field.elementToBytes(outBuytes, random);
     auto fromBytes = field.bytesToElement(outBuytes);
 
@@ -509,9 +510,9 @@ void test_hash(CryptographicHash * hash, string in, string expect)
 {
 	const char *cstr = in.c_str();
 	int len = in.size();
-	vector<byte> vec(cstr, cstr + len);
+	vector<uint8_t> vec(cstr, cstr + len);
 	hash->update(vec, 0, len);
-	vector<byte> out;
+	vector<uint8_t> out;
 	hash->hashFinal(out, 0);
 	string actual = hexStr(out);
 	CAPTURE(actual);
@@ -550,13 +551,13 @@ void test_prp(string key, string in, string expected_out)
 	OpenSSLPRP * prp = new T();
 	string s = boost::algorithm::unhex(key);
 	char const *c = s.c_str();
-	SecretKey sk = SecretKey((byte *)c, strlen(c), prp->getAlgorithmName());
+	SecretKey sk = SecretKey((uint8_t *)c, strlen(c), prp->getAlgorithmName());
 	prp->setKey(sk);
 	
 	string sin = boost::algorithm::unhex(in);
 	char const * cin = sin.c_str();
-	vector<byte> in_vec, out_vec;
-	copy_byte_array_to_byte_vector((byte*)cin, strlen(cin), in_vec, 0);
+	vector<uint8_t> in_vec, out_vec;
+	copy_byte_array_to_byte_vector((uint8_t*)cin, strlen(cin), in_vec, 0);
 	prp->computeBlock(in_vec, 0, out_vec, 0);
 	
 	REQUIRE(hexStr(out_vec) == expected_out);
@@ -585,13 +586,13 @@ TEST_CASE("PRF", "[AES, PRF]")
 		auto mac = new OpenSSLHMAC();
 		string s = boost::algorithm::unhex(key);
 		char const *c = s.c_str();
-		SecretKey sk = SecretKey((byte *)c, strlen(c), mac->getAlgorithmName());
+		SecretKey sk = SecretKey((uint8_t *)c, strlen(c), mac->getAlgorithmName());
 		mac->setKey(sk);
 		
 		// compute_block for plain 
 		int in_len = strlen(plain);
-		vector<byte> in_vec, out_vec;
-		copy_byte_array_to_byte_vector((byte*)plain, in_len, in_vec, 0);
+		vector<uint8_t> in_vec, out_vec;
+		copy_byte_array_to_byte_vector((uint8_t*)plain, in_len, in_vec, 0);
 		mac->computeBlock(in_vec, 0, in_len, out_vec, 0);
 
 		// clean 
@@ -610,10 +611,10 @@ void test_prg(PseudorandomGenerator * prg, string expected_name)
 	REQUIRE(prg->isKeySet());
 
 	REQUIRE(prg->getAlgorithmName() == expected_name); // verify alg name is as expected
-	vector<byte> out;
+	vector<uint8_t> out;
 	prg->getPRGBytes(out, 0, 16);
 	REQUIRE(out.size() == 16);
-	vector<byte> out2;
+	vector<uint8_t> out2;
 	prg->getPRGBytes(out2, 0, 16);
 	string s1(out.begin(), out.end());
 	string s2(out2.begin(), out2.end());
@@ -695,10 +696,10 @@ TEST_CASE("random", "[PrgFromOpenSSLAES]")
 
 		for (int k = 0; k < 10; k++) {
 
-			vector<byte> out;
+			vector<uint8_t> out;
 			random1.getPRGBytes(out, 0, 10);
 			REQUIRE(out.size() == 10);
-			vector<byte> out2;
+			vector<uint8_t> out2;
 			random2.getPRGBytes(out2, 0, 10);
 			bool equal = false;
 
@@ -715,10 +716,10 @@ TEST_CASE("random", "[PrgFromOpenSSLAES]")
 
 		for (int k = 0; k < 10; k++) {
 
-			vector<byte> out;
+			vector<uint8_t> out;
 			random1.getPRGBytes(out, 0, 10);
 			REQUIRE(out.size() == 10);
-			vector<byte> out2;
+			vector<uint8_t> out2;
 			random2.getPRGBytes(out2, 0, 10);
 			bool equal = false;
 
@@ -733,10 +734,10 @@ TEST_CASE("random", "[PrgFromOpenSSLAES]")
 
 		for (int k = 0; k < 10; k++) {
 
-			vector<byte> out;
+			vector<uint8_t> out;
 			random3.getPRGBytes(out, 0, 10);
 			REQUIRE(out.size() == 10);
-			vector<byte> out2;
+			vector<uint8_t> out2;
 			random2.getPRGBytes(out2, 0, 10);
 			bool equal = false;
 
@@ -785,7 +786,7 @@ TEST_CASE("KDF","")
 		HKDF hkdf(make_shared<OpenSSLHMAC>());
 		string s = "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c";
 		string source = boost::algorithm::unhex(s);
-		vector<byte> v_source(source.begin(), source.end());
+		vector<uint8_t> v_source(source.begin(), source.end());
 		auto sk = hkdf.deriveKey(v_source, 0, v_source.size(), 40);
 		auto v = sk.getEncoded();
 		string s2(v.begin(), v.end());
@@ -796,8 +797,8 @@ void random_oracle_test(RandomOracle * ro, string algName)
 {
 	REQUIRE(ro->getAlgorithmName() == algName);
 	string input = "123456";
-	vector<byte> in_vec(input.begin(), input.end());
-	vector<byte> output;
+	vector<uint8_t> in_vec(input.begin(), input.end());
+	vector<uint8_t> output;
 	ro->compute(in_vec, 0, 6, output, 6);
 	//REQUIRE(output.size() == 6);
 	string s(output.begin(), output.end());
@@ -1044,7 +1045,7 @@ TEST_CASE("symmetric encryption")
 		REQUIRE(enc.getAlgorithmName() == "CTR Encryption with AES"); 
 		
 		string message = "I want to encrypt this!";
-		vector<byte> plainM(message.begin(), message.end());
+		vector<uint8_t> plainM(message.begin(), message.end());
 		ByteArrayPlaintext plaintext(plainM);
 		auto cipher = enc.encrypt(&plaintext);
 		auto original = enc.decrypt(cipher.get());
@@ -1068,7 +1069,7 @@ TEST_CASE("asymmetric encryption")
 		if (elgamal.hasMaxByteArrayLengthForPlaintext()) {
 			REQUIRE(len < elgamal.getMaxLengthOfByteArrayForPlaintext());
 		}
-		vector<byte> plainM(message.begin(), message.end());
+		vector<uint8_t> plainM(message.begin(), message.end());
 		auto plaintext = elgamal.generatePlaintext(plainM);
 		biginteger r = getRandomInRange(0, dlog->getOrder() - 1, random.get());
 		auto cipher = elgamal.encrypt(plaintext, r);
@@ -1090,7 +1091,7 @@ TEST_CASE("asymmetric encryption")
 		REQUIRE(*doubleC == *multC);
 	}
 
-	SECTION("El Gamal on byte array")
+	SECTION("El Gamal on uint8_t array")
 	{
 		auto random = get_seeded_prg();
 		auto dlog = make_shared<OpenSSLDlogZpSafePrime>(64);
@@ -1103,7 +1104,7 @@ TEST_CASE("asymmetric encryption")
 		if (elgamal.hasMaxByteArrayLengthForPlaintext()) {
 			REQUIRE(len < elgamal.getMaxLengthOfByteArrayForPlaintext());
 		}
-		vector<byte> plainM(message.begin(), message.end());
+		vector<uint8_t> plainM(message.begin(), message.end());
 		auto plaintext = elgamal.generatePlaintext(plainM);
 		biginteger r = getRandomInRange(0, dlog->getOrder() - 1, random.get());
 		auto cipher = elgamal.encrypt(plaintext, r);
@@ -1130,7 +1131,7 @@ TEST_CASE("asymmetric encryption")
 		if (cr.hasMaxByteArrayLengthForPlaintext()) {
 			REQUIRE(len < cr.getMaxLengthOfByteArrayForPlaintext());
 		}
-		vector<byte> plainM(message.begin(), message.end());
+		vector<uint8_t> plainM(message.begin(), message.end());
 		auto plaintext = cr.generatePlaintext(plainM);
 		biginteger r = getRandomInRange(0, dlog->getOrder() - 1, random.get());
 		auto cipher = cr.encrypt(plaintext, r);

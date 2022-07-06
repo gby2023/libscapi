@@ -28,7 +28,7 @@
 
 #include "../../include/primitives/Prf.hpp"
 
-void PrpFromPrfFixed::computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte>& outBytes, int outOff, int outLen) {
+void PrpFromPrfFixed::computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t>& outBytes, int outOff, int outLen) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	if ((inOff > (int)inBytes.size()) || (inOff + inLen > (int)inBytes.size()))
@@ -43,7 +43,7 @@ void PrpFromPrfFixed::computeBlock(const vector<byte> & inBytes, int inOff, int 
 		throw out_of_range("input and output lengths should be equal to Block size");
 }
 
-void PrpFromPrfFixed::computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte>& outBytes, int outOff) {
+void PrpFromPrfFixed::computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t>& outBytes, int outOff) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	if ((inOff > (int)inBytes.size()) || (inOff + inLen > (int)inBytes.size()))
@@ -58,7 +58,7 @@ void PrpFromPrfFixed::computeBlock(const vector<byte> & inBytes, int inOff, int 
 		throw out_of_range("input and output lengths should be equal to Block size");
 }
 
-void PrpFromPrfFixed::invertBlock(const vector<byte> & inBytes, int inOff, vector<byte>& outBytes, int outOff, int len) {
+void PrpFromPrfFixed::invertBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t>& outBytes, int outOff, int len) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	// Checks that the offset and length are correct 
@@ -74,7 +74,7 @@ void PrpFromPrfFixed::invertBlock(const vector<byte> & inBytes, int inOff, vecto
 
 }
 
-void IteratedPrfVarying::computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte> & outBytes, int outOff, int outLen) {
+void IteratedPrfVarying::computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t> & outBytes, int outOff, int outLen) {
 	if (!isKeySet())
 		throw invalid_argument("secret key isn't set");
 	
@@ -86,17 +86,17 @@ void IteratedPrfVarying::computeBlock(const vector<byte> & inBytes, int inOff, i
 
 	int prfLength = prfVaryingInputLength->getBlockSize(); // The output size of the prfVaryingInputLength.
 	int rounds = (int) ceil((float)outLen / (float)prfLength);  // The smallest integer for which rounds * prfLength > outlen.
-	vector<byte> intermediateOutBytes(prfLength); // Round result
-	vector<byte> currentInBytes(inBytes.begin() + inOff, inBytes.begin() + inOff + inLen); 	//Copy the x (inBytes) to the input of the prf in the beginning.
-	currentInBytes.push_back((byte)outLen); // Works for len up to 256. Copy the outLen to the input of the prf after the x.
+	vector<uint8_t> intermediateOutBytes(prfLength); // Round result
+	vector<uint8_t> currentInBytes(inBytes.begin() + inOff, inBytes.begin() + inOff + inLen); 	//Copy the x (inBytes) to the input of the prf in the beginning.
+	currentInBytes.push_back((uint8_t)outLen); // Works for len up to 256. Copy the outLen to the input of the prf after the x.
 
 	int bulk_size;
 	int start_index;
 	for (int i = 1; i <= rounds; i++) {
-		currentInBytes.push_back((byte)i); // Works for len up to 256. Copy the i to the input of the prf.
+		currentInBytes.push_back((uint8_t)i); // Works for len up to 256. Copy the i to the input of the prf.
 		// operates the computeBlock of the prf to get the round output
 		prfVaryingInputLength->computeBlock(currentInBytes, 0, inLen + 2, intermediateOutBytes, 0);
-		// copies the round result to the output byte array
+		// copies the round result to the output uint8_t array
 		start_index = outOff + (i - 1)*prfLength;
 		// in case of the last round - copies only the number of bytes left to match outLen
 		bulk_size = (i == rounds) ? outLen - ((i - 1)*prfLength) : prfLength; 
@@ -120,7 +120,7 @@ LubyRackoffPrpFromPrfVarying::LubyRackoffPrpFromPrfVarying(const shared_ptr<PrfV
 	prfVaryingIOLength = _prfVaryingIOLength;
 }
 
-void LubyRackoffPrpFromPrfVarying::computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte>& outBytes, int outOff) {
+void LubyRackoffPrpFromPrfVarying::computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t>& outBytes, int outOff) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	if ((inOff > (int)inBytes.size()) || (inOff + inLen > (int)inBytes.size()))
@@ -131,32 +131,32 @@ void LubyRackoffPrpFromPrfVarying::computeBlock(const vector<byte> & inBytes, in
 		throw invalid_argument("Length of input must be even");
 
 	int sideSize = inLen / 2; // L in the pseudo code
-	vector<byte> tmpReference;
-	vector<byte> leftNext(sideSize);
-	vector<byte> rightNext(sideSize+1);//keeps space for the index. Size of L+1.
+	vector<uint8_t> tmpReference;
+	vector<uint8_t> leftNext(sideSize);
+	vector<uint8_t> rightNext(sideSize+1);//keeps space for the index. Size of L+1.
 
 	// Let left_current be the first half bits of the input
-	vector<byte> leftCurrent(inBytes.begin()+inOff, inBytes.begin() + inOff + sideSize);
+	vector<uint8_t> leftCurrent(inBytes.begin()+inOff, inBytes.begin() + inOff + sideSize);
 
 	//Let right_current be the last half bits of the input
-	vector<byte> rightCurrent(inBytes.begin() + inOff + sideSize, inBytes.begin() + inOff + 2 * sideSize);
+	vector<uint8_t> rightCurrent(inBytes.begin() + inOff + sideSize, inBytes.begin() + inOff + 2 * sideSize);
 
 	for (int i = 1; i <= 4; i++) {
 		// Li = Ri-1
 		leftNext.insert(rightCurrent.begin(), leftNext.begin(), rightCurrent.begin() + sideSize);
 
 		// Put the index in the last position of Ri-1
-		rightCurrent.push_back((byte)i);
+		rightCurrent.push_back((uint8_t)i);
 
 		// Do PRF_VARY_INOUT(k,(Ri-1,i),L) of the pseudocode
 		// Put the result in the rightNext array. Later we will XOr it with leftCurrent. Note that the result size is not the entire
-		// rightNext array. It is one byte less. The remaining byte will contain the index for the next iteration.
+		// rightNext array. It is one uint8_t less. The remaining uint8_t will contain the index for the next iteration.
 		prfVaryingIOLength->computeBlock(rightCurrent, 0, rightCurrent.size(), rightNext, 0, sideSize);
 
 		// Do Ri = Li-1 ^ PRF_VARY_INOUT(k,(Ri-1,i),L)  
 		// XOR rightNext (which is the resulting PRF computation by now) with leftCurrent.
 		for (int j = 0; j<sideSize; j++)
-			rightNext[j] = (byte)(rightNext[j] ^ leftCurrent[j]);
+			rightNext[j] = (uint8_t)(rightNext[j] ^ leftCurrent[j]);
 
 
 		//Switch between the current and the next for the next round.
@@ -177,7 +177,7 @@ void LubyRackoffPrpFromPrfVarying::computeBlock(const vector<byte> & inBytes, in
 	outBytes.insert(outBytes.begin() + outOff+inLen/2, rightCurrent.begin(), rightCurrent.begin() + (inLen / 2));
 }
 
-void LubyRackoffPrpFromPrfVarying::invertBlock(const vector<byte> & inBytes, int inOff, vector<byte>& outBytes, int outOff, int len){
+void LubyRackoffPrpFromPrfVarying::invertBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t>& outBytes, int outOff, int len){
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	if ((inOff > (int)inBytes.size()) || (inOff + len  > (int)inBytes.size()))
@@ -188,19 +188,19 @@ void LubyRackoffPrpFromPrfVarying::invertBlock(const vector<byte> & inBytes, int
 		throw invalid_argument("Length of input must be even");
 
 	int sideSize = len / 2; // L in the pseudo code
-	vector<byte> tmpReference;
-	vector<byte> leftCurrent(sideSize);
-	vector<byte> rightCurrent(sideSize + 1); //Keep space for the index. Size of L+1.
+	vector<uint8_t> tmpReference;
+	vector<uint8_t> leftCurrent(sideSize);
+	vector<uint8_t> rightCurrent(sideSize + 1); //Keep space for the index. Size of L+1.
 
 	// Let leftNext be the first half bits of the input
-	vector<byte> leftNext(inBytes.begin() + inOff, inBytes.begin() + inOff + sideSize);
+	vector<uint8_t> leftNext(inBytes.begin() + inOff, inBytes.begin() + inOff + sideSize);
 	// Let rightNext be the last half bits of the input
-	vector<byte> rightNext(inBytes.begin() + inOff + sideSize, inBytes.begin() + inOff + 2*sideSize);
+	vector<uint8_t> rightNext(inBytes.begin() + inOff + sideSize, inBytes.begin() + inOff + 2*sideSize);
 
 	for (int i = 4; i >= 1; i--) {
 		//Ri-1 = Li
 		rightCurrent.insert(rightCurrent.begin(), leftNext.begin(), leftNext.begin() + sideSize);
-		rightCurrent.push_back((byte)i);
+		rightCurrent.push_back((uint8_t)i);
 
 
 		// Do PRF_VARY_INOUT(k,(Ri-1,i),L) of the pseudocode
@@ -210,7 +210,7 @@ void LubyRackoffPrpFromPrfVarying::invertBlock(const vector<byte> & inBytes, int
 		// does Li-1 = Ri ^ PRF_VARY_INOUT(k,(Ri-1,i),L)  
 		// XOR leftCurrent (which is the resulting PRF computation by now) with rightNext.
 		for (int j = 0; j<sideSize; j++)
-			leftCurrent[j] = (byte)(leftCurrent[j] ^ rightNext[j]);
+			leftCurrent[j] = (uint8_t)(leftCurrent[j] ^ rightNext[j]);
 
 		// Switch between the current and the next for the next round.
 		// Note that it is much more readable and straightforward to copy the next arrays into the current arrays.
@@ -232,13 +232,13 @@ void LubyRackoffPrpFromPrfVarying::invertBlock(const vector<byte> & inBytes, int
 }
 
 
-void PrpFromPrfVarying::computeBlock(const vector<byte> & inBytes, int inOff, vector<byte>& outBytes, int outOff) {
+void PrpFromPrfVarying::computeBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t>& outBytes, int outOff) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	throw out_of_range("to use this prp, call the computeBlock function that specifies the block size length");
 }
 
-void PrpFromPrfVarying::computeBlock(const vector<byte> & inBytes, int inOff, int inLen, vector<byte>& outBytes, int outOff, int outLen) {
+void PrpFromPrfVarying::computeBlock(const vector<uint8_t> & inBytes, int inOff, int inLen, vector<uint8_t>& outBytes, int outOff, int outLen) {
 	if (!isKeySet())
 		throw new IllegalStateException("secret key isn't set");
 	// Check that the offsets and lengths are correct.
@@ -254,7 +254,7 @@ void PrpFromPrfVarying::computeBlock(const vector<byte> & inBytes, int inOff, in
 	else throw out_of_range("input and output lengths should be equal");
 }
 
-void PrpFromPrfVarying::invertBlock(const vector<byte> & inBytes, int inOff, vector<byte>& outBytes, int outOff) {
+void PrpFromPrfVarying::invertBlock(const vector<uint8_t> & inBytes, int inOff, vector<uint8_t>& outBytes, int outOff) {
 	if (!isKeySet())
 		throw IllegalStateException("secret key isn't set");
 	throw out_of_range("to use this prp, call the invertBlock function which specify the block size length");

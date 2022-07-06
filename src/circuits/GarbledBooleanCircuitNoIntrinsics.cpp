@@ -43,14 +43,14 @@ void GarbledBooleanCircuitNoIntrinsics::createCircuitMemory(const char* fileName
     numOfRows = 2;
 
     if (isNonXorOutputsRequired == true){
-        garbledTables = new byte[KEY_SIZE * ((numberOfGates - numOfXorGates - numOfNotGates) * 2 + 2 * numberOfOutputs)];
+        garbledTables = new uint8_t[KEY_SIZE * ((numberOfGates - numOfXorGates - numOfNotGates) * 2 + 2 * numberOfOutputs)];
         if (garbledTables == nullptr) {
             cout << "garbledTables could not be allocated";
             exit(0);
         }
         memset(garbledTables, 0, (KEY_SIZE * ((numberOfGates - numOfXorGates - numOfNotGates) * 2 + 2 * numberOfOutputs)));
 
-        garbledWires = new byte[KEY_SIZE * ((lastWireIndex + 1) + 1 + 2 * numberOfOutputs)];
+        garbledWires = new uint8_t[KEY_SIZE * ((lastWireIndex + 1) + 1 + 2 * numberOfOutputs)];
 
         if (garbledWires == nullptr) {
             cout << "garbledWires could not be allocated";
@@ -60,7 +60,7 @@ void GarbledBooleanCircuitNoIntrinsics::createCircuitMemory(const char* fileName
         garbledWires = garbledWires+ KEY_SIZE;
     }
     else{
-        garbledTables = new byte[KEY_SIZE * (numberOfGates - numOfXorGates - numOfNotGates) * 2];
+        garbledTables = new uint8_t[KEY_SIZE * (numberOfGates - numOfXorGates - numOfNotGates) * 2];
 
         if (garbledTables == nullptr) {
             cout << "garbled tables could not be allocated";
@@ -68,7 +68,7 @@ void GarbledBooleanCircuitNoIntrinsics::createCircuitMemory(const char* fileName
         }
         memset(garbledTables, 0, (KEY_SIZE * (numberOfGates - numOfXorGates - numOfNotGates) * 2));
 
-        garbledWires = new byte[KEY_SIZE * ((lastWireIndex + 1) + 1)];
+        garbledWires = new uint8_t[KEY_SIZE * ((lastWireIndex + 1) + 1)];
 
         if (garbledWires == nullptr) {
             cout << "garbledWires could not be allocated";
@@ -125,13 +125,13 @@ GarbledBooleanCircuitNoIntrinsics::~GarbledBooleanCircuitNoIntrinsics(void)
 void GarbledBooleanCircuitNoIntrinsics::createCircuit(const char* fileName, bool isFreeXor, bool isNonXorOutputsRequired){
 
     //Set the fixed key.
-    byte fixedKey [] = {(byte)36, (byte)-100, (byte)50, (byte)-22, (byte)92, (byte)-26, (byte)49, (byte)9, (byte)-82 , (byte)-86, (byte)-51, (byte)-96, (byte)98, (byte)-20, 29,  (byte)-13};
+    uint8_t fixedKey [] = {(uint8_t)36, (uint8_t)-100, (uint8_t)50, (uint8_t)-22, (uint8_t)92, (uint8_t)-26, (uint8_t)49, (uint8_t)9, (uint8_t)-82 , (uint8_t)-86, (uint8_t)-51, (uint8_t)-96, (uint8_t)98, (uint8_t)-20, 29,  (uint8_t)-13};
     aesFixedKey = SecretKey(fixedKey, KEY_SIZE, "AES");
 
     //create the round keys for the fixed key.
     aes.setKey(aesFixedKey);
 
-    //AES_set_encrypt_key((const unsigned char *)&fixedKey, 128, &aesFixedKey);
+    //AES_set_encrypt_key((const uint8_t *)&fixedKey, 128, &aesFixedKey);
 
     this->isFreeXor = isFreeXor;
     this->isNonXorOutputsRequired = isNonXorOutputsRequired;
@@ -156,10 +156,10 @@ void GarbledBooleanCircuitNoIntrinsics::createCircuit(const char* fileName, bool
     int sizeOfWires;
     if (isNonXorOutputsRequired) {
         sizeOfWires = (lastWireIndex + 1) + 1 + numberOfOutputs;
-        computedWires = new byte[KEY_SIZE * sizeOfWires];//the wires that have been already computed. It is assumed that when a gate is handled the
+        computedWires = new uint8_t[KEY_SIZE * sizeOfWires];//the wires that have been already computed. It is assumed that when a gate is handled the
     } else {
         sizeOfWires = (lastWireIndex + 1) + 1;
-        computedWires = new byte[KEY_SIZE * sizeOfWires];//the wires that have been already computed. It is assumed that when a gate is handled the
+        computedWires = new uint8_t[KEY_SIZE * sizeOfWires];//the wires that have been already computed. It is assumed that when a gate is handled the
     }
     if (computedWires== nullptr) {
         cout<<"computedWires could not be allocated";
@@ -172,15 +172,15 @@ void GarbledBooleanCircuitNoIntrinsics::createCircuit(const char* fileName, bool
     translationTable.reserve(numberOfOutputs);
 }
 
-tuple<byte*, byte*, vector<unsigned char> > GarbledBooleanCircuitNoIntrinsics::garble(byte *seed)
+tuple<uint8_t*, uint8_t*, vector<uint8_t> > GarbledBooleanCircuitNoIntrinsics::garble(uint8_t *seed)
 {
-    byte *allInputWireValues = new byte[KEY_SIZE * 2 * numberOfInputs];
-    byte *allOutputWireValues = new byte[KEY_SIZE * 2 * numberOfOutputs];
-    vector<unsigned char> translationTable;
+    uint8_t *allInputWireValues = new uint8_t[KEY_SIZE * 2 * numberOfInputs];
+    uint8_t *allOutputWireValues = new uint8_t[KEY_SIZE * 2 * numberOfOutputs];
+    vector<uint8_t> translationTable;
 
     if (seed == nullptr) {
 
-        byte* seedLocl = new byte[KEY_SIZE];
+        uint8_t* seedLocl = new uint8_t[KEY_SIZE];
 
         if (!RAND_bytes(seedLocl, KEY_SIZE))
             throw runtime_error("key generation failed");
@@ -193,8 +193,8 @@ tuple<byte*, byte*, vector<unsigned char> > GarbledBooleanCircuitNoIntrinsics::g
     return make_tuple(allInputWireValues, allOutputWireValues, translationTable);
 }
 
-void GarbledBooleanCircuitNoIntrinsics::garble(byte *emptyBothInputKeys, byte *emptyBothOutputKeys,
-        vector<unsigned char> & emptyTranslationTable, byte* seed){
+void GarbledBooleanCircuitNoIntrinsics::garble(uint8_t *emptyBothInputKeys, uint8_t *emptyBothOutputKeys,
+        vector<uint8_t> & emptyTranslationTable, uint8_t* seed){
 
     this->seed = seed;
 
@@ -207,16 +207,16 @@ void GarbledBooleanCircuitNoIntrinsics::garble(byte *emptyBothInputKeys, byte *e
     int nonXorIndex = 0;
 
     //two different tweaks one for input0 and the other for input1
-    byte* tweak = new byte[KEY_SIZE];
-    byte* tweak2 = new byte[KEY_SIZE];
+    uint8_t* tweak = new uint8_t[KEY_SIZE];
+    uint8_t* tweak2 = new uint8_t[KEY_SIZE];
 
     //create input arrays in order to get the inputs immedietly and not invoke unneeded xor's
-    byte* inputs = new byte[KEY_SIZE * 4];
-    byte* tempInputs = new byte[KEY_SIZE * 4];
+    uint8_t* inputs = new uint8_t[KEY_SIZE * 4];
+    uint8_t* tempInputs = new uint8_t[KEY_SIZE * 4];
 
     //two temporary values that will eventually be XORed together to calculate the output0 zero wire
-    byte* tempK0 = new byte[KEY_SIZE];
-    byte* tempK1 = new byte[KEY_SIZE];
+    uint8_t* tempK0 = new uint8_t[KEY_SIZE];
+    uint8_t* tempK1 = new uint8_t[KEY_SIZE];
 
     //go over all the gates in the circuit
     for (int i = 0; i < numberOfGates; i++){
@@ -259,7 +259,7 @@ void GarbledBooleanCircuitNoIntrinsics::garble(byte *emptyBothInputKeys, byte *e
             int wire0signalBitsArray = getSignalBitOf(inputs);
             int wire1signalBitsArray = getSignalBitOf(inputs + 2*KEY_SIZE);
             //generate the keys array
-            vector<byte> keys(4*KEY_SIZE);
+            vector<uint8_t> keys(4*KEY_SIZE);
 
             //generate K = H(input) = 2Input XOR tweak
             //Multiply the input by 2
@@ -277,7 +277,7 @@ void GarbledBooleanCircuitNoIntrinsics::garble(byte *emptyBothInputKeys, byte *e
 
 
             //generate the keys array as well as the encryptedKeys array
-            vector<byte> encryptedKeys(4 * KEY_SIZE);
+            vector<uint8_t> encryptedKeys(4 * KEY_SIZE);
             //Encrypt the 4 keys in one chunk to gain pipelining and puts the answer in encryptedKeys block array
             //AES_ecb_encrypt_blks_4_in_out((block*)keys, (block*)encryptedKeys, &aesFixedKey);
             aes.optimizedCompute(keys, encryptedKeys);
@@ -403,7 +403,7 @@ vector<int> GarbledBooleanCircuitNoIntrinsics::getInputWireIndices(int partyNumb
 }
 
 
-int GarbledBooleanCircuitNoIntrinsics::getRowTruthTableResult(int i, int j, unsigned char truthTable){
+int GarbledBooleanCircuitNoIntrinsics::getRowTruthTableResult(int i, int j, uint8_t truthTable){
 
     //get the row of the table starting from 0
     int rowNumber = 2*i + j;
@@ -430,7 +430,7 @@ int GarbledBooleanCircuitNoIntrinsics::integerPow(int p) {
 }
 
 
-void GarbledBooleanCircuitNoIntrinsics::translate(byte *outputKeys, unsigned char* answer){
+void GarbledBooleanCircuitNoIntrinsics::translate(uint8_t *outputKeys, uint8_t* answer){
 
 
     for(int i=0; i<numberOfOutputs;i++){
@@ -445,7 +445,7 @@ void GarbledBooleanCircuitNoIntrinsics::translate(byte *outputKeys, unsigned cha
 
 }
 
-void GarbledBooleanCircuitNoIntrinsics::initAesEncryptionsAndAllKeys(byte* emptyBothInputKeys){
+void GarbledBooleanCircuitNoIntrinsics::initAesEncryptionsAndAllKeys(uint8_t* emptyBothInputKeys){
 
     //reserve memory for the translation table
     translationTable.reserve(numberOfOutputs);
@@ -481,13 +481,13 @@ void GarbledBooleanCircuitNoIntrinsics::initAesEncryptionsAndAllKeys(byte* empty
 
 }
 
-void GarbledBooleanCircuitNoIntrinsics::setTranslationTable(vector<unsigned char> & translationTable) {
+void GarbledBooleanCircuitNoIntrinsics::setTranslationTable(vector<uint8_t> & translationTable) {
 
     this->translationTable = translationTable;
 }
 
 
-void GarbledBooleanCircuitNoIntrinsics::setGarbledTables(byte* garbledTables) {
+void GarbledBooleanCircuitNoIntrinsics::setGarbledTables(uint8_t* garbledTables) {
 
     if (this->garbledTables != nullptr && this->garbledTables != garbledTables)
         delete [] this->garbledTables;
@@ -501,9 +501,9 @@ vector<int> GarbledBooleanCircuitNoIntrinsics::getNumOfInputsForEachParty(){
 }
 
 
-bool GarbledBooleanCircuitNoIntrinsics::verify(byte *bothInputKeys){
+bool GarbledBooleanCircuitNoIntrinsics::verify(uint8_t *bothInputKeys){
 
-    byte *emptyBothWireOutputKeys = new byte[KEY_SIZE * numberOfOutputs*2];
+    uint8_t *emptyBothWireOutputKeys = new uint8_t[KEY_SIZE * numberOfOutputs*2];
 
     //Call the internal internalVerify function that verifies all the gates but does not check the translation table.
     bool isVerified = internalVerify(bothInputKeys,emptyBothWireOutputKeys);
@@ -521,7 +521,7 @@ bool GarbledBooleanCircuitNoIntrinsics::verify(byte *bothInputKeys){
 }
 
 
-bool  GarbledBooleanCircuitNoIntrinsics::equalBlocks(byte* a, byte* b)
+bool  GarbledBooleanCircuitNoIntrinsics::equalBlocks(uint8_t* a, uint8_t* b)
 {
     //A function that checks if two blocks are equal by casting to double size long array and check each half of a block
     for (int i=0; i<KEY_SIZE; i++) {
@@ -534,16 +534,16 @@ bool  GarbledBooleanCircuitNoIntrinsics::equalBlocks(byte* a, byte* b)
 }
 
 
-bool GarbledBooleanCircuitNoIntrinsics::verifyTranslationTable(byte * bothWireOutputKeys)
+bool GarbledBooleanCircuitNoIntrinsics::verifyTranslationTable(uint8_t * bothWireOutputKeys)
 {
     bool isVerified = true;
     //go over the output key results and make sure that they comply with the translation table
     for (int i=0; i<numberOfOutputs;i++) {
-        byte* zeroBlock = bothWireOutputKeys + 2*i*KEY_SIZE;
-        byte* oneBlock = bothWireOutputKeys + (2*i+1)*KEY_SIZE;
+        uint8_t* zeroBlock = bothWireOutputKeys + 2*i*KEY_SIZE;
+        uint8_t* oneBlock = bothWireOutputKeys + (2*i+1)*KEY_SIZE;
 
-        unsigned char translatedZeroValue = translationTable[i] ^ getSignalBitOf(zeroBlock);
-        unsigned char translatedOneValue = translationTable[i] ^ getSignalBitOf(oneBlock);
+        uint8_t translatedZeroValue = translationTable[i] ^ getSignalBitOf(zeroBlock);
+        uint8_t translatedOneValue = translationTable[i] ^ getSignalBitOf(oneBlock);
 
         //Verify that the translatedZeroValue is actually 0 and that translatedOneValue is indeed 1
         if (translatedZeroValue != 0 || translatedOneValue != 1) {
@@ -707,7 +707,7 @@ int GarbledBooleanCircuitNoIntrinsics::getGarbledTableSize()
 
 }
 
-void  GarbledBooleanCircuitNoIntrinsics::compute(byte * singleWiresInputKeys, byte * Output)
+void  GarbledBooleanCircuitNoIntrinsics::compute(uint8_t * singleWiresInputKeys, uint8_t * Output)
 {
     int nonXorIndex = 0;
     for (int i = 0; i < numberOfInputs; i++){
@@ -716,11 +716,11 @@ void  GarbledBooleanCircuitNoIntrinsics::compute(byte * singleWiresInputKeys, by
         memcpy(computedWires + inputIndices[i]*KEY_SIZE, singleWiresInputKeys + i*KEY_SIZE, KEY_SIZE);
     }
 
-    byte* keys = new byte[2*KEY_SIZE];
-    byte* tweak = new byte[KEY_SIZE];
-    byte* tweak2 = new byte[KEY_SIZE];
-    byte* tempK0 = new byte[KEY_SIZE];
-    byte* tempK1 = new byte[KEY_SIZE];
+    uint8_t* keys = new uint8_t[2*KEY_SIZE];
+    uint8_t* tweak = new uint8_t[KEY_SIZE];
+    uint8_t* tweak2 = new uint8_t[KEY_SIZE];
+    uint8_t* tempK0 = new uint8_t[KEY_SIZE];
+    uint8_t* tempK1 = new uint8_t[KEY_SIZE];
 
     for (int i = 0; i < numberOfGates; i++){
 
@@ -747,7 +747,7 @@ void  GarbledBooleanCircuitNoIntrinsics::compute(byte * singleWiresInputKeys, by
         else{
 //            cout<<"gate "<<i<<endl;
 
-            vector<byte> keys2(2*KEY_SIZE);
+            vector<uint8_t> keys2(2*KEY_SIZE);
             //get the keys from the already calculated wires
             memcpy(keys, computedWires + garbledGates[i].input0*KEY_SIZE, KEY_SIZE);
             memcpy(keys + KEY_SIZE, computedWires + garbledGates[i].input1*KEY_SIZE, KEY_SIZE);
@@ -800,7 +800,7 @@ void  GarbledBooleanCircuitNoIntrinsics::compute(byte * singleWiresInputKeys, by
 //            }
 
             //generate the keys array as well as the encryptedKeys array
-            vector<byte> encryptedKeys(2*KEY_SIZE);
+            vector<uint8_t> encryptedKeys(2*KEY_SIZE);
             //Encrypt the 2 keys in one chunk to gain pipelining and puts the answer in encryptedKeys block array
 //            AES_ecb_encrypt_blks_2_in_out((block*)keys2, (block*)encryptedKeys, &aesFixedKey);
             aes.optimizedCompute(keys2, encryptedKeys);
@@ -892,7 +892,7 @@ void  GarbledBooleanCircuitNoIntrinsics::compute(byte * singleWiresInputKeys, by
 }
 
 
-/*void GarbledBooleanCircuitNoIntrinsics::computeOutputWiresToNoFixedDelta(int nonXorIndex, byte * Output){
+/*void GarbledBooleanCircuitNoIntrinsics::computeOutputWiresToNoFixedDelta(int nonXorIndex, uint8_t * Output){
 
     for (int i = 0; i < numberOfOutputs; i++){
 
@@ -925,14 +925,14 @@ void  GarbledBooleanCircuitNoIntrinsics::compute(byte * singleWiresInputKeys, by
 }
 
 
-void GarbledBooleanCircuitNoIntrinsics::verifyOutputWiresToNoFixedDelta(byte *bothOutputsKeys){
+void GarbledBooleanCircuitNoIntrinsics::verifyOutputWiresToNoFixedDelta(uint8_t *bothOutputsKeys){
 
     //The result of chunk encrypting indexArray.
-    byte* encryptedChunkKeys = new byte[KEY_SIZE * numberOfOutputs];
+    uint8_t* encryptedChunkKeys = new uint8_t[KEY_SIZE * numberOfOutputs];
 
     //An array that holds the number numberOfGates - numOfXorGates to the number of numberOfGates - numOfXorGates + numberOfOutputs.
     //The purpuse of this array is to encrypt all the number of outputs in one chucnk. This gains piplining
-    byte* indexArray = new byte[KEY_SIZE * numberOfOutputs];
+    uint8_t* indexArray = new uint8_t[KEY_SIZE * numberOfOutputs];
 
     //Since we are using ecb mode, the plaintext must be different for every encryption
     for (int i = 0; i < numberOfOutputs; i++){
@@ -953,12 +953,12 @@ void GarbledBooleanCircuitNoIntrinsics::verifyOutputWiresToNoFixedDelta(byte *bo
 
         //build the garbled wires of the identity gates, note that the wire with signal bit 0 stays the same
         if (getSignalBitOf(bothOutputsKeys + 2 * i * KEY_SIZE) == 0){
-            *((unsigned char *)(&encryptedChunkKeys[i*KEY_SIZE])) |= 1;
+            *((uint8_t *)(&encryptedChunkKeys[i*KEY_SIZE])) |= 1;
             for (int j=0; j<KEY_SIZE; j++)
                 bothOutputsKeys[(2 * i + 1)*KEY_SIZE + j] = encryptedChunkKeys[i*KEY_SIZE + j];
         }
         else{
-            *((unsigned char *)(&encryptedChunkKeys[i*KEY_SIZE])) &= 0;
+            *((uint8_t *)(&encryptedChunkKeys[i*KEY_SIZE])) &= 0;
             for (int j=0; j<KEY_SIZE; j++)
                 bothOutputsKeys[2 * i *KEY_SIZE + j] = encryptedChunkKeys[i*KEY_SIZE + j];
         }
@@ -967,14 +967,14 @@ void GarbledBooleanCircuitNoIntrinsics::verifyOutputWiresToNoFixedDelta(byte *bo
 
 }
 
-void GarbledBooleanCircuitNoIntrinsics::garbleOutputWiresToNoFixedDelta(byte *deltaFreeXor, int nonXorIndex, byte *emptyBothOutputKeys){
+void GarbledBooleanCircuitNoIntrinsics::garbleOutputWiresToNoFixedDelta(uint8_t *deltaFreeXor, int nonXorIndex, uint8_t *emptyBothOutputKeys){
 
     //The result of chunk encrypting indexArray.
-    byte* encryptedChunkKeys = new byte[KEY_SIZE * numberOfOutputs];
+    uint8_t* encryptedChunkKeys = new uint8_t[KEY_SIZE * numberOfOutputs];
 
     //An array that holds the number numberOfGates - numOfXorGates to the number of numberOfGates - numOfXorGates + numberOfOutputs.
     //The purpuse of this array is to encrypt all the number of outputs in one chucnk. This gains piplining
-    byte* indexArray = new byte[KEY_SIZE * numberOfOutputs];
+    uint8_t* indexArray = new uint8_t[KEY_SIZE * numberOfOutputs];
 
     //Since we are using ecb mode, the plaintext must be different for every encryption
     for (int i = 0; i < numberOfOutputs; i++){
@@ -995,18 +995,18 @@ void GarbledBooleanCircuitNoIntrinsics::garbleOutputWiresToNoFixedDelta(byte *de
         //build the garbled wires of the identity gates
         if (getSignalBitOf(garbledWires + outputIndices[i] * KEY_SIZE) == 0){
             garbledWires[lastWireIndex + 1 + 2 * i] = garbledWires[outputIndices[i]];
-            *((unsigned char *)(&encryptedChunkKeys[i])) |= 1;
+            *((uint8_t *)(&encryptedChunkKeys[i])) |= 1;
             garbledWires[lastWireIndex + 1 + 2 * i + 1] = encryptedChunkKeys[i];
         }
         else{
-            *((unsigned char *)(&encryptedChunkKeys[i])) &= 0;
+            *((uint8_t *)(&encryptedChunkKeys[i])) &= 0;
             garbledWires[lastWireIndex + 1 + 2 * i] = encryptedChunkKeys[i];
             garbledWires[lastWireIndex + 1 + 2 * i + 1] = garbledWires[outputIndices[i]];
         }
 
-        byte* TwoA = new byte[2*KEY_SIZE];
-        byte* keys = new byte[2*KEY_SIZE];
-        byte* encryptedKeys = new byte[2*KEY_SIZE];
+        uint8_t* TwoA = new uint8_t[2*KEY_SIZE];
+        uint8_t* keys = new uint8_t[2*KEY_SIZE];
+        uint8_t* encryptedKeys = new uint8_t[2*KEY_SIZE];
 
 
         //Shift int inputs of the identity gates (the output of the freeXor circuit) by one
@@ -1040,7 +1040,7 @@ void GarbledBooleanCircuitNoIntrinsics::garbleOutputWiresToNoFixedDelta(byte *de
 
 }*/
 
-bool GarbledBooleanCircuitNoIntrinsics::internalVerify(byte *bothInputKeys, byte *emptyBothWireOutputKeys){
+bool GarbledBooleanCircuitNoIntrinsics::internalVerify(uint8_t *bothInputKeys, uint8_t *emptyBothWireOutputKeys){
 
     int nonXorIndex = 0;
 
@@ -1057,13 +1057,13 @@ bool GarbledBooleanCircuitNoIntrinsics::internalVerify(byte *bothInputKeys, byte
         memcpy(garbledWires + inputIndices[i]*KEY_SIZE, bothInputKeys + 2 * i*KEY_SIZE, KEY_SIZE);
     }
 
-    byte* tweak = new byte[KEY_SIZE];
-    byte* tweak2 = new byte[KEY_SIZE];
-    byte* inputs = new byte[KEY_SIZE * 4];
+    uint8_t* tweak = new uint8_t[KEY_SIZE];
+    uint8_t* tweak2 = new uint8_t[KEY_SIZE];
+    uint8_t* inputs = new uint8_t[KEY_SIZE * 4];
     //declare temp variables to store the 0-wire key and the 1-wire key
-    byte* k0 = new byte[KEY_SIZE];
-    byte* tempK0 = new byte[KEY_SIZE];
-    byte* tempK1 = new byte[KEY_SIZE];
+    uint8_t* k0 = new uint8_t[KEY_SIZE];
+    uint8_t* tempK0 = new uint8_t[KEY_SIZE];
+    uint8_t* tempK1 = new uint8_t[KEY_SIZE];
 
 
     for (int i = 0; i<numberOfGates; i++){
@@ -1106,7 +1106,7 @@ bool GarbledBooleanCircuitNoIntrinsics::internalVerify(byte *bothInputKeys, byte
             }
 
             //generate the keys array
-            vector<byte> keys(4*KEY_SIZE);
+            vector<uint8_t> keys(4*KEY_SIZE);
 
             //signal bits of input0 and input1
             int wire0SignalBit, wire1SignalBit;
@@ -1125,7 +1125,7 @@ bool GarbledBooleanCircuitNoIntrinsics::internalVerify(byte *bothInputKeys, byte
             }
 
             //generate the keys array as well as the encryptedKeys array
-            vector<byte> encryptedKeys(4*KEY_SIZE);
+            vector<uint8_t> encryptedKeys(4*KEY_SIZE);
             //Encrypt the 4 keys in one chunk to gain pipelining and puts the answer in encryptedKeys block array
 //            AES_ecb_encrypt_blks_4_in_out((block*)keys, (block*)encryptedKeys, &aesFixedKey);
             aes.optimizedCompute(keys, encryptedKeys);

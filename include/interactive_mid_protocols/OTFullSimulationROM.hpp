@@ -59,7 +59,7 @@ public:
 * Concrete implementation of the sender side in oblivious transfer based on the DDH assumption that achieves
 * full simulation in the random oracle model.
 *
-* This class derived from OTFullSimROMDDHSenderAbs and implements the functionality related to the byte vector inputs.
+* This class derived from OTFullSimROMDDHSenderAbs and implements the functionality related to the uint8_t vector inputs.
 *
 * For more information see Protocol 7.5.1 page 201 of <i>Efficient Secure Two-Party Protocols</i> by Hazay-Lindell;
 * this is the protocol of [PVW] adapted to the stand-alone setting and using a Fiat-Shamir proof instead of interactive zero-knowledge. 
@@ -167,7 +167,7 @@ public:
 * Concrete implementation of the receiver side in oblivious transfer based on the DDH assumption
 *  that achieves full simulation in the random oracle model.
 *
-* This class derived from OTFullSimROMDDHReceiverAbs and implements the functionality related to the byte vector inputs.
+* This class derived from OTFullSimROMDDHReceiverAbs and implements the functionality related to the uint8_t vector inputs.
 *
 * For more information see Protocol 7.5.1 page 201 of <i>Efficient Secure Two-Party Protocols</i> by Hazay-Lindell;
 * this is the protocol of [PVW] adapted to the stand-alone setting and using a Fiat-Shamir proof instead of interactive zero-knowledge. 

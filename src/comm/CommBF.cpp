@@ -40,22 +40,22 @@
 /* CommPartyBF			                */
 /*****************************************/
 
-void CommPartyBF::writeWithSize(const unsigned char* data, int size) {
-	write((const unsigned char *)&size, sizeof(int));
+void CommPartyBF::writeWithSize(const uint8_t* data, int size) {
+	write((const uint8_t *)&size, sizeof(int));
 	write(data, size);
 }
 
 int CommPartyBF::readSize() {
-	unsigned char buf[sizeof(int)];
+	uint8_t buf[sizeof(int)];
 	read(buf, sizeof(int));
 	int * res = (int *)buf;
 	return *res;
 }
 
-size_t CommPartyBF::readWithSizeIntoVector(std::vector<unsigned char> & targetVector) {
+size_t CommPartyBF::readWithSizeIntoVector(std::vector<uint8_t> & targetVector) {
 	int msgSize = readSize();
 	targetVector.resize(msgSize);
-	return read((unsigned char*)&targetVector[0], msgSize);
+	return read((uint8_t*)&targetVector[0], msgSize);
 }
 
 /*****************************************/
@@ -184,7 +184,7 @@ void CommPartyTCPSyncedBoostFree::join(int sleepBetweenAttempts, int timeout)
 	}
 }
 
-void CommPartyTCPSyncedBoostFree::write(const unsigned char* data, int size)
+void CommPartyTCPSyncedBoostFree::write(const uint8_t* data, int size)
 {
 	struct timeval write_timeout;
 	int written_size = 0, written_now;
@@ -207,7 +207,7 @@ void CommPartyTCPSyncedBoostFree::write(const unsigned char* data, int size)
 	}
 }
 
-size_t CommPartyTCPSyncedBoostFree::read(unsigned char* data, int sizeToRead)
+size_t CommPartyTCPSyncedBoostFree::read(uint8_t* data, int sizeToRead)
 {
 	struct timeval read_timeout;
 	int read_size = 0, read_now;

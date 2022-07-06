@@ -40,12 +40,12 @@ void SigmaOrTwoSecondMsg::initFromString(const string & s) {
 string SigmaOrTwoSecondMsg::toString() {
 	string output = z0->toString();
 	output += ":";
-	const byte * uc0 = &(e0[0]);
+	const uint8_t * uc0 = &(e0[0]);
 	output += string(reinterpret_cast<char const*>(uc0), e0.size());
 	output += ":";
 	output += z1->toString();
 	output += ":";
-	const byte * uc1 = &(e1[0]);
+	const uint8_t * uc1 = &(e1[0]);
 	output += string(reinterpret_cast<char const*>(uc1), e1.size());
 	return output;
 }
@@ -109,7 +109,7 @@ SigmaOrTwoSimulator::SigmaOrTwoSimulator(const vector<shared_ptr<SigmaSimulator>
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 * @throws IllegalArgumentException if the given input is not an instance of SigmaORTwoCommonInput.
 */
-shared_ptr<SigmaSimulatorOutput> SigmaOrTwoSimulator::simulate(SigmaCommonInput* input, const vector<byte> & challenge) {
+shared_ptr<SigmaSimulatorOutput> SigmaOrTwoSimulator::simulate(SigmaCommonInput* input, const vector<uint8_t> & challenge) {
 	/*
 	* SAMPLE a random e0,
 	* 	COMPUTE e1 = e XOR e0
@@ -128,12 +128,12 @@ shared_ptr<SigmaSimulatorOutput> SigmaOrTwoSimulator::simulate(SigmaCommonInput*
 	}
 	
 	//Sample a random e0.
-	vector<byte> e0(len);
+	vector<uint8_t> e0(len);
 	random->getPRGBytes(e0, 0, t / 8);
 
 	
 	//Set e1 = challenge XOR e0.
-	vector<byte> e1;
+	vector<uint8_t> e1;
 	for (int i = 0; i < len; i++) {
 		e1.push_back(challenge[i] ^ e0[i]);
 	}
@@ -160,8 +160,8 @@ shared_ptr<SigmaSimulatorOutput> SigmaOrTwoSimulator::simulate(SigmaCommonInput*
 * @throws IllegalArgumentException if the given input is not an instance of SigmaORTwoCommonInput.
 */
 shared_ptr<SigmaSimulatorOutput> SigmaOrTwoSimulator::simulate(SigmaCommonInput* input) {
-	//Create a new byte array of size t/8, to get the required byte size.
-	vector<byte> e(t / 8);
+	//Create a new uint8_t array of size t/8, to get the required uint8_t size.
+	vector<uint8_t> e(t / 8);
 	random->getPRGBytes(e, 0, t / 8);
 	
 	return simulate(input, e);
@@ -252,7 +252,7 @@ shared_ptr<SigmaProtocolMsg> SigmaOrTwoProverComputation::computeFirstMsg(const 
 * @return SigmaORTwoSecondMsg contains e0,z0,e1,z1.
 * @throws CheatAttemptException if the received challenge's length is not equal to the soundness parameter.
 */
-shared_ptr<SigmaProtocolMsg> SigmaOrTwoProverComputation::computeSecondMsg(const vector<byte> & challenge) {
+shared_ptr<SigmaProtocolMsg> SigmaOrTwoProverComputation::computeSecondMsg(const vector<uint8_t> & challenge) {
 	//check the challenge validity.
 	int len = challenge.size();
 	if (!checkChallengeLength(len)) {
@@ -260,7 +260,7 @@ shared_ptr<SigmaProtocolMsg> SigmaOrTwoProverComputation::computeSecondMsg(const
 	}
 
 	//Set eb = e XOR e1-b.
-	vector<byte> eb;
+	vector<uint8_t> eb;
 	for (int i = 0; i < len; i++) {
 		eb.push_back(challenge[i] ^ eOneMinusB[i]);
 	}

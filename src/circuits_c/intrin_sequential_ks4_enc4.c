@@ -28,7 +28,7 @@
 
 typedef struct KEY_SCHEDULE
 {
-   ALIGN16 unsigned char KEY[16*15];
+   ALIGN16 uint8_t KEY[16*15];
    unsigned int nr;
 } ROUND_KEYS; 
 
@@ -98,7 +98,7 @@ typedef struct KEY_SCHEDULE
 
 //#pragma intrinsic( _mm_lddqu_si128 )
 
-void intrin_sequential_ks4_enc4(const unsigned char* PT, unsigned char* CT, int test_length, unsigned char* KEYS, unsigned char* first_key, unsigned char* TEMP_BUF){
+void intrin_sequential_ks4_enc4(const uint8_t* PT, uint8_t* CT, int test_length, uint8_t* KEYS, uint8_t* first_key, uint8_t* TEMP_BUF){
 	
 	ROUND_KEYS *keys=(ROUND_KEYS *)KEYS;
     register __m128i keyA, keyB, keyC, keyD, con, mask, x2, keyA_aux, keyB_aux, keyC_aux, keyD_aux, globAux;

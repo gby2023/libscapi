@@ -129,7 +129,7 @@ void RowReductionGarbledBooleanCircuit::createCircuitMemory(const char* fileName
 
 
 
-void RowReductionGarbledBooleanCircuit::garble(block *emptyBothInputKeys, block *emptyBothOutputKeys, vector<unsigned char> & emptyTranslationTable, block seed){
+void RowReductionGarbledBooleanCircuit::garble(block *emptyBothInputKeys, block *emptyBothOutputKeys, vector<uint8_t> & emptyTranslationTable, block seed){
 
 	this->seed = seed;
 
@@ -289,18 +289,18 @@ void RowReductionGarbledBooleanCircuit::initAesEncryptionsAndInputKeys(block* em
 
 	//create the translation table
 	/*if(translationTable==nullptr){
-	translationTable = new unsigned char[numberOfOutputs];
+	translationTable = new uint8_t[numberOfOutputs];
 	}*/
 
 	//create the aes with the seed as the key. This will be used for encrypting the input keys
-	AES_set_encrypt_key((const unsigned char *)&seed, 128, &aesSeedKey);
+	AES_set_encrypt_key((const uint8_t *)&seed, 128, &aesSeedKey);
 
 	deltaFreeXor = ZERO_BLOCK;
 	AES_ecb_encrypt(&deltaFreeXor, &aesSeedKey);
 	AES_ecb_encrypt(&deltaFreeXor, &aesSeedKey);
 
 	//set the last bit of the first char to 1
-	*((unsigned char *)(&deltaFreeXor)) |= 1;
+	*((uint8_t *)(&deltaFreeXor)) |= 1;
 
 
 	AES_ecb_encrypt_chunk_in_out(indexArray,

@@ -35,7 +35,7 @@ void OTFullSimDDHReceiverMsg::initFromString(const string & row) {
 * @throws IOException if failed to receive a message.
 */
 OTFullSimDDHReceiverMsg OTFullSimSenderPreprocessUtil::waitForFullSimMessageFromReceiver(CommParty* channel) {
-	vector<byte> raw_msg;
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 
 	// create an empty OTRGroupElementPairMsg and initialize it with the received data. 
@@ -145,7 +145,7 @@ shared_ptr<OTFullSimPreprocessPhaseValues> OTFullSimReceiverPreprocessUtil::preP
 * @throws IOException if failed to receive a message.
 */
 OTRGroupElementPairMsg OTFullSimSenderTransferUtilAbs::waitForMessageFromReceiver(CommParty* channel) {
-	vector<byte> raw_msg;
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 
 	// create an empty OTRGroupElementPairMsg and initialize it with the received data. 
@@ -162,7 +162,7 @@ OTRGroupElementPairMsg OTFullSimSenderTransferUtilAbs::waitForMessageFromReceive
 *	DENOTE the values received by (g,h) <p>
 *	COMPUTE (u0,v0) = RAND(g0,g,h0,h)<p>
 *	COMPUTE (u1,v1) = RAND(g1,g,h1,h)<p>
-*	in the byte array scenario:<p>
+*	in the uint8_t array scenario:<p>
 *		COMPUTE c0 = x0 XOR KDF(|x0|,v0)<p>
 *		COMPUTE c1 = x1 XOR KDF(|x1|,v1)<p>
 *	in the GroupElement scenario:<p>
@@ -279,7 +279,7 @@ shared_ptr<OTSMsg> OTFullSimOnByteArraySenderTransferUtil::computeTuple(OTSInput
 
 	//Xores the result from the kdf with x0.
 	for (int i = 0; i<len; i++) {
-		c0[i] = (byte)(c0[i] ^ x0[i]);
+		c0[i] = (uint8_t)(c0[i] ^ x0[i]);
 	}
 
 	//Calculate c1:
@@ -315,7 +315,7 @@ OTFullSimOnByteArraySenderTransferUtil::OTFullSimOnByteArraySenderTransferUtil(c
 * @param r random value sampled in the protocol
 * @return OTRFullSimMessage contains the tuple (g,h).
 */
-OTRGroupElementPairMsg OTFullSimReceiverTransferUtilAbs::computeSecondTuple(byte sigma, biginteger & r, OTFullSimPreprocessPhaseValues* preprocessValues) {
+OTRGroupElementPairMsg OTFullSimReceiverTransferUtilAbs::computeSecondTuple(uint8_t sigma, biginteger & r, OTFullSimPreprocessPhaseValues* preprocessValues) {
 	shared_ptr<GroupElement> g, h;
 
 	if (sigma == 0) {
@@ -382,7 +382,7 @@ shared_ptr<OTROutput> OTFullSimReceiverTransferUtilAbs::transfer(CommParty* chan
 		throw invalid_argument("input should contain sigma.");
 	}
 
-	byte sigma = in->getSigma();
+	uint8_t sigma = in->getSigma();
 
 	//The given sigma should be 0 or 1.
 	if ((sigma != 0) && (sigma != 1)) {
@@ -439,8 +439,8 @@ void OTFullSimOnGroupElementReceiverTransferUtil::checkReceivedTuple(GroupElemen
 * @return OTROutput contains xSigma
 * @throws CheatAttemptException
 */
-shared_ptr<OTROutput> OTFullSimOnGroupElementReceiverTransferUtil::getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & r) {
-	vector<byte> raw_msg;
+shared_ptr<OTROutput> OTFullSimOnGroupElementReceiverTransferUtil::getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & r) {
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 
 	// create an empty OTRGroupElementPairMsg and initialize it with the received data. 
@@ -489,7 +489,7 @@ shared_ptr<OTROutput> OTFullSimOnGroupElementReceiverTransferUtil::getMsgAndComp
 * @param u0
 * @throws CheatAttemptException if there was a cheat attempt during the execution of the protocol.
 */
-void OTFullSimOnByteArrayReceiverTransferUtil::checkReceivedTuple(GroupElement* u0, GroupElement* u1, vector<byte> & c0, vector<byte> & c1) {
+void OTFullSimOnByteArrayReceiverTransferUtil::checkReceivedTuple(GroupElement* u0, GroupElement* u1, vector<uint8_t> & c0, vector<uint8_t> & c1) {
 
 	if (!(dlog->isMember(u0))) {
 		throw new CheatAttemptException("u0 element is not a member in the current DlogGroup");
@@ -516,8 +516,8 @@ void OTFullSimOnByteArrayReceiverTransferUtil::checkReceivedTuple(GroupElement* 
 * @return OTROutput contains xSigma
 * @throws CheatAttemptException
 */
-shared_ptr<OTROutput> OTFullSimOnByteArrayReceiverTransferUtil::getMsgAndComputeXSigma(CommParty* channel, byte sigma, biginteger & r) {
-	vector<byte> raw_msg;
+shared_ptr<OTROutput> OTFullSimOnByteArrayReceiverTransferUtil::getMsgAndComputeXSigma(CommParty* channel, uint8_t sigma, biginteger & r) {
+	vector<uint8_t> raw_msg;
 	channel->readWithSizeIntoVector(raw_msg);
 
 	// create an empty OTRGroupElementPairMsg and initialize it with the received data. 
@@ -528,7 +528,7 @@ shared_ptr<OTROutput> OTFullSimOnByteArrayReceiverTransferUtil::getMsgAndCompute
 	auto u0 = dlog->reconstructElement(true, msg.getW0().get());
 	auto u1 = dlog->reconstructElement(true, msg.getW1().get());
 
-	//Get the byte arrays from the given message.
+	//Get the uint8_t arrays from the given message.
 	auto c0 = msg.getC0();
 	auto c1 = msg.getC1();
 
@@ -536,7 +536,7 @@ shared_ptr<OTROutput> OTFullSimOnByteArrayReceiverTransferUtil::getMsgAndCompute
 	checkReceivedTuple(u0.get(), u1.get(), c0, c1);
 
 	shared_ptr<GroupElement> kdfInput;
-	vector<byte> cSigma;
+	vector<uint8_t> cSigma;
 
 	//If sigma = 0, compute u0^r and set cSigma to c0.
 	if (sigma == 0) {

@@ -47,7 +47,7 @@ public:
 	*		*	k0 = h0^r
 	*		*	k1 = h1^r
 	*	COMPUTE:
-	*			in the byte array scenario
+	*			in the uint8_t array scenario
 	*				*	v0 = x0 XOR KDF(|x0|,k0)
 	*				*	v1 = x1 XOR KDF(|x1|,k1)
 	*			OR in the GroupElement scenario:
@@ -71,7 +71,7 @@ protected:
 
 	/**
 	* Runs the following lines from the protocol:
-	* "COMPUTE: in the byte array scenario:
+	* "COMPUTE: in the uint8_t array scenario:
 	*		*	v0 = x0 XOR KDF(|x0|,k0)
 	*		*	v1 = x1 XOR KDF(|x1|,k1)
 	* OR in the GroupElement scenario:
@@ -162,7 +162,7 @@ public:
 };
 
 /**
-* Concrete implementation of OT sender (on byte vector) message.
+* Concrete implementation of OT sender (on uint8_t vector) message.
 * In the byteArray scenario, the sender sends GroupElement u and two binary strings v0, v1.
 *
 */
@@ -170,22 +170,22 @@ class OTSemiHonestDDHOnByteArraySenderMsg : public OTSMsg {
 
 private:
 	shared_ptr<GroupElementSendableData> u;
-	vector<byte> v0;
-	vector<byte> v1;
+	vector<uint8_t> v0;
+	vector<uint8_t> v1;
 
 public:
 	OTSemiHonestDDHOnByteArraySenderMsg() {}
 	/**
 	* Constructor that sets the given values calculated by the protocol.
 	*/
-	OTSemiHonestDDHOnByteArraySenderMsg(const shared_ptr<GroupElementSendableData> & u, vector<byte> & v0, vector<byte> & v1) 
+	OTSemiHonestDDHOnByteArraySenderMsg(const shared_ptr<GroupElementSendableData> & u, vector<uint8_t> & v0, vector<uint8_t> & v1) 
 		: u(u), v0(v0), v1(v1)	{}
 
 	shared_ptr<GroupElementSendableData> getU() { return u;	}
 
-	vector<byte> getV0() {	return v0;	}
+	vector<uint8_t> getV0() {	return v0;	}
 
-	vector<byte> getV1() {	return v1; }
+	vector<uint8_t> getV1() {	return v1; }
 
 	string toString();
 	void initFromString(const string & row);
@@ -223,8 +223,8 @@ protected:
 };
 
 /**
-* Concrete class for Semi-Honest OT assuming DDH sender ON BYTE ARRAY.
-* This class derived from OTSemiHonestDDHSenderAbs and implements the functionality related to the byte array inputs.
+* Concrete class for Semi-Honest OT assuming DDH sender ON uint8_t ARRAY.
+* This class derived from OTSemiHonestDDHSenderAbs and implements the functionality related to the uint8_t array inputs.
 *
 * The pseudo code of this protocol can be found in Protocol 4.1 of pseudo codes document at https://github.com/cryptobiu/scapi/blob/master/doc/old/SDD_docs/SDK_Pseudocode.docx
 *
@@ -277,9 +277,9 @@ class OTSemiHonestDDHReceiverAbs : public OTReceiver {
 		2.	If sigma = 1 then h0 = h and h1 = g^alpha
 		SEND (h0,h1) to S
 		WAIT for the message (u, v0,v1) from S
-		COMPUTE kSigma = (u)^alpha							- in byte array scenario
+		COMPUTE kSigma = (u)^alpha							- in uint8_t array scenario
 		OR (kSigma)^(-1) = u^(-alpha)					- in GroupElement scenario
-		OUTPUT  xSigma = vSigma XOR KDF(|cSigma|,kSigma)	- in byte array scenario
+		OUTPUT  xSigma = vSigma XOR KDF(|cSigma|,kSigma)	- in uint8_t array scenario
 		OR xSigma = vSigma * (kSigma)^(-1) 			- in GroupElement scenario
 	*/
 
@@ -293,9 +293,9 @@ public:
 	*			2.	If sigma = 1 then h0 = h and h1 = g^alpha
 	*		SEND (h0,h1) to S
 	*		WAIT for the message (u, v0,v1) from S
-	*		COMPUTE kSigma = (u)^alpha							- in byte array scenario
+	*		COMPUTE kSigma = (u)^alpha							- in uint8_t array scenario
 	*			 OR (kSigma)^(-1) = u^(-alpha)					- in GroupElement scenario
-	*		OUTPUT  xSigma = vSigma XOR KDF(|cSigma|,kSigma)	- in byte array scenario
+	*		OUTPUT  xSigma = vSigma XOR KDF(|cSigma|,kSigma)	- in uint8_t array scenario
 	*			 OR xSigma = vSigma * (kSigma)^(-1)" 			- in GroupElement scenario
 	*/
 	shared_ptr<OTROutput> transfer(CommParty* channel, OTRInput* input) override;
@@ -313,9 +313,9 @@ protected:
 
 	/**
 	* Runs the following lines from the protocol:
-	* "COMPUTE kSigma = (u)^alpha							- in byte array scenario
+	* "COMPUTE kSigma = (u)^alpha							- in uint8_t array scenario
 	OR (kSigma)^(-1) = u^(-alpha)							- in GroupElement scenario
-	OUTPUT  xSigma = vSigma XOR KDF(|cSigma|,kSigma)		- in byte array scenario
+	OUTPUT  xSigma = vSigma XOR KDF(|cSigma|,kSigma)		- in uint8_t array scenario
 	OR xSigma = vSigma * (kSigma)^(-1) 						- in GroupElement scenario
 	* @param sigma input for the protocol
 	* @param alpha random value sampled by the protocol
@@ -385,8 +385,8 @@ protected:
 };
 
 /**
-* Concrete class for Semi-Honest OT assuming DDH receiver ON BYTE ARRAY.
-* This class derived from OTSemiHonestDDHReceiverAbs and implements the functionality related to the byte vector inputs.
+* Concrete class for Semi-Honest OT assuming DDH receiver ON uint8_t ARRAY.
+* This class derived from OTSemiHonestDDHReceiverAbs and implements the functionality related to the uint8_t vector inputs.
 *
 * The pseudo code of this protocol can be found in Protocol 4.1 of pseudo codes document at https://github.com/cryptobiu/scapi/blob/master/doc/old/SDD_docs/SDK_Pseudocode.docx
 *

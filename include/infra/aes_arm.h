@@ -13,7 +13,7 @@
 #define AES_BLK_SIZE 16
 
 typedef unsigned int uint;
-typedef unsigned char octet;
+typedef uint8_t octet;
 typedef uint8x16_t __mi128;
 
 inline void aes_schedule( uint* RK, octet* K );
