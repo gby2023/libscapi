@@ -60,7 +60,7 @@ void print_aes_bristol()
         lib.aes_exapnded_build(cir, m, k, c);
 
         // c = c ^ cMask
-        lib.int_int_bitwiseXor_build(cir, c, cMask, c);
+        lib.bitwiseXor_build(cir, c, cMask, c);
 
         auto name = "./aes_r_" + std::to_string(rounds) + ".txt";
 
@@ -90,7 +90,7 @@ void print_aes_bristol()
             in[1].randomize(prng);
             if (rounds == 10)
             {
-                memcpy(in[0].data(), aes.mRoundKey, 11 * 16);
+                memcpy(in[0].data(), aes.mRoundKey.data(), 11 * 16);
             }
             else
             {
@@ -142,17 +142,23 @@ void print_aes_bristol()
 
 int main(int argc, char** argv)
 {
+
     CLP cmd(argc, argv);
-    cmd.set("u");
 
-#ifdef ENABLE_CIRCUITS
-    if (cmd.isSet("aes"))
+    if (cmd.isSet("tut"))
     {
-        print_aes_bristol();
-        return 0;
+        networkTutorial();
     }
-#endif
-
-
-    tests_cryptoTools::Tests.runIf(cmd);
+    else if(cmd.isSet("u"))
+    {
+        tests_cryptoTools::Tests.runIf(cmd);
+    }
+    else
+    {
+        std::cout << "Run the unit tests with:\n\n\t"
+            << Color::Green << cmd.mProgramName << " -u\n\n" << Color::Default
+            << "Run the  network tutorial with:\n\n\t"
+            << Color::Green << cmd.mProgramName << " -tut" << Color::Default
+            << std::endl;
+    }
 }

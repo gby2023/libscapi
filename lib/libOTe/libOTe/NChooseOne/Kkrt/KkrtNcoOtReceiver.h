@@ -1,5 +1,7 @@
 #pragma once
 // This file and the associated implementation has been placed in the public domain, waiving all copyright. No restrictions are placed on its use. 
+#include "libOTe/config.h"
+#ifdef ENABLE_KKRT
 #include "libOTe/NChooseOne/NcoOtExt.h"
 #include <cryptoTools/Network/Channel.h>
 #include <cryptoTools/Common/Matrix.h>
@@ -95,13 +97,13 @@ namespace osuCrypto
         //      2-choose-1 OT messages. The sender should hold one of them.
         // @ prng: not used.
         // @ chl: not used.
-        void setBaseOts(gsl::span<std::array<block, 2>> baseRecvOts, PRNG& prng, Channel& chl) override
+        void setBaseOts(span<std::array<block, 2>> baseRecvOts, PRNG& prng, Channel& chl) override
         {
             setBaseOts(baseRecvOts);
         }
         
         // See other setBaseOts(...);
-        void setBaseOts(gsl::span<std::array<block, 2>> baseRecvOts);
+        void setBaseOts(span<std::array<block, 2>> baseRecvOts);
 
         // Perform some computation before encode(...) can be called. Note that this
         // can be called several times, with each call creating new OTs to be encoded.
@@ -162,3 +164,4 @@ namespace osuCrypto
     };
 
 }
+#endif

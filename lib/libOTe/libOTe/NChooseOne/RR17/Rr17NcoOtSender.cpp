@@ -1,5 +1,5 @@
 #include "Rr17NcoOtSender.h"
-
+#ifdef ENABLE_RR
 
 #include <cryptoTools/Network/Channel.h>
 #include <cryptoTools/Crypto/RandomOracle.h>
@@ -38,12 +38,17 @@ namespace osuCrypto
         //    ret->setBaseOts(baseOts, mKos.mBaseChoiceBits);
         //}
         //((Rr17NcoOtSender*)ret.get())
-
+#ifdef OC_NO_MOVE_ELISION 
         return std::move(ret);
+#else
+        return ret;
+#endif
     }
 
     void Rr17NcoOtSender::init(u64 numOtExt, PRNG& prng, Channel& chl)
     {
+        if (hasBaseOts() == false)
+            genBaseOts(prng, chl);
 
         mMessages.resize(numOtExt * mInputByteCount * 8);
         prng.mAes.ecbEncCounterMode(prng.mBlockIdx, mMessages.size() * 2, (block*)mMessages.data());
@@ -84,7 +89,8 @@ namespace osuCrypto
 
             if (step == count - 1)
             {
-                chl.asyncSend(buff + step * stepSize, curSize * sizeof(std::array<block,2>), [buff]() 
+                auto chunk = span<u8>(buff + step * stepSize, curSize * sizeof(std::array<block, 2>));
+                chl.asyncSend(std::move(chunk), [buff]() 
                 {
                     delete[] buff; 
                 });
@@ -163,3 +169,4 @@ namespace osuCrypto
 
 
 }
+#endif

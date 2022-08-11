@@ -14,9 +14,8 @@ namespace osuCrypto
 		BitReference(const BitReference& rhs) = default;
 
 		// Construct a reference to the bit in the provided byte offset by the shift.
-		// Shift should be less than 8.
-        BitReference(u8* byte, u8 shift)
-            :mByte(byte), mMask(1 << shift), mShift(shift) {}
+        BitReference(u8* byte, u64 shift)
+            :mByte(byte + (shift / 8)), mMask(1 << (shift%8)), mShift(shift % 8) {}
 
 		// Construct a reference to the bit in the provided byte offset by the shift and mask.
 		// Shift should be less than 8. and the mask should equal 1 << shift.
@@ -54,14 +53,14 @@ namespace osuCrypto
     class BitIterator
     {
     public:
-
+        BitIterator() = default;
 		// Default copy constructor
 		BitIterator(const BitIterator& cp) = default;
 
 		// Construct a reference to the bit in the provided byte offset by the shift.
 		// Shift should be less than 8.
-        BitIterator(u8* byte, u8 shift)
-            :mByte(byte), mMask(1 << (shift & 7)), mShift(shift & 7) {}
+        BitIterator(u8* byte, u64 shift = 0)
+            :mByte(byte + (shift / 8)), mMask(1 << (shift & 7)), mShift(shift & 7) {}
 
 		// Construct a reference to the current bit pointed to by the iterator.
         BitReference operator*() { return BitReference(mByte, mMask, mShift); }
@@ -87,20 +86,28 @@ namespace osuCrypto
             return ret;
         }
 
+        // Pre increment the iterator by 1.
+        BitIterator& operator--()
+        {
+            mByte -= (mShift == 0) & 1;
+            --mShift &= 7;
+            mMask = 1 << mShift;
+            return *this;
+        }
+
+        // Pre increment the iterator by 1.
+        BitIterator operator--(int)
+        {
+            auto ret = *this;
+            --(*this);
+            return ret;
+        }
+
 		// Return the Iterator that has been incremented by v.
 		// v must be possitive.
         BitIterator operator+(i64 v)const
         {
-			Expects(v >= 0);
-
-            BitIterator ret(*this);
-            ret.mByte += (v / 8);
-            ret.mShift += (v & 7);
-            
-            if (ret.mShift > 7) ++ret.mByte;
-            
-            ret.mShift &= 7;
-            ret.mMask = 1 << mShift;
+            BitIterator ret(mByte, mShift + v);
 
             return ret;
         }

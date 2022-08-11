@@ -1,4 +1,5 @@
 #include "libOTe/Base/BaseOT.h"
+#ifdef ENABLE_OOS
 #include "OosNcoOtReceiver.h"
 #include "libOTe/Tools/Tools.h"
 #include "libOTe/Tools/bch511.h"
@@ -49,11 +50,12 @@ namespace osuCrypto
     void OosNcoOtReceiver::init(u64 numOtExt, PRNG& prng, Channel& chl)
     {
         u64 doneIdx = 0;
-        if (hasBaseOts() == false)
-            throw std::runtime_error("rt error at " LOCATION);
 
         if (mInputByteCount == 0)
             throw std::runtime_error("configure must be called first" LOCATION);
+        
+        if (hasBaseOts() == false)
+            genBaseOts(prng, chl);
 
         const u8 superBlkSize(8);
 
@@ -76,6 +78,7 @@ namespace osuCrypto
         // The is the index of the last correction value u = T0 ^ T1 ^ c(w)
         // that was sent to the sender.
         mCorrectionIdx = 0;
+        mChallengeSeed = ZeroBlock;
 
         // We need three matrices, T0, T1, and mW. T1, T0 will hold the expanded
         // and transposed rows that we got the using the base OTs as PRNG seed.
@@ -130,8 +133,8 @@ namespace osuCrypto
 
                 // transpose our 128 columns of 1024 bits. We will have 1024 rows,
                 // each 128 bits wide.
-                sse_transpose128x1024(t0);
-                sse_transpose128x1024(t1);
+                transpose128x1024(t0);
+                transpose128x1024(t1);
 
                 // This is the index of where we will store the matrix long term.
                 // doneIdx is the starting row. i is the offset into the blocks of 128 bits.
@@ -191,13 +194,16 @@ namespace osuCrypto
             }
             raw.setUniformBaseOts(base);
         }
-
+#ifdef OC_NO_MOVE_ELISION 
         return std::move(raw);
+#else
+        return raw;
+#endif
     }
 
     std::unique_ptr<NcoOtExtReceiver> OosNcoOtReceiver::split()
     {
-        return std::make_unique<OosNcoOtReceiver>(std::move(splitBase()));
+        return std::make_unique<OosNcoOtReceiver>((splitBase()));
     }
 
     void OosNcoOtReceiver::encode(
@@ -522,7 +528,7 @@ namespace osuCrypto
         u8* byteView = (u8*)expandedBuff.data();
 
         // This will be used to compute expandedBuff
-        block mask = _mm_set_epi8(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+        block mask = block(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
 
         // get raw pointer to this data. faster than normal indexing.
         auto mT0Iter = mT0.data();
@@ -542,14 +548,14 @@ namespace osuCrypto
             // the bottom bit. Doing the 8 times gets us each bit in its own byte.
             for (u64 i = 0; i < mStatSecParam; ++i)
             {
-                expandedBuff[i * 8 + 0] = mask & _mm_srai_epi16(challengeBuff[i], 0);
-                expandedBuff[i * 8 + 1] = mask & _mm_srai_epi16(challengeBuff[i], 1);
-                expandedBuff[i * 8 + 2] = mask & _mm_srai_epi16(challengeBuff[i], 2);
-                expandedBuff[i * 8 + 3] = mask & _mm_srai_epi16(challengeBuff[i], 3);
-                expandedBuff[i * 8 + 4] = mask & _mm_srai_epi16(challengeBuff[i], 4);
-                expandedBuff[i * 8 + 5] = mask & _mm_srai_epi16(challengeBuff[i], 5);
-                expandedBuff[i * 8 + 6] = mask & _mm_srai_epi16(challengeBuff[i], 6);
-                expandedBuff[i * 8 + 7] = mask & _mm_srai_epi16(challengeBuff[i], 7);
+                expandedBuff[i * 8 + 0] = mask & challengeBuff[i].srai_epi16(0);
+                expandedBuff[i * 8 + 1] = mask & challengeBuff[i].srai_epi16(1);
+                expandedBuff[i * 8 + 2] = mask & challengeBuff[i].srai_epi16(2);
+                expandedBuff[i * 8 + 3] = mask & challengeBuff[i].srai_epi16(3);
+                expandedBuff[i * 8 + 4] = mask & challengeBuff[i].srai_epi16(4);
+                expandedBuff[i * 8 + 5] = mask & challengeBuff[i].srai_epi16(5);
+                expandedBuff[i * 8 + 6] = mask & challengeBuff[i].srai_epi16(6);
+                expandedBuff[i * 8 + 7] = mask & challengeBuff[i].srai_epi16(7);
             }
 
             // compute when we should stop of this set.
@@ -715,3 +721,4 @@ namespace osuCrypto
         chl.asyncSend(std::move(mWBuff));
     }
 }
+#endif

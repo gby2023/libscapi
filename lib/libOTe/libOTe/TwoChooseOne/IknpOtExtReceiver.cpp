@@ -1,4 +1,6 @@
 #include "IknpOtExtReceiver.h"
+#ifdef ENABLE_IKNP
+
 #include "libOTe/Tools/Tools.h"
 #include <cryptoTools/Common/Log.h>
 
@@ -16,12 +18,13 @@ namespace osuCrypto
         if (baseOTs.size() != gOtExtBaseOtCount)
             throw std::runtime_error(LOCATION);
 
+
+        mGens.resize(gOtExtBaseOtCount);
         for (u64 i = 0; i < gOtExtBaseOtCount; i++)
         {
             mGens[i][0].SetSeed(baseOTs[i][0]);
             mGens[i][1].SetSeed(baseOTs[i][1]);
         }
-
 
         mHasBase = true;
     }
@@ -30,6 +33,9 @@ namespace osuCrypto
     IknpOtExtReceiver IknpOtExtReceiver::splitBase()
     {
         std::array<std::array<block, 2>, gOtExtBaseOtCount>baseRecvOts;
+
+        if (!hasBaseOts())
+            throw std::runtime_error("base OTs have not been set. " LOCATION);
 
         for (u64 i = 0; i < mGens.size(); ++i)
         {
@@ -61,9 +67,8 @@ namespace osuCrypto
         PRNG& prng,
         Channel& chl)
     {
-
-        if (mHasBase == false)
-            throw std::runtime_error("rt error at " LOCATION);
+        if (hasBaseOts() == false)
+            genBaseOts(prng, chl);
 
         // we are going to process OTs in blocks of 128 * superBlkSize messages.
         u64 numOtExt = roundUpTo(choices.size(), 128);
@@ -159,7 +164,7 @@ namespace osuCrypto
 
             // transpose our 128 columns of 1024 bits. We will have 1024 rows, 
             // each 128 bits wide.
-            sse_transpose128x1024(t0);
+            transpose128x1024(t0);
 
 
             //block* mStart = mIter;
@@ -193,62 +198,65 @@ namespace osuCrypto
             //doneIdx = stopIdx;
         }
 
-
-#ifdef IKNP_SHA_HASH
-        RandomOracle sha;
-        u8 hashBuff[20];
-#else
-        std::array<block, 8> aesHashTemp;
-#endif
-
-        u64 doneIdx = (0);
-
-        u64 bb = (messages.size() + 127) / 128;
-        for (u64 blockIdx = 0; blockIdx < bb; ++blockIdx)
+        if (mHash)
         {
-            u64 stop = std::min<u64>(messages.size(), doneIdx + 128);
 
 #ifdef IKNP_SHA_HASH
-            for (u64 i = 0; doneIdx < stop; ++doneIdx, ++i)
-            {
-                // hash it
-                sha.Reset();
-                sha.Update((u8*)&messages[doneIdx], sizeof(block));
-                sha.Final(hashBuff);
-                messages[doneIdx] = *(block*)hashBuff;
-            }
+            RandomOracle sha;
+            u8 hashBuff[20];
 #else
-            auto length = stop - doneIdx;
-            auto steps = length / 8;
-            block* mIter = messages.data() + doneIdx;
-            for (u64 i = 0; i < steps; ++i)
-            {
-                mAesFixedKey.ecbEncBlocks(mIter, 8, aesHashTemp.data());
-                mIter[0] = mIter[0] ^ aesHashTemp[0];
-                mIter[1] = mIter[1] ^ aesHashTemp[1];
-                mIter[2] = mIter[2] ^ aesHashTemp[2];
-                mIter[3] = mIter[3] ^ aesHashTemp[3];
-                mIter[4] = mIter[4] ^ aesHashTemp[4];
-                mIter[5] = mIter[5] ^ aesHashTemp[5];
-                mIter[6] = mIter[6] ^ aesHashTemp[6];
-                mIter[7] = mIter[7] ^ aesHashTemp[7];
-
-                mIter += 8;
-            }
-
-            auto rem = length - steps * 8;
-            mAesFixedKey.ecbEncBlocks(mIter, rem, aesHashTemp.data());
-            for (u64 i = 0; i < rem; ++i)
-            {
-                mIter[i] = mIter[i] ^ aesHashTemp[i];
-            }
-
-            doneIdx = stop;
+            std::array<block, 8> aesHashTemp;
 #endif
 
-        }
+            u64 doneIdx = (0);
 
+            u64 bb = (messages.size() + 127) / 128;
+            for (u64 blockIdx = 0; blockIdx < bb; ++blockIdx)
+            {
+                u64 stop = std::min<u64>(messages.size(), doneIdx + 128);
+
+#ifdef IKNP_SHA_HASH
+                for (u64 i = 0; doneIdx < stop; ++doneIdx, ++i)
+                {
+                    // hash it
+                    sha.Reset();
+                    sha.Update((u8*)&messages[doneIdx], sizeof(block));
+                    sha.Final(hashBuff);
+                    messages[doneIdx] = *(block*)hashBuff;
+                }
+#else
+                auto length = stop - doneIdx;
+                auto steps = length / 8;
+                block* mIter = messages.data() + doneIdx;
+                for (u64 i = 0; i < steps; ++i)
+                {
+                    mAesFixedKey.ecbEncBlocks(mIter, 8, aesHashTemp.data());
+                    mIter[0] = mIter[0] ^ aesHashTemp[0];
+                    mIter[1] = mIter[1] ^ aesHashTemp[1];
+                    mIter[2] = mIter[2] ^ aesHashTemp[2];
+                    mIter[3] = mIter[3] ^ aesHashTemp[3];
+                    mIter[4] = mIter[4] ^ aesHashTemp[4];
+                    mIter[5] = mIter[5] ^ aesHashTemp[5];
+                    mIter[6] = mIter[6] ^ aesHashTemp[6];
+                    mIter[7] = mIter[7] ^ aesHashTemp[7];
+
+                    mIter += 8;
+                }
+
+                auto rem = length - steps * 8;
+                mAesFixedKey.ecbEncBlocks(mIter, rem, aesHashTemp.data());
+                for (u64 i = 0; i < rem; ++i)
+                {
+                    mIter[i] = mIter[i] ^ aesHashTemp[i];
+                }
+
+                doneIdx = stop;
+#endif
+
+            }
+        }
         static_assert(gOtExtBaseOtCount == 128, "expecting 128");
     }
 
 }
+#endif

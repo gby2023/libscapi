@@ -1,5 +1,5 @@
 #include "IknpOtExtSender.h"
-
+#ifdef ENABLE_IKNP
 #include "libOTe/Tools/Tools.h"
 #include <cryptoTools/Common/Log.h>
 #include <cryptoTools/Crypto/Commit.h>
@@ -15,6 +15,9 @@ namespace osuCrypto
     IknpOtExtSender IknpOtExtSender::splitBase()
     {
         std::array<block, gOtExtBaseOtCount> baseRecvOts;
+
+        if (!hasBaseOts())
+            throw std::runtime_error("base OTs have not been set. " LOCATION);
 
         for (u64 i = 0; i < mGens.size(); ++i)
             baseRecvOts[i] = mGens[i].get<block>();
@@ -37,6 +40,8 @@ namespace osuCrypto
         if (baseRecvOts.size() != gOtExtBaseOtCount || choices.size() != gOtExtBaseOtCount)
             throw std::runtime_error("not supported/implemented");
 
+        mGens.resize(gOtExtBaseOtCount);
+
         mBaseChoiceBits = choices;
         for (u64 i = 0; i < gOtExtBaseOtCount; i++)
         {
@@ -49,6 +54,9 @@ namespace osuCrypto
         PRNG& prng,
         Channel& chl)
     {
+
+        if (hasBaseOts() == false)
+            genBaseOts(prng, chl);
 
         // round up
         u64 numOtExt = roundUpTo(messages.size(), 128);
@@ -120,7 +128,7 @@ namespace osuCrypto
 
             // transpose our 128 columns of 1024 bits. We will have 1024 rows,
             // each 128 bits wide.
-            sse_transpose128x1024(t);
+            transpose128x1024(t);
 
 
             auto mEnd = mIter + std::min<u64>(128 * superBlkSize, messages.end() - mIter);
@@ -162,71 +170,75 @@ namespace osuCrypto
 #endif
         }
 
-#ifdef IKNP_SHA_HASH
-        RandomOracle sha;
-        u8 hashBuff[20];
-        u64 doneIdx = 0;
 
-
-        u64 bb = (messages.size() + 127) / 128;
-        for (u64 blockIdx = 0; blockIdx < bb; ++blockIdx)
+        if (mHash)
         {
-            u64 stop = std::min<u64>(messages.size(), doneIdx + 128);
 
-            for (u64 i = 0; doneIdx < stop; ++doneIdx, ++i)
+#ifdef IKNP_SHA_HASH
+            RandomOracle sha;
+            u8 hashBuff[20];
+            u64 doneIdx = 0;
+
+
+            u64 bb = (messages.size() + 127) / 128;
+            for (u64 blockIdx = 0; blockIdx < bb; ++blockIdx)
             {
-                // hash the message without delta
-                sha.Reset();
-                sha.Update((u8*)&messages[doneIdx][0], sizeof(block));
-                sha.Final(hashBuff);
-                messages[doneIdx][0] = *(block*)hashBuff;
+                u64 stop = std::min<u64>(messages.size(), doneIdx + 128);
 
-                // hash the message with delta
-                sha.Reset();
-                sha.Update((u8*)&messages[doneIdx][1], sizeof(block));
-                sha.Final(hashBuff);
-                messages[doneIdx][1] = *(block*)hashBuff;
+                for (u64 i = 0; doneIdx < stop; ++doneIdx, ++i)
+                {
+                    // hash the message without delta
+                    sha.Reset();
+                    sha.Update((u8*)&messages[doneIdx][0], sizeof(block));
+                    sha.Final(hashBuff);
+                    messages[doneIdx][0] = *(block*)hashBuff;
+
+                    // hash the message with delta
+                    sha.Reset();
+                    sha.Update((u8*)&messages[doneIdx][1], sizeof(block));
+                    sha.Final(hashBuff);
+                    messages[doneIdx][1] = *(block*)hashBuff;
+                }
             }
-        }
 #else
 
 
-        std::array<block, 8> aesHashTemp;
+            std::array<block, 8> aesHashTemp;
 
-        u64 doneIdx = 0;
-        u64 bb = (messages.size() + 127) / 128;
-        for (u64 blockIdx = 0; blockIdx < bb; ++blockIdx)
-        {
-            u64 stop = std::min<u64>(messages.size(), doneIdx + 128);
-
-            auto length = 2 * (stop - doneIdx);
-            auto steps = length / 8;
-            block* mIter = messages[doneIdx].data();
-            for (u64 i = 0; i < steps; ++i)
+            u64 doneIdx = 0;
+            u64 bb = (messages.size() + 127) / 128;
+            for (u64 blockIdx = 0; blockIdx < bb; ++blockIdx)
             {
-                mAesFixedKey.ecbEncBlocks(mIter, 8, aesHashTemp.data());
-                mIter[0] = mIter[0] ^ aesHashTemp[0];
-                mIter[1] = mIter[1] ^ aesHashTemp[1];
-                mIter[2] = mIter[2] ^ aesHashTemp[2];
-                mIter[3] = mIter[3] ^ aesHashTemp[3];
-                mIter[4] = mIter[4] ^ aesHashTemp[4];
-                mIter[5] = mIter[5] ^ aesHashTemp[5];
-                mIter[6] = mIter[6] ^ aesHashTemp[6];
-                mIter[7] = mIter[7] ^ aesHashTemp[7];
+                u64 stop = std::min<u64>(messages.size(), doneIdx + 128);
 
-                mIter += 8;
+                auto length = 2 * (stop - doneIdx);
+                auto steps = length / 8;
+                block* mIter = messages[doneIdx].data();
+                for (u64 i = 0; i < steps; ++i)
+                {
+                    mAesFixedKey.ecbEncBlocks(mIter, 8, aesHashTemp.data());
+                    mIter[0] = mIter[0] ^ aesHashTemp[0];
+                    mIter[1] = mIter[1] ^ aesHashTemp[1];
+                    mIter[2] = mIter[2] ^ aesHashTemp[2];
+                    mIter[3] = mIter[3] ^ aesHashTemp[3];
+                    mIter[4] = mIter[4] ^ aesHashTemp[4];
+                    mIter[5] = mIter[5] ^ aesHashTemp[5];
+                    mIter[6] = mIter[6] ^ aesHashTemp[6];
+                    mIter[7] = mIter[7] ^ aesHashTemp[7];
+
+                    mIter += 8;
+                }
+
+                auto rem = length - steps * 8;
+                mAesFixedKey.ecbEncBlocks(mIter, rem, aesHashTemp.data());
+                for (u64 i = 0; i < rem; ++i)
+                {
+                    mIter[i] = mIter[i] ^ aesHashTemp[i];
+                }
+
+                doneIdx = stop;
             }
-
-            auto rem = length - steps * 8;
-            mAesFixedKey.ecbEncBlocks(mIter, rem, aesHashTemp.data());
-            for (u64 i = 0; i < rem; ++i)
-            {
-                mIter[i] = mIter[i] ^ aesHashTemp[i];
-            }
-
-            doneIdx = stop;
         }
-
 #endif
 
         static_assert(gOtExtBaseOtCount == 128, "expecting 128");
@@ -234,3 +246,4 @@ namespace osuCrypto
 
 
 }
+#endif

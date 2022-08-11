@@ -32,7 +32,7 @@ OBJ_FILES     += $(patsubst src/%.c,obj/%.o,$(C_FILES))
 OBJ_FILES     += $(patsubst tools/circuits/scapiBristolConverter/%.cpp,obj/tools/scapiBristolConverter/%.o,$(CPP_FILES))
 OBJ_FILES     += $(patsubst tools/circuits/scapiNecConverter/%.cpp,obj/tools/scapiNecConverter/%.o,$(CPP_FILES))
 
-GCC_STANDARD = c++14
+GCC_STANDARD = c++17
 
 ifeq ($(uname_os), Linux)
     INC            = -Iinstall/include -Iinstall/include/OTExtensionBristol -Iinstall/include/libOTe \
@@ -103,6 +103,22 @@ ifeq ($(uname_os), Darwin)
     libs:  compile-libote compile-ntl compile-blake
 endif # Darwin c++14
 endif
+
+##### c++17 #####
+ifeq ($(GCC_STANDARD), c++17)
+ifeq ($(uname_os), Linux)
+ifeq ($(uname_arch), x86_64)
+    libs: compile-ntl compile-blake compile-libote-17 compile-otextension-bristol compile-kcp
+endif
+ifeq ($(uname_arch), aarch64)
+    libs:  compile-ntl compile-kcp compile-otextension-encrypto
+endif
+endif # Linux c++14
+ifeq ($(uname_os), Darwin)
+    libs:  compile-libote compile-ntl compile-blake
+endif # Darwin c++14
+endif
+
 
 libscapi: directories $(SLib)
 directories: $(OUT_DIR)
@@ -182,6 +198,29 @@ ifeq ($(uname_os), Darwin)
 endif
 	@touch compile-libote
 
+
+# Support only in c++17
+compile-libote-17:
+	@echo "Compiling libOTe library..."
+	rm -rf build/libOTe
+	mkdir build/libOTe
+	cd lib/libOTe; tar -cf - --exclude '.git*' . | tar -xC ../../build/libOTe/ ; cd ../..
+	cd $(builddir)/libOTe; cmake . -DCMAKE_BUILD_TYPE=Release -DLIBSCAPI_ROOT=$(PWD)
+	cd $(builddir)/libOTe; make
+	@cp $(builddir)/libOTe/libOTe/*.a install/lib/
+	@mv install/lib/liblibOTe.a install/lib/libOTe.a
+	$(info$(shell mkdir -p install/include/libOTe))
+ifeq ($(uname_os), Linux)
+	@cd $(builddir)/libOTe/ && find . -name "*.h" -type f |xargs -I {} cp --parents {} $(PWD)/install/include/libOTe
+	@cp -r $(builddir)/libOTe/cryptoTools/cryptoTools/gsl $(PWD)/install/include/libOTe/cryptoTools/cryptoTools
+endif
+ifeq ($(uname_os), Darwin)
+	@cd $(builddir)/libOTe/ && find . -name "*.h" -type f |xargs -I {} rsync -R {} $(PWD)/install/include/libOTe
+	@rsync -R $(builddir)/libOTe/cryptoTools/cryptoTools/gsl $(PWD)/install/include/libOTe/cryptoTools/cryptoTools
+endif
+	@touch compile-libote
+
+
 compile-otextension-bristol:
 	@echo "Compiling the OtExtension malicious Bristol library..."
 	@cp -r lib/OTExtensionBristol $(builddir)/OTExtensionBristol
@@ -196,7 +235,7 @@ compile-kcp:
 	@$(MAKE) -C $(builddir)/KCP
 	@mkdir -p install/include/KCP
 	@cp -r $(builddir)/KCP/*.h install/include/KCP
-	@mv $(builddir)/KCP/ikcp.a install/lib
+	@mv $(builddir)/KCP/libkcp.a install/lib/ikcp.a
 	@touch compile-kcp
 
 compile-otextension-encrypto:

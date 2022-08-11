@@ -264,7 +264,7 @@ struct ByteBlock
             throw RTE_LOC;
 
         auto s = bv.getSpan<u8>();
-        for (u64 i = 0; i < s.size(); ++i)
+        for (u64 i = 0; i < static_cast<u64>(s.size()); ++i)
             a[i] = s[i];
 
     }
@@ -699,13 +699,13 @@ ByteBlock AddRoundKey(ByteBlock buf, ByteBlock key)
 
 ByteBlock fAES(ByteBlock text, span<ByteBlock> keyEx)
 {
-    auto  Nr = keyEx.size() - 1;
+    u64  Nr = static_cast<u64>(keyEx.size() - 1);
     ByteBlock buff;
     buff = AddRoundKey(text, keyEx[0]);
 
     //std::cout << 0 << " ";
     //print(buff);
-    auto pp = 1;
+    //auto pp = 1;
     for (u64 i = 1; i < Nr; i++)
     {
         buff = SubBytes(buff);
@@ -775,7 +775,7 @@ void BetaCircuit_aes_sbox_test()
     {
 
         BitVector xx(8), yy(8);
-        xx.data()[0] = val;
+        xx.data()[0] = static_cast<u8>(val);
 
         cir.evaluate({ &xx,1 }, { &yy,1 }, true);
         auto c = sbox[val];
@@ -945,7 +945,7 @@ void print(state_t& state)
 void fAES(state_t& state, span<state_t> RoundKey)
 {
     u64 round = 0;
-    auto Nr = RoundKey.size() - 1;
+    auto Nr = static_cast<u64>(RoundKey.size() - 1);
 
     print(state);
 
@@ -983,7 +983,7 @@ void BetaCircuit_aes_test()
     //BetaCircuit_aes_shiftRows_test();
     //BetaCircuit_aes_mixColumns_test();
 
-    std::cout << "\n";
+    //std::cout << "\n";
     //return;
 
     auto keySize = 11;
@@ -1013,7 +1013,7 @@ void BetaCircuit_aes_test()
         AES aes(keyBlock);
 
         in[0].randomize(prng);
-        in[1] = BitVector((u8*)aes.mRoundKey, 128 * keySize);
+        in[1] = BitVector((u8*)aes.mRoundKey.data(), 128 * keySize);
 
         cir.evaluate(in, { &cc,1 });
         cir2->evaluate(in, { &cc2,1 });

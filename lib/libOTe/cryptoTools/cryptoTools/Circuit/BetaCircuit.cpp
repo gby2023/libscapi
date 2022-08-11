@@ -6,7 +6,10 @@
 #include <set>
 #include <numeric>
 #include "cryptoTools/Common/BitVector.h"
-#include <cryptoTools/Crypto/sha1.h>
+#include <cryptoTools/Crypto/RandomOracle.h>
+#include <string>
+#include <algorithm>
+#include <list>
 
 #ifdef USE_JSON
 #include <nlohmann/json.hpp>
@@ -26,6 +29,12 @@ namespace osuCrypto
 
     BetaCircuit::~BetaCircuit()
     {
+    }
+
+    void BetaCircuit::addTempWire(BetaWire& in)
+    {
+        in = mWireCount++;
+        mWireFlags.resize(mWireCount, BetaWireFlag::Uninitialized);
     }
 
     void BetaCircuit::addTempWireBundle(BetaBundle & in)
@@ -122,12 +131,14 @@ namespace osuCrypto
             gt == GateType::Zero)
             throw std::runtime_error("");
 
-
-
-        if (mWireFlags[aIdx] == BetaWireFlag::Uninitialized ||
-            mWireFlags[bIdx] == BetaWireFlag::Uninitialized)
+        if (aIdx >= mWireCount || mWireFlags[aIdx] == BetaWireFlag::Uninitialized)
             throw std::runtime_error(LOCATION);
 
+        if (bIdx >= mWireCount || mWireFlags[bIdx] == BetaWireFlag::Uninitialized)
+            throw std::runtime_error(LOCATION);
+
+        if(out >= mWireCount)
+            throw std::runtime_error(LOCATION);
 
         if (aIdx == bIdx)
             throw std::runtime_error(LOCATION);
@@ -254,14 +265,14 @@ namespace osuCrypto
             ++i;
             mWireFlags[*d] = mWireFlags[*s];
 
-            u64 rem = (dd - d);
+            //u64 rem = (dd - d);
             u64 len = 1;
-            while (len < rem && *i == *(i - 1) + 1)
-            {
-                ++i;
-                mWireFlags[*(d + len)] = mWireFlags[*(s + len)];
-                ++len;
-            }
+            //while (len < rem && *i == *(i - 1) + 1)
+            //{
+            //    ++i;
+            //    mWireFlags[*(d + len)] = mWireFlags[*(s + len)];
+            //    ++len;
+            //}
 
             mGates.emplace_back(*s, u32(len), GateType::a, *d);
             d += len;
@@ -298,7 +309,14 @@ namespace osuCrypto
 
     void osuCrypto::BetaCircuit::addPrint(BetaWire wire)
     {
-        mPrints.emplace_back(mGates.size(), wire, "", isInvert(wire));
+        if (isConst(wire))
+        {
+            addPrint(std::to_string(u64(constVal(wire))));
+        }
+        else
+        {
+            mPrints.emplace_back(mGates.size(), wire, "", isInvert(wire));
+        }
     }
 
     void osuCrypto::BetaCircuit::addPrint(std::string str)
@@ -314,16 +332,21 @@ namespace osuCrypto
     {
         std::vector<u8> mem(mWireCount), outOfDate(mWireCount, 0);
 
-        if (input.size() != mInputs.size())
+        if (static_cast<u64>(input.size()) != mInputs.size())
         {
             throw std::runtime_error(LOCATION);
         }
 
-        for (u64 i = 0; i < input.size(); ++i)
+        for (u64 i = 0; i < static_cast<u64>(input.size()); ++i)
         {
             if (input[i].size() != mInputs[i].mWires.size())
-                throw std::runtime_error(LOCATION);
+            {
+                std::cout << "BetaCircuit::evaluate error. Bad input size at input " << i
+                    << ". Expecting " << mInputs.size() << " bits but evaluate called with "
+                    << input[i].size() << " bits." << std::endl;
 
+                throw std::runtime_error(LOCATION);
+            }
             for (u64 j = 0; j < input[i].size(); ++j)
             {
                 mem[mInputs[i].mWires[j]] = input[i][j];
@@ -338,13 +361,13 @@ namespace osuCrypto
         for (u64 i = 0; i < mGates.size(); ++i)
         {
             auto& gate = mGates[i];
-            while (print && iter != mPrints.end() && std::get<0>(*iter) == i)
+            while (print && iter != mPrints.end() && (*iter).mGateIdx == i)
             {
-                auto wireIdx = std::get<1>(*iter);
-                auto str = std::get<2>(*iter);
-                auto invert = std::get<3>(*iter);
+                auto wireIdx = (*iter).mWire;
+                auto str =    (*iter).mMsg;
+                auto invert = (*iter).mInvert;
 
-                if (wireIdx != -1)
+                if (wireIdx != static_cast<u32>(~0))
                     std::cout << (u64)(mem[wireIdx] ^ (invert ? 1 : 0));
                 if (str.size())
                     std::cout << str;
@@ -401,11 +424,11 @@ namespace osuCrypto
         }
         while (print && iter != mPrints.end())
         {
-            auto wireIdx = std::get<1>(*iter);
-            auto str = std::get<2>(*iter);
-            auto invert = std::get<3>(*iter);
+            auto wireIdx = (*iter).mWire;
+            auto str =     (*iter).mMsg;
+            auto invert =  (*iter).mInvert;
 
-            if (wireIdx != -1)
+            if (wireIdx != ~u32(0))
                 std::cout << (u64)(mem[wireIdx] ^ (invert ? 1 : 0));
             if (str.size())
                 std::cout << str;
@@ -414,12 +437,12 @@ namespace osuCrypto
         }
 
 
-        if (output.size() != mOutputs.size())
+        if (static_cast<u64>(output.size()) != mOutputs.size())
         {
             throw std::runtime_error(LOCATION);
         }
 
-        for (u64 i = 0; i < output.size(); ++i)
+        for (u64 i = 0; i < static_cast<u64>(output.size()); ++i)
         {
             if (output[i].size() != mOutputs[i].mWires.size())
                 throw std::runtime_error(LOCATION);
@@ -560,16 +583,24 @@ namespace osuCrypto
 
     //}
 
-    u64 hash(const BetaGate& gate)
-    {
-        static_assert(sizeof(BetaGate) == sizeof(block), "");
+    //u64 hash(const BetaGate& gate)
+    //{
+    //    static_assert(sizeof(BetaGate) == sizeof(block), "");
 
-        auto b = mAesFixedKey.ecbEncBlock(*(block*)& gate);
-        return *(u64*)&b;
-    }
+    //    auto b = mAesFixedKey.ecbEncBlock(*(block*)& gate);
+    //    return *(u64*)&b;
+    //}
 
     void BetaCircuit::levelByAndDepth()
     {
+        if (mNonlinearGateCount == 0)
+        {
+            mLevelAndCounts.resize(1);
+            mLevelCounts.resize(1);
+            mLevelCounts[0] = mGates.size();
+            return;
+        }
+
         static const i64 freed(-3), uninit(-2)/*, inputWire(-1)*/;
         struct Node
         {
@@ -580,10 +611,10 @@ namespace osuCrypto
                 , mFixedWireValue(false)
             {}
 
-            BetaGate mGate;
+            BetaGate mGate = {};
             i64 mIdx, mDepth, mWire;
             bool mFixedWireValue;
-            std::array<Node*, 2> mInput;
+            std::array<Node*, 2> mInput = { nullptr ,nullptr };
             std::vector<Node*> mOutputs;
         };
 
@@ -618,17 +649,21 @@ namespace osuCrypto
             curNode.mGate = mGates[i - numInputs];
             curNode.mIdx = i;
             curNode.mDepth = 0;
+            if (curNode.mGate.mInput[0] == curNode.mGate.mInput[1] && curNode.mGate.mType != GateType::a)
+                throw std::runtime_error("Gate has the same input for both inputs. Not allowed. " LOCATION);
 
             for (u64 in = 0; in < 2; ++in)
             {
+                // the node that produced our input
                 auto& inNode = *wireOwner[curNode.mGate.mInput[in]];
                 curNode.mInput[in] = &inNode;
 
-                for (auto& oo : inNode.mOutputs)
-                {
-                    if (oo->mIdx == curNode.mIdx)
-                        throw std::runtime_error(LOCATION);
-                }
+                //// check that we haven't already included
+                //for (auto& oo : inNode.mOutputs)
+                //{
+                //    if (oo->mIdx == curNode.mIdx)
+                //        throw std::runtime_error(LOCATION);
+                //}
 
                 inNode.mOutputs.emplace_back(&curNode);
 
@@ -638,7 +673,7 @@ namespace osuCrypto
                     curNode.mDepth = std::max(curNode.mDepth, inNode.mDepth);
             }
 
-            if (curNode.mDepth >= mLevelCounts.size())
+            if (static_cast<u64>(curNode.mDepth) >= mLevelCounts.size())
             {
                 mLevelCounts.resize(curNode.mDepth + 1, 0);
                 mLevelAndCounts.resize(curNode.mDepth + 1, 0);
@@ -655,12 +690,12 @@ namespace osuCrypto
         }
 
         i64 nextWire = numInputs;
-        std::vector<i64> freeWires;
-        auto getOutWire = [&](Node& node) -> u64
+        std::vector<i64> freeWires, nextLvlFreeWires;
+        auto getOutWire = [&](Node& node) -> u32
         {
             if (node.mFixedWireValue) {
                 node.mWire = node.mGate.mOutput;
-                return node.mWire;
+                return static_cast<u32>(node.mWire);
             }
             else if (node.mWire == uninit) {
                 if (freeWires.size()) {
@@ -670,36 +705,38 @@ namespace osuCrypto
                 else {
                     node.mWire = nextWire++;
                 }
-                return node.mWire;
+                return static_cast<u32>(node.mWire);
             }
 
             throw std::runtime_error(LOCATION);
         };
 
-        auto getInWire = [&](Node& node, u64 i) -> u64
+        auto getInWire = [&](Node& node, u64 i) -> u32
         {
             auto& depList = node.mInput[i]->mOutputs;
 
             auto iter = std::find(depList.begin(), depList.end(), &node);
 
-            if (iter == depList.end() || std::find(iter + 1, depList.end(), &node) != depList.end())
-                throw std::runtime_error(LOCATION);
+            if (iter == depList.end() || 
+                (   node.mGate.mType != GateType::a && 
+                    std::find(iter + 1, depList.end(), &node) != depList.end()))
+                throw std::runtime_error("input value appears more than once... " LOCATION);
 
             auto wire = node.mInput[i]->mWire;
             if (wire < 0)
-                throw std::runtime_error(LOCATION);
+                throw std::runtime_error("wire is uninit... " LOCATION);
 
 
             if (depList.size() == 1 && node.mInput[i]->mFixedWireValue == false)
             {
-                freeWires.push_back(wire);
+                nextLvlFreeWires.push_back(wire);
                 node.mInput[i]->mWire = freed;
             }
 
             std::swap(*iter, depList.back());
             depList.pop_back();
 
-            return wire;
+            return static_cast<u32>(wire);
         };
 
         for (u64 i = 0; i < mOutputs.size(); ++i)
@@ -707,7 +744,9 @@ namespace osuCrypto
             for (u64 j = 0; j < mOutputs[i].mWires.size(); ++j)
             {
                 nextWire = std::max<i64>(nextWire, mOutputs[i].mWires[j] + 1);
-                wireOwner[mOutputs[i].mWires[j]]->mFixedWireValue = true;
+
+                if(wireOwner[mOutputs[i].mWires[j]])
+                    wireOwner[mOutputs[i].mWires[j]]->mFixedWireValue = true;
 
                 //std::cout << "out[" << i << "][" << j << "] = " << mOutputs[i].mWires[j] << std::endl;
             }
@@ -720,12 +759,12 @@ namespace osuCrypto
 
         std::vector<BetaGate> sortedGates(mGates.size());
 
-        u64 ii = 0;
+        //u64 ii = 0;
         auto iter = sortedGates.begin();
         for (auto& level : nodesByLevel)
         {
             //std::cout << "level " << ii++ << ": " << std::endl;
-            u64 jj = 0;
+            //u64 jj = 0;
             for (auto& node : level)
             {
                 *iter = node->mGate;
@@ -740,13 +779,50 @@ namespace osuCrypto
 
                 ++iter;
             }
+            freeWires.insert(freeWires.begin(), nextLvlFreeWires.begin(), nextLvlFreeWires.end());
+            nextLvlFreeWires.clear();
         }
 
         // replace the gates with the sorted version
-        mWireCount = nextWire;
+        mWireCount = static_cast<BetaWire>(nextWire);
         mWireFlags.resize(mWireCount, BetaWireFlag::Wire);
         mGates = std::move(sortedGates);
 
+    }
+
+    void BetaCircuit::levelByAndDepth(LevelizeType type)
+    {
+        if (type == LevelizeType::Reorder)
+            levelByAndDepth();
+        else
+        {
+            auto iter = mGates.begin();
+
+            u64 curCount = 0;
+            while (iter != mGates.end())
+            {
+                ++curCount;
+                if (isLinear(iter->mType) == false)
+                {
+                    mLevelCounts.push_back(curCount);
+                    mLevelAndCounts.push_back(1);
+                    curCount = 0;
+                }
+                else if (type == LevelizeType::SingleNoReorder)
+                {
+                    mLevelCounts.push_back(curCount);
+                    mLevelAndCounts.push_back(0);
+                    curCount = 0;
+                }
+                ++iter;
+            }
+
+            if (curCount)
+            {
+                mLevelCounts.push_back(curCount);
+                mLevelAndCounts.push_back(0);
+            }
+        }
     }
 
 #ifdef USE_JSON
@@ -1005,10 +1081,10 @@ namespace osuCrypto
         for (u64 i = 0; i < mPrints.size(); ++i)
         {
             //std::tuple<u64, BetaWire, std::string, bool>
-            write(std::get<0>(mPrints[i]), out);
-            write(std::get<1>(mPrints[i]), out);
-            write(std::get<2>(mPrints[i]), out);
-            write(std::get<3>(mPrints[i]), out);
+            write((mPrints[i].mGateIdx), out);
+            write((mPrints[i].mWire), out);
+            write((mPrints[i].mMsg), out);
+            write((mPrints[i].mInvert), out);
         }
 
         auto hashVal = hash();
@@ -1069,7 +1145,7 @@ namespace osuCrypto
         }
 
         read(count, in);
-        mWireCount = count;
+        mWireCount = static_cast<u32>(count);
 
         read(count, in);
         mGates.resize(count);
@@ -1100,10 +1176,10 @@ namespace osuCrypto
             read(msg, in);
             read(flag, in);
 
-            std::get<0>(mPrints[i]) = gateIdx;
-            std::get<1>(mPrints[i]) = wireIdx;
-            std::get<2>(mPrints[i]) = msg;
-            std::get<3>(mPrints[i]) = flag;
+            (mPrints[i].mGateIdx) = gateIdx;
+            (mPrints[i].mWire) = static_cast<u32>(wireIdx);
+            (mPrints[i].mMsg) = msg;
+            (mPrints[i].mInvert) = flag;
         }
 
         block fileHashValue;
@@ -1138,7 +1214,7 @@ namespace osuCrypto
         auto numOut = 0ull;
         for (auto o : mOutputs)
             numOut += o.size();
-        auto internalCount = mWireCount - inputCount - numOut;
+        //auto internalCount = mWireCount - inputCount - numOut;
 
 
         std::list<GateNode> nodes;
@@ -1351,9 +1427,9 @@ namespace osuCrypto
                     throw RTE_LOC;
 
                 if (inIdx0 == outIdx)
-                    addInvert(inIdx0);
+                    addInvert(static_cast<u32>(inIdx0));
                 else
-                    addInvert(inIdx0, outIdx);
+                    addInvert(static_cast<u32>(inIdx0), static_cast<u32>(outIdx));
             }
             else
             {
@@ -1370,14 +1446,15 @@ namespace osuCrypto
                 else
                     throw RTE_LOC;
 
-                addGate(inIdx0, inIdx1, gt, outIdx);
+                addGate(static_cast<u32>(inIdx0), static_cast<u32>(inIdx1),
+                    gt, static_cast<u32>(outIdx));
             }
         }
     }
 
     block BetaCircuit::hash()const
     {
-        SHA1 sha(sizeof(block));
+        RandomOracle sha(sizeof(block));
         sha.Update(mWireCount);
 
         sha.Update(mGates.data(), mGates.size());
@@ -1386,10 +1463,10 @@ namespace osuCrypto
         for (u64 i = 0; i < mPrints.size(); ++i)
         {
             //std::tuple<u64, BetaWire, std::string, bool>
-            auto v0 = std::get<0>(mPrints[i]);
-            auto v1 = std::get<1>(mPrints[i]);
-            auto v2 = std::get<2>(mPrints[i]);
-            auto v3 = std::get<3>(mPrints[i]);
+            auto v0 = (mPrints[i].mGateIdx);
+            auto v1 = (mPrints[i].mWire);
+            auto v2 = (mPrints[i].mMsg);
+            auto v3 = (mPrints[i].mInvert);
 
             sha.Update(v0);
             sha.Update(v1);

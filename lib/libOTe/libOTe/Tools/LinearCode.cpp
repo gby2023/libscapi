@@ -306,16 +306,16 @@ namespace osuCrypto
 
 
 
-    static std::array<block, 2> sBlockMasks{ { ZeroBlock, AllOneBlock } };
+    //static std::array<block, 2> sBlockMasks{ { ZeroBlock, AllOneBlock } };
 
     void LinearCode::encode(
         const span<block>& plaintxt,
         const span<block>& codeword)
     {
 #ifndef NDEBUG
-        if (plaintxt.size() != plaintextBlkSize() ||
-            codeword.size() < codewordBlkSize())
-            throw std::runtime_error("");
+        if (static_cast<u64>(plaintxt.size()) != plaintextBlkSize() ||
+            static_cast<u64>(codeword.size()) < codewordBlkSize())
+            throw std::runtime_error(LOCATION);
 #endif
 
         //span<u8> pp((u8*)plaintxt.data(), plaintextU8Size(), false);
@@ -422,9 +422,9 @@ namespace osuCrypto
         const span<u8>& codeword)
     {
 #ifndef NDEBUG
-        if (plaintxt.size() != plaintextU8Size() ||
-            codeword.size() < codewordU8Size())
-            throw std::runtime_error("");
+        if (static_cast<u64>(plaintxt.size()) != plaintextU8Size() ||
+            static_cast<u64>(codeword.size()) < codewordU8Size())
+            throw std::runtime_error(LOCATION);
 #endif
         encode(plaintxt.data(), codeword.data());
     }
@@ -711,8 +711,8 @@ namespace osuCrypto
 
     void LinearCode::encode_bch511(u8 * input, u8 * codeword)
     {
-        Expects(mPlaintextU8Size == 10);
-        Expects(mPow2CodeSize == 4);
+        assert(mPlaintextU8Size == 10);
+        assert(mPow2CodeSize == 4);
 
         // The size of the bch 511 codewords in 128 bit units.
         const i32 codeSize = 4;

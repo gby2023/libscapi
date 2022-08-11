@@ -1,4 +1,5 @@
 #include "KkrtNcoOtSender.h"
+#ifdef ENABLE_KKRT
 #include <cryptoTools/Network/IOService.h>
 #include "libOTe/Tools/Tools.h"
 #include <cryptoTools/Common/Log.h>
@@ -10,7 +11,7 @@ namespace osuCrypto
     using namespace std;
 
     void KkrtNcoOtSender::setBaseOts(
-        gsl::span<block> baseRecvOts,
+        span<block> baseRecvOts,
         const BitVector & choices)
     {
         if (choices.size() != u64(baseRecvOts.size()))
@@ -56,17 +57,26 @@ namespace osuCrypto
             }
             raw.setBaseOts(base, mBaseChoiceBits);
         }
-        return std::move(raw); 
+#ifdef OC_NO_MOVE_ELISION 
+        return std::move(raw);
+#else
+        return raw;
+#endif
     }
 
     std::unique_ptr<NcoOtExtSender> KkrtNcoOtSender::split()
     {
-        return std::make_unique<KkrtNcoOtSender>(std::move(splitBase()));
+        return std::make_unique<KkrtNcoOtSender>((splitBase()));
     }
 
     void KkrtNcoOtSender::init(
         u64 numOTExt, PRNG& prng, Channel& chl)
     {
+
+        if (hasBaseOts() == false)
+            genBaseOts(prng, chl);
+
+
         static const u8 superBlkSize(8);
 
         block seed = prng.get<block>(), theirSeed;
@@ -130,7 +140,7 @@ namespace osuCrypto
 
                 // transpose our 128 columns of 1024 bits. We will have 1024 rows,
                 // each 128 bits wide.
-                sse_transpose128x1024(t);
+                transpose128x1024(t);
 
                 // This is the index of where we will store the matrix long term.
                 // doneIdx is the starting row. i is the offset into the blocks of 128 bits.
@@ -312,3 +322,4 @@ namespace osuCrypto
 
 
 }
+#endif

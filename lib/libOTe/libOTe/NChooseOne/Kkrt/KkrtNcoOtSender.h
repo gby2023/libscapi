@@ -1,5 +1,8 @@
 #pragma once
 // This file and the associated implementation has been placed in the public domain, waiving all copyright. No restrictions are placed on its use.  
+#include "libOTe/config.h"
+#ifdef ENABLE_KKRT
+
 #include "libOTe/NChooseOne/NcoOtExt.h"
 #include <cryptoTools/Common/BitVector.h>
 #include <cryptoTools/Common/Matrix.h>
@@ -83,14 +86,14 @@ namespace osuCrypto {
         // @ choices: The select bits that were used in the base OT
         // @ chl: not used.
         void setBaseOts(
-            gsl::span<block> baseRecvOts,
+            span<block> baseRecvOts,
             const BitVector& choices, Channel& chl) override {
             setBaseOts(baseRecvOts, choices);
         }
         
         // See other setBaseOts(...).
         void setBaseOts(
-            gsl::span<block> baseRecvOts,
+            span<block> baseRecvOts,
             const BitVector& choices);
 
         // Performs the PRNG expantion and transpose operations. This sets the 
@@ -148,3 +151,4 @@ namespace osuCrypto {
     };
 }
 
+#endif

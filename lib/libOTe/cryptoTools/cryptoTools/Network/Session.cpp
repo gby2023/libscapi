@@ -1,3 +1,6 @@
+#include <cryptoTools/Common/config.h>
+#ifdef ENABLE_BOOST
+
 #include <cryptoTools/Network/Session.h>
 #include <cryptoTools/Network/IOService.h>
 #include <cryptoTools/Network/Channel.h>
@@ -5,6 +8,7 @@
 #include <cryptoTools/Network/IoBuffer.h>
 #include <cryptoTools/Common/Log.h>
 #include <cryptoTools/Common/Timer.h>
+#include <cryptoTools/Crypto/PRNG.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -16,33 +20,16 @@ namespace osuCrypto {
 	//extern std::vector<std::string> split(const std::string &s, char delim);
 
 
+
+	SessionBase::SessionBase(IOService& ios) 
+		: mRealRefCount(1)
+		, mWorker(ios, "Session:" + std::to_string((u64)this)) 
+	{}
+
 	void Session::start(IOService& ioService, std::string remoteIP, u32 port, SessionMode type, std::string name)
 	{
-		if (mBase && mBase->mStopped == false)
-			throw std::runtime_error("rt error at " LOCATION);
-
-		mBase.reset(new SessionBase(ioService.mIoService));
-		mBase->mIP = (remoteIP);
-		mBase->mPort = (port);
-		mBase->mMode = (type);
-		mBase->mIOService = &(ioService);
-		mBase->mStopped = (false);
-		mBase->mName = (name);
-
-
-		if (type == SessionMode::Server)
-		{
-			ioService.aquireAcceptor(mBase);
-		}
-		else
-		{
-			std::random_device rd;
-			mBase->mSessionID = (1ULL << 32) * rd() + rd();
-
-			boost::asio::ip::tcp::resolver resolver(ioService.mIoService);
-			boost::asio::ip::tcp::resolver::query query(remoteIP, boost::lexical_cast<std::string>(port));
-			mBase->mRemoteAddr = *resolver.resolve(query);
-		}
+        TLSContext ctx;
+        start(ioService, remoteIP, port, type, ctx, name);
 	}
 
 	void Session::start(IOService& ioService, std::string address, SessionMode host, std::string name)
@@ -61,6 +48,45 @@ namespace osuCrypto {
 
 	}
 
+    void Session::start(IOService& ioService, std::string ip, u64 port, SessionMode type, TLSContext& tls, std::string name)
+    {
+        if (mBase && mBase->mStopped == false)
+            throw std::runtime_error("rt error at " LOCATION);
+#ifdef ENABLE_WOLFSSL
+        if (tls && 
+            (tls.mode() != WolfContext::Mode::Both) &&
+            (tls.mode() == WolfContext::Mode::Server) != (type == SessionMode::Server))
+            throw std::runtime_error("TLS context isServer does not match SessionMode");
+#endif
+
+
+        mBase.reset(new SessionBase(ioService));
+        mBase->mIP = std::move(ip);
+        mBase->mPort = static_cast<u32>(port);
+        mBase->mMode = (type);
+        mBase->mIOService = &(ioService);
+        mBase->mStopped = (false);
+        mBase->mTLSContext = tls;
+        mBase->mName = (name);
+
+
+        if (type == SessionMode::Server)
+        {
+            ioService.aquireAcceptor(mBase);
+        }
+        else
+        {
+			PRNG prng(ioService.getRandom(), sizeof(block) + sizeof(u64));
+			mBase->mSessionID = prng.get();
+#ifdef ENABLE_WOLFSSL
+			mBase->mTLSSessionID = prng.get();
+#endif
+            boost::asio::ip::tcp::resolver resolver(ioService.mIoService);
+            boost::asio::ip::tcp::resolver::query query(mBase->mIP, boost::lexical_cast<std::string>(port));
+            mBase->mRemoteAddr = *resolver.resolve(query);
+        }
+    }
+
 	// See start(...)
 
 	Session::Session(IOService & ioService, std::string address, SessionMode type, std::string name)
@@ -75,6 +101,12 @@ namespace osuCrypto {
 		start(ioService, remoteIP, port, type, name);
 	}
 
+    Session::Session(IOService& ioService, std::string remoteIP, u32 port
+        , SessionMode type, TLSContext& ctx, std::string name)
+    {
+        start(ioService, remoteIP, port, type, ctx, name);
+    }
+
 
 	// Default constructor
 
@@ -84,7 +116,8 @@ namespace osuCrypto {
 	Session::Session(const Session & v)
 		: mBase(v.mBase)
 	{
-		++mBase->mRealRefCount;
+        if(mBase)
+		    ++mBase->mRealRefCount;
 	}
 
 	Session::Session(const std::shared_ptr<SessionBase>& c)
@@ -95,9 +128,12 @@ namespace osuCrypto {
 
 	Session::~Session()
 	{
-		--mBase->mRealRefCount;
-		if (mBase->mRealRefCount == 0)
-			mBase->stop();
+        if (mBase)
+        {
+		    --mBase->mRealRefCount;
+		    if (mBase->mRealRefCount == 0)
+			    mBase->stop();
+        }
 	}
 
 	std::string Session::getName() const
@@ -126,6 +162,9 @@ namespace osuCrypto {
 
 	Channel Session::addChannel(std::string localName, std::string remoteName)
 	{
+        if (mBase == nullptr)
+            throw std::runtime_error("Session is not initialized");
+
 		// if the user does not provide a local name, use the following.
 		if (localName == "") {
 			if (remoteName != "") throw std::runtime_error("remote name must be empty is local name is empty. " LOCATION);
@@ -143,21 +182,6 @@ namespace osuCrypto {
 
 		// construct the basic channel. Has no socket.
 		Channel chl(*this, localName, remoteName);
-		//auto chlBase = chl.mBase;
-		//auto epBase = mBase;
-
-		if (mBase->mMode == SessionMode::Server)
-		{
-			// the acceptor will do the handshake, set chl.mHandel and
-			// kick off any send and receives which may happen after this
-			// call but before the handshake completes
-			mBase->mAcceptor->asyncGetSocket(chl.mBase);
-		}
-		else
-		{
-			chl.mBase->asyncConnectToServer(mBase->mRemoteAddr);
-		}
-
 		return (chl);
 	}
 
@@ -174,7 +198,7 @@ namespace osuCrypto {
 			mStopped = true;
 			if (mAcceptor)
 				mAcceptor->unsubscribe(this);
-			mWorker.reset(nullptr);
+			mWorker.reset();
 		}
 	}
 
@@ -203,3 +227,4 @@ namespace osuCrypto {
 	//}
 
 }
+#endif

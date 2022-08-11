@@ -1,5 +1,7 @@
 #pragma once
 // This file and the associated implementation has been placed in the public domain, waiving all copyright. No restrictions are placed on its use.  
+#include "libOTe/config.h"
+#ifdef ENABLE_KOS
 #include "libOTe/TwoChooseOne/OTExtInterface.h"
 #include <cryptoTools/Common/BitVector.h>
 #include <cryptoTools/Common/Timer.h>
@@ -15,8 +17,17 @@ namespace osuCrypto {
         struct SetUniformOts {};
 
 
-        std::array<PRNG, gOtExtBaseOtCount> mGens;
+        std::vector<PRNG> mGens;
         BitVector mBaseChoiceBits;
+
+        enum class HashType
+        {
+            RandomOracle,
+            AesHash
+        };
+        HashType mHashType = HashType::AesHash;
+        bool mFiatShamir = false;
+
 
         KosOtExtSender() = default;
         KosOtExtSender(const KosOtExtSender&) = delete;
@@ -26,6 +37,8 @@ namespace osuCrypto {
             SetUniformOts,
             span<block> baseRecvOts,
             const BitVector& choices);
+
+        virtual ~KosOtExtSender() = default;
 
         void operator=(KosOtExtSender&& v)
         {
@@ -66,6 +79,11 @@ namespace osuCrypto {
             span<std::array<block, 2>> messages,
             PRNG& prng,
             Channel& chl) override;
+
+
+
+        void hash(span<std::array<block, 2>> messages, Channel& chl, block seed, std::array<block, 128>& extraBlocks, block delta);
     };
 }
 
+#endif

@@ -1,5 +1,7 @@
 #pragma once
 // This file and the associated implementation has been placed in the public domain, waiving all copyright. No restrictions are placed on its use.  
+#include "libOTe/config.h"
+#ifdef ENABLE_DELTA_KOS
 #include "libOTe/TwoChooseOne/OTExtInterface.h"
 #include <cryptoTools/Common/BitVector.h>
 #include <cryptoTools/Common/Timer.h>
@@ -27,6 +29,7 @@ namespace osuCrypto {
         {
             setBaseOts(baseRecvOts, choices);
         }
+        virtual ~KosDotExtSender() = default;
 
         void operator=(KosDotExtSender&& v)
         {
@@ -83,3 +86,4 @@ namespace osuCrypto {
     };
 }
 
+#endif

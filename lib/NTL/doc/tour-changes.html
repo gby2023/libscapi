@@ -18,6 +18,422 @@ A Tour of NTL: Summary of Changes
 
 <p><hr><p>
 <h3>
+2021.06.23: Changes between NTL 11.5.0 and 11.5.1
+</h3>
+
+<ul>
+<li>
+Fixed bug that prevented compilation on IBM Z.
+</ul>
+
+<p><hr><p>
+<h3>
+2021.06.20: Changes between NTL 11.4.4 and 11.5.0
+</h3>
+
+<ul>
+<li>
+Added a new configuration option <tt>NTL_RANDOM_AES256CTR</tt>.
+The default is <tt>off</tt>.
+Configure with <tt>NTL_RANDOM_AES256CTR=on</tt>
+to replace the default ChaCha20 Pseudo-Random Number Generator (PRNG)
+with 256-bit AES counter mode.
+On certain plaforms (modern <tt>x86</tt> and IBM System/390x),
+special instructions are exploited to improve performance.
+<p>
+Using AES in place of ChaCha may break inter-operability of 
+applications that depend on the behavior of the PRNG.
+<p>
+Using AES in place of ChaCha may affect the performance positively
+or negatively.
+On IBM System/390x, there is a marked performance improvement.
+On <tt>x86</tt> there may be a moderate performance improvement
+or degredation.
+On any other platforms, where there is no hardware support
+for AES (or none that is exploited by NTL),  there will likely be a marked performance
+degredation.
+
+<p>
+Thanks to Patrick Steuer for contributing this code.
+</ul>
+
+
+<p><hr><p>
+<h3>
+2021.03.05: Changes between NTL 11.4.3 and 11.4.4
+</h3>
+
+<ul>
+<li>
+Improved Karatsuba code for <tt>ZZX</tt> and <tt>GF2EX</tt>
+(as well as the non-GMP implementation of <tt>ZZ</tt>).
+(Thanks to  Marco Bodrato)
+
+</ul>
+
+
+<p><hr><p>
+<h3>
+2020.01.04: Changes between NTL 11.4.2 and 11.4.3
+</h3>
+
+<ul>
+<li>
+Fixed bug in build logic that prevented compilation
+when not using <tt>gf2x</tt> library.
+</ul>
+
+
+<p><hr><p>
+<h3>
+2019.12.31: Changes between NTL 11.4.1 and 11.4.2
+</h3>
+
+<ul>
+<li>
+Fixed <tt>gf2x</tt> library usage so that it now works with <tt>gf2x-1.3</tt>.
+<li>
+Fixed a bug in <tt>FFT.cpp</tt> that could be triggered
+when compiling in some legacy modes.
+<li>
+Added <tt>KarMul</tt> and <tt>KarSqr</tt> for <tt>ZZ_pX</tt> 
+(declared in <tt>ZZX.h</tt> and implemented
+in <tt>ZZX.cpp</tt>).
+These are <i>not</i> a part of the documented interface.
+<li>
+A few other minor internal modifications.
+</ul>
+
+
+<p><hr><p>
+<h3>
+2019.10.08: Changes between NTL 11.4.0 and 11.4.1
+</h3>
+
+<ul>
+<li>
+Fixed bug in new <tt>NTL_EXEC_DIVIDE</tt> that 
+could manifest itself when <tt>NTL_THREAD_BOOST=off</tt>.
+Existing code that does not explicitly use this feature
+should not be affected by this bug.
+<li>
+Fixed some namespace visibility issues in the TLS hack macros.
+</ul>
+
+
+<p><hr><p>
+<h3>
+2019.09.24: Changes between NTL 11.3.4 and 11.4.0
+</h3>
+
+<ul>
+<li>
+The Schoenhage-Strassen FFT for both <tt>ZZ_pX</tt>
+and <tt>ZZX</tt> is now fully "thread boosted".
+Here is a snapshot of performance, based on 
+multiplying two polynomials of degree less than 8000
+with 8000-bit coefficients.
+For <tt>ZZ_pX</tt>:
+<pre>
+    # threads   time (ms)   effectiveness
+    1           606   
+    2           310         97%
+    4           168         90%
+    8           103         74%
+</pre>
+For <tt>ZZX</tt>:
+<pre>
+    # threads   time (ms)   effectiveness
+    1           461 
+    2           247         93%
+    4           144         80%
+    8            96         60%
+</pre>
+
+<p> <li>
+Introduced new tools for applying thread pools to divide and conquer 
+algorithms.
+See <tt>NTL_EXEC_DIVIDE</tt> in 
+<a href="BasicThreadPool.cpp.html">BasicThreadPool.txt</a>.
+
+<li>
+Fixed a few other minor issues.
+
+</ul>
+
+
+
+<p><hr><p>
+<h3>
+2019.09.07: Changes between NTL 11.3.3 and 11.3.4
+</h3>
+
+<ul>
+<li>
+Changed NTL's build system so that if <tt>NTL_THREADS=on</tt>
+(which is the default) and <tt>SHARED=on</tt> 
+(which is not the default), NTL's makefile will now pass
+<tt>-lpthread</tt> to <tt>libtool</tt> when it builds the library.
+On most platforms, this should allow users to forgo passing 
+the <tt>-pthread</tt> option to their compiler when linking.
+
+<li>
+Made the build system's check of correct multithreading behavior
+a bit more robust.
+</ul>
+
+<p><hr><p>
+<h3>
+2019.09.02: Changes between NTL 11.3.2 and 11.3.3
+</h3>
+
+<ul>
+<li>
+Changed "TLS hack" implementation to use fewer pthread keys
+(I did not realize these were a "scarce resource").
+
+<li>
+Implemented <tt>xdouble</tt> to <tt>double</tt> conversion to be more
+efficient for exponents of large magnitude.
+
+<li>
+Changed some internal interfaces (for <tt>FFTRoundUp</tt>) to
+be simpler and (in rare circumstances) to yield somewhat
+more efficient code.
+</ul>
+
+
+<p><hr><p>
+<h3>
+2018.11.15: Changes between NTL 11.3.1 and 11.3.2
+</h3>
+
+<ul>
+<li>
+Fixed a somewhat embarrassing performance issue
+in the <tt>PowerMod</tt> function for the <tt>ZZ</tt> class
+(which also impacts the prime testing and generation functions).
+When using GMP, NTL will now call GMP's <tt>mpz_powm</tt>
+function.
+Although GMP does have an <tt>mpn_pown</tt> function,
+it is not documented, and so cannot be used by NTL.
+This means that NTL is now using some <tt>mpz</tt>-level
+functionality, in addition to <tt>mpn</tt>-level functionality.
+<ul>
+<li>
+This leads to a significant speedup (sometimes 2-3x), 
+especially for numbers
+with a small number of limbs.
+<li>
+Thanks to Niek Bouman for helping to sort this out.
+</ul>
+</ul>
+
+<p><hr><p>
+<h3>
+2018.10.20: Changes between NTL 11.3.0 and 11.3.1
+</h3>
+
+<ul>
+<li>
+Fixed a bug that effected <tt>image</tt>, <tt>kernel</tt>,
+and <tt>gauss</tt> routines for <tt>Mat&lt;zz_p&gt;</tt>.
+These routines did not behave correctly when the
+input matrix was zero.
+Also improved the <tt>mat_lzz_pTest</tt> program. 
+</ul>
+
+
+<p><hr><p>
+<h3>
+2018.08.17: Changes between NTL 11.2.1 and 11.3.0
+</h3>
+
+<ul>
+<li>
+<b>Implemented an AVX-based small-prime FFT</b> (which works with
+both AVX2 and AVX512)
+<ul>
+<li>
+This can give a 2-3x speedup for the FFT.
+<li>
+However, it is not enabled by default, because it reduces
+that small-prime size bound from 60 bits to 50 bits,
+and may slow down certain computations.
+<li>
+The reasons for this unfortunate slowdown are that some CRT-based computations
+may slow down because of the smaller prime size, and because
+Intel CPUs may slow themselves down when executing AVX 
+instructions.
+<li>
+To enable this feature, configure with <tt>NTL_ENABLE_AVX_FFT=on</tt>.
+<li>
+Here are some running times on a Skylake Xeon machine
+(<tt>Intel(R) Xeon(R) Gold 6132 CPU @ 2.60GHz</tt>).
+For various values of <i>n</i>,
+we measure the time to compute <i>a<sup>e</sup>&nbsp;</i>mod<i>&nbsp;f</i>,
+where <i>f</i> is a random monic polynomial of degree <i>n</i>
+over <i>Z<sub>17</sub></i>,
+<i>a</i> is a random polynomial of degree less than <i>n</i>,
+and <i>e=2<sup>n</sup>-1</i>.
+<pre>
+   n           1024    2048    4096    8192   16384
+   non-AVX    0.171   0.741   3.192  14.348  60.812
+   AVX512     0.089   0.372   1.648   7.740  35.588
+</pre>
+</ul>
+
+<p>
+<li>
+<b>Implemented AVX512 instruction sequences</b>
+<ul>
+<li>
+This affects <tt>Mat&lt;zz_p&gt;</tt> arithmetic and the small-prime FFT.
+<li>
+Becuause AVX512 instructions can in certain situations
+lead to slower computations (because of CPU "throttling"),
+this feature can be disabled by configuring with
+<tt>NTL_AVOID_AVX512=on</tt>.
+</ul>
+
+<p>
+<li>
+<b>Performance tuned <tt>GF2EX</tt> arithmetic</b>
+<ul>
+<li>
+Tuned crossovers for various algorithms.
+</ul>
+
+<p>
+<li>
+<b>Implemented asymptotocially fast GCD and XGCD for 
+<tt>GF2EX</tt>, <tt>zz_pEX</tt>, and <tt>ZZ_pEX</tt></b>
+<ul>
+<li>
+Some work may still need to be done to fine tune
+the crossovers, but they should be pretty good as is.
+<li>
+Many thanks to 
+<a href="http://personales.unican.es/taberalf/">Luis Felipe Tabera Alonso</a> for porting the code,
+as well as testing and tuning it.
+</ul>
+
+<p>
+<li>
+<b>Other small changes</b>
+<ul>
+<li>
+Restructured <tt>quad_float</tt> implemenation to isolate better
+the parts that are dependent on correct FP rounding.
+<li>
+Standardized vector growth rate to 1.5 via the function <tt>_ntl_vec_grow</tt>.
+<li>
+Got rid of most uses of <tt>__restrict</tt> in <tt>mat_lzz_p.cpp</tt>,
+some of which were technically UB.
+<li>
+Got rid of some uses of <tt>#warning</tt>, which are not portable.
+</ul>
+
+</ul>
+
+<p><hr><p>
+<h3>
+2018.07.15: Changes between NTL 11.2.0 and 11.2.1
+</h3>
+
+<ul>
+<li>
+Fixed an embarrassing bug, introduced in NTL 11.2.0, 
+in which <tt>add(ZZ,ZZ,long)</tt>
+and <tt>sub(ZZ,ZZ,long)</tt> would give incorrect result
+if third argument was zero.
+<li>
+Fixed incorrect libtool version number in NTL 11.2.0.
+</ul>
+
+<p><hr><p>
+<h3>
+2018.07.07: Changes between NTL 11.1.0 and 11.2.0
+</h3>
+
+<ul>
+<li>
+<b>Complete re-write of the
+Schoenhage-Strassen FFT for <tt>ZZX</tt> arithmetic.</b>
+
+<ul>
+<li>
+Implementation of "truncated" FFT 
+<li>
+Implementaion of "sqrt 2" trick
+<li>
+More efficient implementation of low-level butterfly operations
+<li>
+Here is some timing data comparing <tt>ZZX</tt> multiplication times
+of NTL 11.0 and 11.2.
+The entries are the ratio of the  11.0-time over the 11.2-time (so
+the bigger the number, the bigger the improvement).
+The rows are labeled by the bit-length <i>k</i> of the coefficient,
+the column by the degree bound <i>n</i>.
+Unlabeled columns represent degree bounds half-way between the labeled
+ones.
+
+
+<p>
+
+<img src="zmulrat.jpg" border="0" style="display: block; width: 60%; height: auto;">
+
+<p>
+<li>
+For multiplication in <tt>ZZX</tt>, NTL and 
+<a href="http://www.flintlib.org">FLINT</a>
+now have comparable performance across a wide range
+of parameter sizes, with NTL being 2x faster for some parameters,
+and FLITNt being 1.5x faster in others.
+Here is a chart showing the ratio of FLINT time
+over NTL time (so the bigger the number, the faster NTL is relative to FLINT)
+<p>
+
+<img src="flintrat.jpg" border="0" style="display: block; width: 60%; height: auto;">
+
+<p>
+<li>
+See also this report on 
+<a href="http://www.shoup.net/ntl/benchmarks.pdf">NTL vs FLINT</a>
+for detailed benchmarks that compare the performance NTL and FLINT
+on a number of operations and parameter settings.
+
+<li>
+Future plans for NTL's Schoenhage-Strassen code:
+<ul>
+<li>
+Implement something like Bailey's 4-step variant
+(which should yield better cache behavior)
+<li>
+Thread boosting (built on top of the 4-step variant)
+</ul>
+</ul>
+
+<li>
+Some fine tuning of the new small-prime 
+truncated-FFT implementation introduced in version 11.0.
+<li>
+Fixed obscure bug in new small-prime FFT code: this only affects
+users who call low-level, undocumented FFT routines 
+on transforms of size 2, so it is unlikely to have affected
+any real code.
+
+<li>
+Performance improvements to <tt>ZZ+long</tt> and <tt>ZZ-long</tt>
+routines (and by extension <tt>ZZ+=long</tt>, <tt>ZZ-=long</tt>, 
+<tt>ZZ++</tt>, and <tt>ZZ--</tt>)
+
+
+
+</ul>
+
+<p><hr><p>
+<h3>
 2018.06.07: Changes between NTL 11.0.0 and 11.1.0
 </h3>
 
@@ -46,7 +462,7 @@ a single-precision "FFT" prime (60 bits).
 
 <p>
 
-<img src="TFT-time.jpg" width="38%" height="38%">
+<img src="TFT-time.jpg"  border="0" style="display: block; width: 40%; height: auto;">
 
 </ul>
 
@@ -730,7 +1146,7 @@ compilers and other software development tools.
 
 
 </ul>
-
+</ul>
 
 
 <p><hr><p>

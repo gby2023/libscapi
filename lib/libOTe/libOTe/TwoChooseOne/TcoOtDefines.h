@@ -10,7 +10,12 @@ namespace osuCrypto
      const u64 commStepSize(512);
      const u64 superBlkSize(8);
 
-	enum class SilentBaseType {None, Base, BaseExtend, Extend};
+	enum class SilentBaseType {Base, BaseExtend};
+
+	enum class MultType
+	{
+		QuasiCyclic = 1
+	};
 
 	template<typename S, typename TSpan,
 		typename enabled = typename std::enable_if<

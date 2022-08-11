@@ -5,25 +5,30 @@
 NTL_CLIENT
 
 
+#define ITER (500)
+
 
 void multest()
 {
    cerr << "mul";
-   for (long iter = 0; iter < 2000; iter++) {
+   for (long iter = 0; iter < ITER; iter++) {
       if (iter % 100 == 0) cerr << ".";
 
-      long da = RandomBnd(5000) + 100;
-      long db = RandomBnd(5000) + 100;
+      long da, db;
+
+      if (RandomBnd(2)) {
+         da = RandomBnd(5000) + 100;
+         db = RandomBnd(5000) + 100;
+      }
+      else {
+         da = RandomBnd(200) + 1;
+         db = RandomBnd(200) + 1;
+      }
 
       ZZ_pX a, b, c1, c2;
 
       random(a, da);
       random(b, db);
-
-      if (deg(a) < 80 || deg(b) < 80) {
-         cerr << "*";
-         continue;
-      }
 
       FFTMul(c1, a, b);
 
@@ -46,7 +51,7 @@ void multest()
 void sqrtest()
 {
    cerr << "sqr";
-   for (long iter = 0; iter < 2000; iter++) {
+   for (long iter = 0; iter < ITER; iter++) {
       if (iter % 100 == 0) cerr << ".";
 
       long da = RandomBnd(5000) + 100;
@@ -83,7 +88,7 @@ void sqrtest()
 void mulmodtest()
 {
    cerr << "mulmod";
-   for (long iter = 0; iter < 2000; iter++) {
+   for (long iter = 0; iter < ITER; iter++) {
       if (iter % 100 == 0) cerr << ".";
 
       long n = RandomBnd(5000) + 300;
@@ -123,7 +128,7 @@ void mulmodtest()
 void sqrmodtest()
 {
    cerr << "sqrmod";
-   for (long iter = 0; iter < 2000; iter++) {
+   for (long iter = 0; iter < ITER; iter++) {
       if (iter % 100 == 0) cerr << ".";
 
       long n = RandomBnd(5000) + 300;
@@ -164,7 +169,7 @@ void sqrmodtest()
 void mulmod1test()
 {
    cerr << "mulmod1";
-   for (long iter = 0; iter < 2000; iter++) {
+   for (long iter = 0; iter < ITER; iter++) {
       if (iter % 100 == 0) cerr << ".";
 
       long n = RandomBnd(5000) + 300;
@@ -302,7 +307,7 @@ void UpdateMap(vec_ZZ_p& x, const vec_ZZ_p& a,
 void updatetest()
 {
    cerr << "update";
-   for (long iter = 0; iter < 2000; iter++) {
+   for (long iter = 0; iter < ITER; iter++) {
       if (iter % 100 == 0) cerr << ".";
 
       long n = RandomBnd(5000) + 300;
@@ -344,7 +349,7 @@ void updatetest()
 void divremtest()
 {
    cerr << "divrem";
-   for (long iter = 0; iter < 2000; iter++) {
+   for (long iter = 0; iter < ITER; iter++) {
       if (iter % 100 == 0) cerr << ".";
 
       long n = RandomBnd(5000) + 300;

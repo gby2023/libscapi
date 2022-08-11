@@ -1,20 +1,15 @@
 #pragma once
 // This file and the associated implementation has been placed in the public domain, waiving all copyright. No restrictions are placed on its use.
 
-#include <cinttypes>
-#include <iostream>
+#include <cstdint>
 #include <memory>
+#include "cryptoTools/Common/config.h"
+#include "block.h"
 
-#include <emmintrin.h>
-#include <smmintrin.h>
-
-#include "config.h"
-
-
-#ifdef ENABLE_FULL_GSL
-#include <cryptoTools/gsl/span>
+#ifdef ENABLE_SPAN_LITE
+#include <nonstd/span.hpp>
 #else
-#include <cryptoTools/gsl/gls-lite.hpp>
+#include <span>
 #endif
 
 #define STRINGIZE_DETAIL(x) #x
@@ -23,6 +18,10 @@
 #define RTE_LOC std::runtime_error(LOCATION)
 
 #ifdef _MSC_VER
+    #ifndef _WIN32_WINNT
+        // compile for win 7 and up.
+        #define _WIN32_WINNT 0x0601
+    #endif 
 	#pragma warning( disable : 4018) // signed unsigned comparison warning
 	#define TODO(x) __pragma(message (__FILE__ ":" STRINGIZE(__LINE__) " Warning:TODO - " #x))
 #else
@@ -39,7 +38,11 @@ namespace osuCrypto {
     template<typename T> using ptr = T*;
     template<typename T> using uPtr = std::unique_ptr<T>;
     template<typename T> using sPtr = std::shared_ptr<T>;
-    template<typename T> using span = gsl::span<T>;
+#ifdef ENABLE_SPAN_LITE
+    template<typename T> using span = nonstd::span<T>;
+#else
+    template<typename T> using span = std::span<T>;
+#endif
 
     typedef uint64_t u64;
     typedef int64_t i64;
@@ -50,89 +53,34 @@ namespace osuCrypto {
     typedef uint8_t u8;
     typedef int8_t i8;
 
-
- //   template<typename T>
-	//static std::string ToString(const T& t) { return boost::lexical_cast<std::string>(t); }
-
-    typedef  __m128i block;
-    inline block toBlock(u8*data) { return _mm_set_epi64x(((u64*)data)[1], ((u64*)data)[0]);}
-    inline block toBlock(u64 low_u64)        { return _mm_set_epi64x(0, low_u64); }
-    inline block toBlock(u64 high_u64, u64 low_u64) { return _mm_set_epi64x(high_u64, low_u64); }
-
-    extern const block ZeroBlock;
-    extern const block OneBlock;
-    extern const block AllOneBlock;
-    extern const block CCBlock;
-    extern const std::array<block, 2> zeroAndAllOne;
-
-    inline u64 roundUpTo(u64 val, u64 step) { return ((val + step - 1) / step) * step; }
+    constexpr u64 divCeil(u64 val, u64 d) { return (val + d - 1) / d; }
+    constexpr u64 roundUpTo(u64 val, u64 step) { return divCeil(val, step) * step; }
 
     u64 log2ceil(u64);
     u64 log2floor(u64);
 
     block sysRandomSeed();
-}
 
 
-std::ostream& operator<<(std::ostream& out, const osuCrypto::block& block);
-namespace osuCrypto
-{
-	using ::operator<<;
-}
 
-inline bool eq(const osuCrypto::block& lhs, const osuCrypto::block& rhs)
-{
-    osuCrypto::block neq = _mm_xor_si128(lhs, rhs);
-    return _mm_test_all_zeros(neq, neq) != 0;
-}
+    static inline uint64_t mod64(uint64_t word, uint64_t p)
+    {
+#ifdef __SIZEOF_INT128__ 
+        return (uint64_t)(((__uint128_t)word * (__uint128_t)p) >> 64);
+#elif defined(_MSC_VER) && defined(_WIN64)
+        uint64_t highProduct;
+        _umul128(word, p, &highProduct); 
+        return highProduct;
+        unsigned __int64 _umul128(
+            unsigned __int64 Multiplier,
+            unsigned __int64 Multiplicand,
+            unsigned __int64* HighProduct
+        );
+#else
+        return word % p; 
+#endif 
+    }
 
-inline bool neq(const osuCrypto::block& lhs, const osuCrypto::block& rhs)
-{
-    osuCrypto::block neq = _mm_xor_si128(lhs, rhs);
-    return _mm_test_all_zeros(neq, neq) == 0;
 }
-
-#ifdef _MSC_VER
-inline bool operator<(const osuCrypto::block& lhs, const osuCrypto::block& rhs)
-{
-    return lhs.m128i_u64[1] < rhs.m128i_u64[1] || (eq(lhs, rhs) && lhs.m128i_u64[0] < rhs.m128i_u64[0]);
-}
-
-inline osuCrypto::block operator^(const osuCrypto::block& lhs, const osuCrypto::block& rhs)
-{
-	return _mm_xor_si128(lhs, rhs);
-}
-inline osuCrypto::block operator&(const osuCrypto::block& lhs, const osuCrypto::block& rhs)
-{
-	return _mm_and_si128(lhs, rhs);
-}
-
-inline osuCrypto::block operator|(const osuCrypto::block& lhs, const osuCrypto::block& rhs)
-{
-	return _mm_or_si128(lhs, rhs);
-}
-inline osuCrypto::block operator<<(const osuCrypto::block& lhs, const osuCrypto::u8& rhs)
-{
-	return _mm_slli_epi64(lhs, rhs);
-}
-inline osuCrypto::block operator>>(const osuCrypto::block& lhs, const osuCrypto::u8& rhs)
-{
-	return _mm_srli_epi64(lhs, rhs);
-}
-inline osuCrypto::block operator+(const osuCrypto::block& lhs, const osuCrypto::block& rhs)
-{
-	return _mm_add_epi64(lhs, rhs);
-}
-
-
-#ifdef ENABLE_RELIC
-#pragma comment(lib, "relic_s.lib")
-#endif
-
-#ifdef ENABLE_MIRACL
-#pragma comment(lib, "miracl.lib")
-#endif
-
-#endif
 
 namespace oc = osuCrypto;

@@ -1,4 +1,5 @@
 #include "KosDotExtSender.h"
+#ifdef ENABLE_DELTA_KOS
 
 #include "libOTe/Tools/Tools.h"
 #include <cryptoTools/Common/Matrix.h>
@@ -55,6 +56,9 @@ namespace osuCrypto
         PRNG& prng,
         Channel& chl)
     {
+        if (hasBaseOts() == false)
+            genBaseOts(prng, chl);
+
         setTimePoint("KosDot.send.start");
 
         // round up
@@ -143,7 +147,7 @@ namespace osuCrypto
 
                 // transpose our 128 columns of 1024 bits. We will have 1024 rows,
                 // each 128 bits wide.
-                sse_transpose(t, tOut);
+                transpose(t, tOut);
 
                 auto mCount = std::min<u64>(128 * superBlkSize, messages.end() - mIter);
                 auto xCount = std::min<u64>(128 * superBlkSize - mCount, extraBlocks.data() + extraBlocks.size() - xIter);
@@ -168,7 +172,7 @@ namespace osuCrypto
 
                 // transpose our 128 columns of 1024 bits. We will have 1024 rows,
                 // each 128 bits wide.
-                sse_transpose(t, tOut);
+                transpose(t, tOut);
             }
 
         }
@@ -308,3 +312,4 @@ namespace osuCrypto
 
 
 }
+#endif

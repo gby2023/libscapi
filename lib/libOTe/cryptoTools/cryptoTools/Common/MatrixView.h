@@ -2,6 +2,7 @@
 // This file and the associated implementation has been placed in the public domain, waiving all copyright. No restrictions are placed on its use. 
 #include <cryptoTools/Common/Defines.h>
 #include <array>
+#include <tuple>
 
 namespace osuCrypto
 {
@@ -10,14 +11,11 @@ namespace osuCrypto
     class MatrixView
     {
     public:
-#ifdef ENABLE_FULL_GSL
-        using iterator = gsl::details::span_iterator<gsl::span<T>, false>;
-        using const_iterator = gsl::details::span_iterator<gsl::span<T>, true>;
-#else
-		typedef T* iterator;
-		typedef T const*  const_iterator;
-#endif
-		using reverse_iterator = std::reverse_iterator<iterator>;
+
+        using iterator = typename span<T>::iterator;
+        using const_iterator = typename span<T>::iterator;
+
+        using reverse_iterator = std::reverse_iterator<iterator>;
         using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
         typedef T value_type;
@@ -47,18 +45,18 @@ namespace osuCrypto
         }
 
         template <class Iter>
-        MatrixView(Iter start, Iter end, size_type stride, typename Iter::iterator_category *p = 0) :
+        MatrixView(Iter start, Iter end, size_type stride, typename Iter::iterator_category * = 0) :
             mView(start, end/* - ((end - start) % stride)*/),
             mStride(stride)
         {
-            std::ignore = p;
+            //std::ignore = p;
         }
 
         template<template<typename, typename...> class C, typename... Args>
-        MatrixView(const C<T, Args...>& cont, size_type stride, typename C<T, Args...>::value_type* p = 0) :
+        MatrixView(const C<T, Args...>& cont, size_type stride, typename C<T, Args...>::value_type*  = 0) :
             MatrixView(cont.begin(), cont.end(), stride)
         {
-            std::ignore = p;
+            //std::ignore = p;
         }
 
         const MatrixView<T>& operator=(const MatrixView<T>& copy)
@@ -131,9 +129,16 @@ namespace osuCrypto
         }
 
 
+        operator MatrixView<const T>()
+        {
+            return { data(), rows(), cols() };
+        }
+
 
         template<typename TT = T>
-        typename std::enable_if<std::is_pod<TT>::value>::type setZero()
+        typename std::enable_if<
+            std::is_standard_layout<TT>::value&&
+            std::is_trivial<TT>::value>::type setZero()
         {
             static_assert(std::is_same<TT, T>::value, "");
 

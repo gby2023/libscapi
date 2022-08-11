@@ -1,4 +1,5 @@
 #include "libOTe/Base/BaseOT.h"
+#ifdef ENABLE_KKRT
 #include "KkrtNcoOtReceiver.h"
 #include "libOTe/Tools/Tools.h"
 #include <cryptoTools/Common/Log.h>
@@ -11,7 +12,7 @@ using namespace std;
 namespace osuCrypto
 {
     void KkrtNcoOtReceiver::setBaseOts(
-        gsl::span<std::array<block, 2>> baseRecvOts)
+        span<std::array<block, 2>> baseRecvOts)
     {
 
         if (baseRecvOts.size() % 128 != 0)
@@ -34,9 +35,8 @@ namespace osuCrypto
 
     void KkrtNcoOtReceiver::init(u64 numOtExt, PRNG& prng, Channel& chl)
     {
-
         if (hasBaseOts() == false)
-            throw std::runtime_error("rt error at " LOCATION);
+            genBaseOts(prng, chl);
 
         block seed = prng.get<block>();
         u8 theirComm[RandomOracle::HashSize];
@@ -106,8 +106,8 @@ namespace osuCrypto
 
                 // transpose our 128 columns of 1024 bits. We will have 1024 rows,
                 // each 128 bits wide.
-                sse_transpose128x1024(t0);
-                sse_transpose128x1024(t1);
+                transpose128x1024(t0);
+                transpose128x1024(t1);
 
                 // This is the index of where we will store the matrix long term.
                 // doneIdx is the starting row. i is the offset into the blocks of 128 bits.
@@ -190,12 +190,17 @@ namespace osuCrypto
             }
             raw.setBaseOts(base);
         }
+
+#ifdef OC_NO_MOVE_ELISION 
         return std::move(raw);
+#else
+        return raw;
+#endif
     }
 
     std::unique_ptr<NcoOtExtReceiver> KkrtNcoOtReceiver::split()
     {
-        return std::make_unique<KkrtNcoOtReceiver>(std::move(splitBase()));
+        return std::make_unique<KkrtNcoOtReceiver>((splitBase()));
     }
 
 
@@ -333,3 +338,4 @@ namespace osuCrypto
     }
 
 }
+#endif

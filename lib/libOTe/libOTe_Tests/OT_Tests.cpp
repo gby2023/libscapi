@@ -1,7 +1,7 @@
 #include "OT_Tests.h"
 
 #include "libOTe/TwoChooseOne/OTExtInterface.h"
-
+#include "libOTe/Base/BaseOT.h"
 #include "libOTe/Tools/Tools.h"
 #include "libOTe/Tools/LinearCode.h"
 #include <cryptoTools/Network/Channel.h>
@@ -19,8 +19,6 @@
 #include "libOTe/TwoChooseOne/KosDotExtReceiver.h"
 #include "libOTe/TwoChooseOne/KosDotExtSender.h"
 
-#include "libOTe/TwoChooseOne/IknpDotExtReceiver.h"
-#include "libOTe/TwoChooseOne/IknpDotExtSender.h"
 
 #include "libOTe/NChooseOne/Kkrt/KkrtNcoOtReceiver.h"
 #include "libOTe/NChooseOne/Kkrt/KkrtNcoOtSender.h"
@@ -29,6 +27,9 @@
 #include <thread>
 #include <vector>
 #include <random>
+#include <cryptoTools/Common/BitVector.h>
+#include <cryptoTools/Common/Matrix.h>
+
 #ifdef GetMessage
 #undef GetMessage
 #endif
@@ -42,7 +43,7 @@ using namespace osuCrypto;
 
 namespace tests_libOTe
 {
-	void OT_100Receive_Test(BitVector& choiceBits, gsl::span<block> recv, gsl::span<std::array<block, 2>>  sender)
+	void OT_100Receive_Test(BitVector& choiceBits, span<block> recv, span<std::array<block, 2>>  sender)
 	{
 
 		for (u64 i = 0; i < choiceBits.size(); ++i)
@@ -83,14 +84,14 @@ namespace tests_libOTe
 			std::array<block, 128> data;
 			memset((u8*)data.data(), 0, sizeof(data));
 
-			data[0] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-			data[1] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-			data[2] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-			data[3] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-			data[4] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-			data[5] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-			data[6] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-			data[7] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[0] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[1] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[2] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[3] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[4] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[5] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[6] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[7] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
 
 			//printMtx(data);
 			eklundh_transpose128(data);
@@ -98,10 +99,10 @@ namespace tests_libOTe
 
 			for (auto& d : data)
 			{
-				if (neq(d, _mm_set_epi64x(0, 0xFF)))
+				if (neq(d, block(0, 0xFF)))
 				{
 					std::cout << "expected" << std::endl;
-					std::cout << _mm_set_epi64x(0xF, 0) << std::endl << std::endl;
+					std::cout << block(0xF, 0) << std::endl << std::endl;
 
 					printMtx(data);
 
@@ -115,24 +116,24 @@ namespace tests_libOTe
 			std::array<block, 128> data;
 			memset((u8*)data.data(), 0, sizeof(data));
 
-			data[0] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-			data[1] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-			data[2] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-			data[3] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-			data[4] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-			data[5] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-			data[6] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
-			data[7] = _mm_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[0] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[1] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[2] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[3] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[4] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[5] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[6] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
+			data[7] = block(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF);
 
-			sse_transpose128(data);
+			transpose128(data);
 
 
 			for (auto& d : data)
 			{
-				if (neq(d, _mm_set_epi64x(0, 0xFF)))
+				if (neq(d, block(0, 0xFF)))
 				{
 					std::cout << "expected" << std::endl;
-					std::cout << _mm_set_epi64x(0xF, 0) << std::endl << std::endl;
+					std::cout << block(0xF, 0) << std::endl << std::endl;
 
 					printMtx(data);
 
@@ -151,7 +152,7 @@ namespace tests_libOTe
 
 			std::array<std::array<block, 8>, 128> data2 = data;
 
-			sse_transpose128x1024(data);
+			transpose128x1024(data);
 
 
 			for (u64 i = 0; i < 8; ++i)
@@ -164,7 +165,7 @@ namespace tests_libOTe
 					sub[j] = data2[j][i];
 				}
 
-				sse_transpose128(sub);
+				transpose128(sub);
 
 				for (u64 j = 0; j < 128; ++j)
 				{
@@ -193,9 +194,9 @@ namespace tests_libOTe
 			MatrixView<block> dataView(data.begin(), data.end(), 1);
 			MatrixView<block> data2View(data2.begin(), data2.end(), 1);
 
-			sse_transpose(dataView, data2View);
+			transpose(dataView, data2View);
 
-			sse_transpose128(data);
+			transpose128(data);
 
 
 
@@ -227,7 +228,7 @@ namespace tests_libOTe
 
 			MatrixView<block> dataView((block*)data.data(), 128, 8);
 			MatrixView<block> data2View((block*)data2.data(), 128 * 8, 1);
-			sse_transpose(dataView, data2View);
+			transpose(dataView, data2View);
 
 
 			for (u64 i = 0; i < 8; ++i)
@@ -239,7 +240,7 @@ namespace tests_libOTe
 					data128[j] = data[j][i];
 				}
 
-				sse_transpose128(data128);
+				transpose128(data128);
 
 
 				for (u64 j = 0; j < 128; ++j)
@@ -262,7 +263,7 @@ namespace tests_libOTe
 
 			Matrix<block> data2View(1024, 2);
 			memset(data2View.data(), 0, data2View.bounds()[0] * data2View.stride() * sizeof(block));
-			sse_transpose(dataView, data2View);
+			transpose(dataView, data2View);
 
 			for (u64 b = 0; b < 2; ++b)
 			{
@@ -279,7 +280,7 @@ namespace tests_libOTe
 							data128[j] = ZeroBlock;
 					}
 
-					sse_transpose128(data128);
+					transpose128(data128);
 
 					for (u64 j = 0; j < 128; ++j)
 					{
@@ -301,11 +302,11 @@ namespace tests_libOTe
 			prng.get((u8*)in.data(), sizeof(u8) *in.bounds()[0] * in.stride());
 
 			Matrix<u8> out(63, 2);
-			sse_transpose(in, out);
+			transpose(in, out);
 
 
 			Matrix<u8> out2(64, 2);
-			sse_transpose(in, out2);
+			transpose(in, out2);
 
 			for (u64 i = 0; i < out.bounds()[0]; ++i)
 			{
@@ -339,8 +340,8 @@ namespace tests_libOTe
 			Matrix<u8> out(72, 4);
 			Matrix<u8> out2(72, 4);
 
-			sse_transpose(in, out);
-			sse_transpose(in2, out2);
+			transpose(in, out);
+			transpose(in2, out2);
 
 			for (u64 i = 0; i < out.bounds()[0]; ++i)
 			{
@@ -358,7 +359,7 @@ namespace tests_libOTe
 
     void OtExt_genBaseOts_Test()
     {
-#ifdef LIBOTE_HAS_BASE_OT
+#if defined(LIBOTE_HAS_BASE_OT) && defined(ENABLE_KOS)
         IOService ios(0);
         Session ep0(ios, "127.0.0.1", 1212, SessionMode::Server);
         Session ep1(ios, "127.0.0.1", 1212, SessionMode::Client);
@@ -387,23 +388,24 @@ namespace tests_libOTe
                 throw RTE_LOC;
         }
 #else
-        throw UnitTestSkipped("no base OTs are enabled ");
+        throw UnitTestSkipped("LibOTe has no BaseOTs or ENABLE_KOS not define  ");
 #endif
     }
 
 
 	void OtExt_Kos_Test()
 	{
+#if defined(ENABLE_KOS)
 		setThreadName("Sender");
 
-		IOService ios(0);
-		Session ep0(ios, "127.0.0.1", 1212, SessionMode::Server, "ep");
-		Session ep1(ios, "127.0.0.1", 1212, SessionMode::Client, "ep");
-		Channel senderChannel = ep1.addChannel("chl", "chl");
-		Channel recvChannel = ep0.addChannel("chl", "chl");
+		IOService ios;
+		Session ep0(ios, "127.0.0.1", 1212, SessionMode::Server);
+		Session ep1(ios, "127.0.0.1", 1212, SessionMode::Client);
+		Channel senderChannel = ep1.addChannel();
+		Channel recvChannel   = ep0.addChannel();
 
-		PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
-		PRNG prng1(_mm_set_epi32(4253233465, 334565, 0, 235));
+		PRNG prng0(block(4253465, 3434565));
+		PRNG prng1(block(42532335, 334565));
 
 		u64 numOTs = 20000;
 
@@ -413,6 +415,56 @@ namespace tests_libOTe
 		choices.randomize(prng0);
 		baseChoice.randomize(prng0);
 
+		for (u64 i = 0; i < 128; ++i)
+		{
+			baseSend[i][0] = prng0.get<block>();
+			baseSend[i][1] = prng0.get<block>();
+			baseRecv[i] = baseSend[i][baseChoice[i]];
+		}
+
+		KosOtExtSender sender;
+		KosOtExtReceiver recv;
+
+		std::thread thrd = std::thread([&]() {
+			setThreadName("receiver");
+
+			recv.setBaseOts(baseSend, prng0, recvChannel);
+			recv.receive(choices, recvMsg, prng0, recvChannel);
+		});
+
+		sender.setBaseOts(baseRecv, baseChoice, senderChannel);
+		sender.send(sendMsg, prng1, senderChannel);
+		thrd.join();
+
+		OT_100Receive_Test(choices, recvMsg, sendMsg);
+#else
+		throw UnitTestSkipped("ENABLE_KOS is not defined.");
+#endif
+	}
+
+
+
+	void OtExt_Kos_fs_Test()
+	{
+#if defined(ENABLE_KOS)
+		setThreadName("Sender");
+
+		IOService ios;
+		Session ep0(ios, "127.0.0.1", 1212, SessionMode::Server);
+		Session ep1(ios, "127.0.0.1", 1212, SessionMode::Client);
+		Channel senderChannel = ep1.addChannel();
+		Channel recvChannel = ep0.addChannel();
+
+		PRNG prng0(block(4253465, 3434565));
+		PRNG prng1(block(42532335, 334565));
+
+		u64 numOTs = 20000;
+
+		std::vector<block> recvMsg(numOTs), baseRecv(128);
+		std::vector<std::array<block, 2>> sendMsg(numOTs), baseSend(128);
+		BitVector choices(numOTs), baseChoice(128);
+		choices.randomize(prng0);
+		baseChoice.randomize(prng0);
 
 		for (u64 i = 0; i < 128; ++i)
 		{
@@ -421,56 +473,90 @@ namespace tests_libOTe
 			baseRecv[i] = baseSend[i][baseChoice[i]];
 		}
 
-
 		KosOtExtSender sender;
 		KosOtExtReceiver recv;
 
-
+		sender.mFiatShamir = true;
+		recv.mFiatShamir = true;
 
 		std::thread thrd = std::thread([&]() {
 			setThreadName("receiver");
 
-
-
 			recv.setBaseOts(baseSend, prng0, recvChannel);
 			recv.receive(choices, recvMsg, prng0, recvChannel);
-		});
-
+			});
 
 		sender.setBaseOts(baseRecv, baseChoice, senderChannel);
 		sender.send(sendMsg, prng1, senderChannel);
 		thrd.join();
 
-		//for (u64 i = 0; i < baseOTs.receiver_outputs.size(); ++i)
-		//{
-		//    std::cout << sender.GetMessage(i, 0) << " " << sender.GetMessage(i, 1) << "\n" << recv.GetMessage(1) << "  " << recv.mChoiceBits[i] << std::endl;
-		//}
+		OT_100Receive_Test(choices, recvMsg, sendMsg);
+#else
+		throw UnitTestSkipped("ENABLE_KOS is not defined.");
+#endif
+	}
+
+	void OtExt_Kos_ro_Test()
+	{
+#if defined(ENABLE_KOS)
+		setThreadName("Sender");
+
+		IOService ios;
+		Session ep0(ios, "127.0.0.1", 1212, SessionMode::Server);
+		Session ep1(ios, "127.0.0.1", 1212, SessionMode::Client);
+		Channel senderChannel = ep1.addChannel();
+		Channel recvChannel = ep0.addChannel();
+
+		PRNG prng0(block(4253465, 3434565));
+		PRNG prng1(block(42532335, 334565));
+
+		u64 numOTs = 20000;
+
+		std::vector<block> recvMsg(numOTs), baseRecv(128);
+		std::vector<std::array<block, 2>> sendMsg(numOTs), baseSend(128);
+		BitVector choices(numOTs), baseChoice(128);
+		choices.randomize(prng0);
+		baseChoice.randomize(prng0);
+
+		for (u64 i = 0; i < 128; ++i)
+		{
+			baseSend[i][0] = prng0.get<block>();
+			baseSend[i][1] = prng0.get<block>();
+			baseRecv[i] = baseSend[i][baseChoice[i]];
+		}
+
+		KosOtExtSender sender;
+		KosOtExtReceiver recv;
+
+		sender.mHashType = KosOtExtSender::HashType::RandomOracle;
+		recv.mHashType = KosOtExtReceiver::HashType::RandomOracle;
+
+		std::thread thrd = std::thread([&]() {
+			setThreadName("receiver");
+
+			recv.setBaseOts(baseSend, prng0, recvChannel);
+			recv.receive(choices, recvMsg, prng0, recvChannel);
+			});
+
+		sender.setBaseOts(baseRecv, baseChoice, senderChannel);
+		sender.send(sendMsg, prng1, senderChannel);
+		thrd.join();
 
 		OT_100Receive_Test(choices, recvMsg, sendMsg);
-
-
-
-		senderChannel.close();
-		recvChannel.close();
-
-
-		ep1.stop();
-		ep0.stop();
-
-		ios.stop();
-
+#else
+		throw UnitTestSkipped("ENABLE_KOS is not defined.");
+#endif
 	}
 
     void OtExt_Chosen_Test()
     {
+#if defined(ENABLE_KOS)
 
-
-        IOService ios(0);
-        Session ep0(ios, "127.0.0.1", 1212, SessionMode::Server, "ep");
-        Session ep1(ios, "127.0.0.1", 1212, SessionMode::Client, "ep");
-        Channel senderChannel = ep1.addChannel("chl", "chl");
-        Channel recvChannel = ep0.addChannel("chl", "chl");
-
+        IOService ios;
+        Session ep0(ios, "127.0.0.1:1212", SessionMode::Server);
+        Session ep1(ios, "127.0.0.1:1212", SessionMode::Client);
+        Channel senderChannel = ep1.addChannel();
+        Channel recvChannel	  = ep0.addChannel();
 
         u64 numOTs = 200;
 
@@ -481,7 +567,6 @@ namespace tests_libOTe
         choices.randomize(prng0);
         baseChoice.randomize(prng0);
 
-
         for (u64 i = 0; i < 128; ++i)
         {
             baseSend[i][0] = prng0.get<block>();
@@ -489,16 +574,15 @@ namespace tests_libOTe
             baseRecv[i] = baseSend[i][baseChoice[i]];
         }
 
-
         prng0.get(sendMsg.data(), sendMsg.size());
 
         KosOtExtSender sender;
         KosOtExtReceiver recv;
 
-        auto thrd = std::thread([&]() { 
-            PRNG prng1(OneBlock); 
+        auto thrd = std::thread([&]() {
+            PRNG prng1(OneBlock);
             recv.setBaseOts(baseSend, prng1, recvChannel);
-            recv.receiveChosen(choices, recvMsg, prng1, recvChannel); 
+            recv.receiveChosen(choices, recvMsg, prng1, recvChannel);
         });
 
         sender.setBaseOts(baseRecv, baseChoice, senderChannel);
@@ -506,123 +590,58 @@ namespace tests_libOTe
 
         thrd.join();
 
-
         for (u64 i = 0; i < numOTs; ++i)
         {
             if (neq(recvMsg[i], sendMsg[i][choices[i]]))
                 throw UnitTestFail("bad message " LOCATION);
         }
+#else
+	throw UnitTestSkipped("ENABLE_KOS is not defined.");
+#endif
     }
 
 
-	//void LzOtExt_Kos_Test()
+	//void mul128b(__m128i b, __m128i a, __m128i &c0, __m128i &c1)
 	//{
-	//	setThreadName("Sender");
-
-	//	IOService ios(0);
-	//	Session ep0(ios, "127.0.0.1", 1212, SessionMode::Server, "ep");
-	//	Session ep1(ios, "127.0.0.1", 1212, SessionMode::Client, "ep");
-	//	Channel senderChannel = ep1.addChannel("chl", "chl");
-	//	Channel recvChannel = ep0.addChannel("chl", "chl");
-
-	//	PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
-	//	PRNG prng1(_mm_set_epi32(4253233465, 334565, 0, 235));
-
-	//	u64 numOTs = 200;
-
-	//	std::vector<block> recvMsg(numOTs), baseRecv(128);
-	//	std::vector<std::array<block, 2>> sendMsg(numOTs), baseSend(128);
-	//	BitVector choices(numOTs), baseChoice(128);
-	//	choices.randomize(prng0);
-	//	baseChoice.randomize(prng0);
-
-
-	//	for (u64 i = 0; i < 128; ++i)
-	//	{
-	//		baseSend[i][0] = prng0.get<block>();
-	//		baseSend[i][1] = prng0.get<block>();
-	//		baseRecv[i] = baseSend[i][baseChoice[i]];
-	//	}
-
-
-	//	LzKosOtExtSender sender;
-	//	LzKosOtExtReceiver recv;
-
-	//	std::thread thrd = std::thread([&]() {
-	//		setThreadName("receiver");
-
-	//		recv.setBaseOts(baseSend);
-	//		recv.receive(choices, recvMsg, prng0, recvChannel);
-	//	});
-
-	//	sender.setBaseOts(baseRecv, baseChoice);
-	//	sender.send(sendMsg, prng1, senderChannel);
-	//	thrd.join();
-
-	//	//for (u64 i = 0; i < baseOTs.receiver_outputs.size(); ++i)
-	//	//{
-	//	//    std::cout << sender.GetMessage(i, 0) << " " << sender.GetMessage(i, 1) << "\n" << recv.GetMessage(1) << "  " << recv.mChoiceBits[i] << std::endl;
-	//	//}
-
-	//	OT_100Receive_Test(choices, recvMsg, sendMsg);
-
-
-
-	//	senderChannel.close();
-	//	recvChannel.close();
-
-
-	//	ep1.stop();
-	//	ep0.stop();
-
-	//	ios.stop();
-
-	//	//senderNetMgr.Stop();
-	//	//recvNetMg
+	//	__m128i t1, t2;
+	//	c0 = _mm_clmulepi64_si128(a, b, 0x00);
+	//	c1 = _mm_clmulepi64_si128(a, b, 0x11);
+	//	t1 = _mm_shuffle_epi32(a, 0xEE);
+	//	t1 = _mm_xor_si128(a, t1);
+	//	t2 = _mm_shuffle_epi32(b, 0xEE);
+	//	t2 = _mm_xor_si128(b, t2);
+	//	t1 = _mm_clmulepi64_si128(t1, t2, 0x00);
+	//	t1 = _mm_xor_si128(c0, t1);
+	//	t1 = _mm_xor_si128(c1, t1);
+	//	t2 = t1;
+	//	t1 = _mm_slli_si128(t1, 8);
+	//	t2 = _mm_srli_si128(t2, 8);
+	//	c0 = _mm_xor_si128(c0, t1);
+	//	c1 = _mm_xor_si128(c1, t2);
 	//}
-
-
-	void mul128b(__m128i b, __m128i a, __m128i &c0, __m128i &c1)
-	{
-		__m128i t1, t2;
-		c0 = _mm_clmulepi64_si128(a, b, 0x00);
-		c1 = _mm_clmulepi64_si128(a, b, 0x11);
-		t1 = _mm_shuffle_epi32(a, 0xEE);
-		t1 = _mm_xor_si128(a, t1);
-		t2 = _mm_shuffle_epi32(b, 0xEE);
-		t2 = _mm_xor_si128(b, t2);
-		t1 = _mm_clmulepi64_si128(t1, t2, 0x00);
-		t1 = _mm_xor_si128(c0, t1);
-		t1 = _mm_xor_si128(c1, t1);
-		t2 = t1;
-		t1 = _mm_slli_si128(t1, 8);
-		t2 = _mm_srli_si128(t2, 8);
-		c0 = _mm_xor_si128(c0, t1);
-		c1 = _mm_xor_si128(c1, t2);
-	}
 
 	void DotExt_Kos_Test()
 	{
+#if defined(ENABLE_DELTA_KOS)
+
 		setThreadName("Sender");
 
-		IOService ios(0);
-		Session ep0(ios, "127.0.0.1", 1212, SessionMode::Server, "ep");
-		Session ep1(ios, "127.0.0.1", 1212, SessionMode::Client, "ep");
-		Channel senderChannel = ep1.addChannel("chl", "chl");
-		Channel recvChannel = ep0.addChannel("chl", "chl");
+		IOService ios;
+		Session ep0(ios, "127.0.0.1", 1212, SessionMode::Server);
+		Session ep1(ios, "127.0.0.1", 1212, SessionMode::Client);
+		Channel senderChannel = ep1.addChannel();
+		Channel recvChannel   = ep0.addChannel();
 
-		PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
-		PRNG prng1(_mm_set_epi32(4253233465, 334565, 0, 235));
+		PRNG prng0(block(4253465, 3434565));
+		PRNG prng1(block(42532335, 334565));
 
 		u64 numOTs = 952;
-
 		u64 s = 40;
 
 		std::vector<block> recvMsg(numOTs), baseRecv(128 + s);
 		std::vector<std::array<block, 2>> sendMsg(numOTs), baseSend(128 + s);
 		BitVector choices(numOTs);
 		choices.randomize(prng0);
-		//choices[0] = 1;
 
 		BitVector baseChoice(128 + s);
 		baseChoice.randomize(prng0);
@@ -633,18 +652,11 @@ namespace tests_libOTe
 			baseSend[i][1] = prng0.get<block>();
 			baseRecv[i] = baseSend[i][baseChoice[i]];
 		}
-
-
 		KosDotExtSender sender;
 		KosDotExtReceiver recv;
 
-		//sender.mmChoices = choices;
-
 		std::thread thrd = std::thread([&]() {
 			setThreadName("receiver");
-
-
-
 			recv.setBaseOts(baseSend);
 			recv.receive(choices, recvMsg, prng0, recvChannel);
 		});
@@ -655,10 +667,6 @@ namespace tests_libOTe
 		sender.send(sendMsg, prng1, senderChannel);
 		thrd.join();
 
-		//for (u64 i = 0; i < baseOTs.receiver_outputs.size(); ++i)
-		//{
-		//    std::cout << sender.GetMessage(i, 0) << " " << sender.GetMessage(i, 1) << "\n" << recv.GetMessage(1) << "  " << recv.mChoiceBits[i] << std::endl;
-		//}
 
 		OT_100Receive_Test(choices, recvMsg, sendMsg);
 
@@ -668,122 +676,98 @@ namespace tests_libOTe
 				throw UnitTestFail();
 		}
 
-
 		senderChannel.close();
 		recvChannel.close();
 
-
-		ep1.stop();
-		ep0.stop();
-
-		ios.stop();
-
-		//senderNetMgr.Stop();
-		//recvNetMg
+#else
+		throw UnitTestSkipped("ENABLE_DELTA_KOS is not defined.");
+#endif
 	}
 
 	void DotExt_Iknp_Test()
 	{
+#ifdef ENABLE_IKNP
+
 		setThreadName("Sender");
 
-		IOService ios(0);
-		Session ep0(ios, "127.0.0.1", 1212, SessionMode::Server, "ep");
-		Session ep1(ios, "127.0.0.1", 1212, SessionMode::Client, "ep");
-		Channel senderChannel = ep1.addChannel("chl", "chl");
-		Channel recvChannel = ep0.addChannel("chl", "chl");
+		IOService ios;
+		Session ep0(ios, "127.0.0.1", 1212, SessionMode::Server);
+		Session ep1(ios, "127.0.0.1", 1212, SessionMode::Client);
+		Channel senderChannel = ep1.addChannel();
+		Channel recvChannel   = ep0.addChannel();
 
-		PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
-		PRNG prng1(_mm_set_epi32(4253233465, 334565, 0, 235));
+		PRNG prng0(block(4253465, 3434565));
+		PRNG prng1(block(42532335, 334565));
 
-		//std::default_random_engine gg;
-		//std::exponential_distribution<double> dd(3.5);
 		u64 numTrials = 4;
 		for (u64 t = 0; t < numTrials; ++t)
 		{
+			u64 numOTs = 4234;
 
-
-			u64 numOTs = t + 1;// prng0.get<u64>() % (1 << (t + 1)) + 10;
-
-			u64 s = 40;
-
-			std::vector<block> recvMsg(numOTs), baseRecv(128 + s);
-			std::vector<std::array<block, 2>> sendMsg(numOTs), baseSend(128 + s);
+			std::vector<block> recvMsg(numOTs), baseRecv(128);
+			std::vector<std::array<block, 2>> sendMsg(numOTs), baseSend(128);
 			BitVector choices(numOTs);
 			choices.randomize(prng0);
-			//choices[0] = 1;
 
-			BitVector baseChoice(128 + s);
+			BitVector baseChoice(128);
 			baseChoice.randomize(prng0);
 
-			for (u64 i = 0; i < 128 + s; ++i)
+			for (u64 i = 0; i < 128; ++i)
 			{
 				baseSend[i][0] = prng0.get<block>();
 				baseSend[i][1] = prng0.get<block>();
 				baseRecv[i] = baseSend[i][baseChoice[i]];
 			}
 
+			IknpOtExtSender sender;
+			IknpOtExtReceiver recv;
 
-			IknpDotExtSender sender;
-			IknpDotExtReceiver recv;
-
-			//sender.mmChoices = choices;
+			sender.mHash = false;
+			recv.mHash = false;
 
 			std::thread thrd = std::thread([&]() {
 				setThreadName("receiver");
-
-
-
 				recv.setBaseOts(baseSend);
 				recv.receive(choices, recvMsg, prng0, recvChannel);
 			});
 
-			block delta = prng1.get<block>();
-			sender.setDelta(delta);
+			block delta = baseChoice.getArrayView<block>()[0];
+			//sender.setDelta(delta);
 			sender.setBaseOts(baseRecv, baseChoice);
 			sender.send(sendMsg, prng1, senderChannel);
 			thrd.join();
-
-			//for (u64 i = 0; i < baseOTs.receiver_outputs.size(); ++i)
-			//{
-			//    std::cout << sender.GetMessage(i, 0) << " " << sender.GetMessage(i, 1) << "\n" << recv.GetMessage(1) << "  " << recv.mChoiceBits[i] << std::endl;
-			//}
 
 			OT_100Receive_Test(choices, recvMsg, sendMsg);
 
 			for (auto& s : sendMsg)
 			{
 				if (neq(s[0] ^ delta, s[1]))
-					throw UnitTestFail();
+					throw UnitTestFail(LOCATION);
 			}
-
 		}
 
 		senderChannel.close();
 		recvChannel.close();
-
-
-		ep1.stop();
-		ep0.stop();
-
-		ios.stop();
-
-		//senderNetMgr.Stop();
-		//recvNetMg
+#else
+		throw UnitTestSkipped("ENABLE_IKNP is not defined.");
+#endif
 	}
 
 
 	void OtExt_Iknp_Test()
 	{
+#ifdef ENABLE_IKNP
+
 		setThreadName("Sender");
 
-		IOService ios(0);
-		Session ep0(ios, "127.0.0.1", 1212, SessionMode::Server, "ep");
-		Session ep1(ios, "127.0.0.1", 1212, SessionMode::Client, "ep");
-		Channel senderChannel = ep1.addChannel("chl", "chl");
-		Channel recvChannel = ep0.addChannel("chl", "chl");
+		IOService ios;
+		Session ep0(ios, "127.0.0.1", 1212, SessionMode::Server);
+		Session ep1(ios, "127.0.0.1", 1212, SessionMode::Client);
+		Channel senderChannel = ep1.addChannel();
+		Channel recvChannel   = ep0.addChannel();
 
-		PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
-		PRNG prng1(_mm_set_epi32(4253233465, 334565, 0, 235));
+		PRNG prng0(block(4253465, 3434565));
+		PRNG prng1(block(42532335, 334565));
 
 		u64 numOTs = 200;
 
@@ -803,46 +787,19 @@ namespace tests_libOTe
 		IknpOtExtReceiver recv;
 
 		std::thread thrd = std::thread([&]() {
-
-
-
 			recv.setBaseOts(baseSend);
 			recv.receive(choices, recvMsg, prng0, recvChannel);
 		});
 
-
-
-		//{
-		//    std::lock_guard<std::mutex> lock(Log::mMtx);
-		//    for (u64 i = 0; i < baseOTs.receiver_outputs.size(); ++i)
-		//    {
-		//        std::cout << "i  " << baseOTs.receiver_outputs[i] << " " << (int)baseOTs.receiver_inputs[i] << std::endl;
-		//    }
-		//}
 		sender.setBaseOts(baseRecv, baseChoice);
 		sender.send(sendMsg, prng1, senderChannel);
 		thrd.join();
 
-		//for (u64 i = 0; i < baseOTs.receiver_outputs.size(); ++i)
-		//{
-		//    std::cout << sender.GetMessage(i, 0) << " " << sender.GetMessage(i, 1) << "\n" << recv.GetMessage(1) << "  " << recv.mChoiceBits[i] << std::endl;
-		//}
 		OT_100Receive_Test(choices, recvMsg, sendMsg);
 
-
-
-
-		senderChannel.close();
-		recvChannel.close();
-
-
-		ep1.stop();
-		ep0.stop();
-
-		ios.stop();
-
-		//senderNetMgr.Stop();
-		//recvNetMg
+#else
+		throw UnitTestSkipped("ENABLE_IKNP is not defined.");
+#endif
 	}
 
 

@@ -1,4 +1,5 @@
 #include "AknOtReceiver.h"
+#ifdef ENABLE_AKN
 #include <cryptoTools/Common/Log.h>
 #include <cryptoTools/Common/Timer.h>
 #include <cryptoTools/Crypto/RandomOracle.h>
@@ -232,7 +233,7 @@ namespace osuCrypto
                     //memcpy(iter, threadsZeroOnesList[i][1].data(), threadsZeroOnesList[i][1].size() * sizeof(u64));
                     iter += threadsZeroOnesList[i][1].size();
                 }
-                std::random_shuffle(mOnes.begin(), mOnes.begin(), prng);
+                std::shuffle(mOnes.begin(), mOnes.begin(), prng);
 
             }
 
@@ -259,7 +260,7 @@ namespace osuCrypto
                     iter += threadsZeroOnesList[i][0].size();
                 }
 
-                std::random_shuffle(mZeros.begin(), mZeros.begin(), prng);
+                std::shuffle(mZeros.begin(), mZeros.begin(), prng);
             }
         };
 
@@ -272,7 +273,7 @@ namespace osuCrypto
         for (u64 i = 0; i < thrds.size(); ++i)
         {
             // split the OT to that it can be multi threaded.
-            parOts[i] = std::move(ots.split());
+            parOts[i] = (ots.split());
 
             // create a seed for it.
             block seed = prng.get<block>();
@@ -296,3 +297,4 @@ namespace osuCrypto
         // all done
     }
 }
+#endif

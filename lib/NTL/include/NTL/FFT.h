@@ -127,25 +127,6 @@ void UseFFTPrime(long index);
 // allocates and initializes information for FFT prime
 
 
-
-#define NTL_FFT_RDUP (4)
-
-inline
-long FFTRoundUp(long xn, long k)
-{
-   long n = 1L << k;
-   if (xn <= 0) return n;
-   // default truncation value of 0 gets converted to n
-
-   xn = ((xn+((1L << NTL_FFT_RDUP)-1)) >> NTL_FFT_RDUP) << NTL_FFT_RDUP; 
-   if (xn > n - (n >> 3)) xn = n;
-   // truncation just a bit below n does not really help
-   // at all, and can sometimes slow things down, so round up 
-   // to n
-
-   return xn;
-}
-
 void new_fft(long* A, const long* a, long k, 
              const FFTPrimeInfo& info, long yn, long xn);
 

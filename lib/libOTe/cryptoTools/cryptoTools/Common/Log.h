@@ -14,6 +14,13 @@ namespace osuCrypto
     class Log
     {
     public:
+        Log() = default;
+        Log(const Log& c) {
+
+            std::lock_guard<std::mutex>l(const_cast<std::mutex&>(c.mLock));
+            mMessages = c.mMessages;
+        }
+
         std::vector<std::pair<u64, std::string>> mMessages;
         std::mutex mLock;
 
@@ -34,9 +41,38 @@ namespace osuCrypto
         std::lock_guard<std::mutex>l(log.mLock);
         for (u64 i = 0; i < log.mMessages.size(); ++i)
         {
-            o << "[" << i << ", " << log.mMessages[i].first << "]  " << log.mMessages[i].second << std::endl;
+            o << "[" << i << ", " << log.mMessages[i].first / 1000.0 << "ms ]  " << log.mMessages[i].second << std::endl;
         }
 
+        return o;
+    }
+    class LogAdapter
+    {
+    public:
+        Log* mLog = nullptr;
+
+        LogAdapter() = default;
+        LogAdapter(const LogAdapter&) = default;
+        LogAdapter(Log& log) : mLog(&log) {}
+
+        void push(const std::string& msg)
+        {
+            if (mLog)
+                mLog->push(msg);
+        }
+
+        void setLog(Log& log)
+        {
+            mLog = &log;
+        }
+    };
+
+    inline std::ostream& operator<<(std::ostream& o, LogAdapter& log)
+    {
+        if (log.mLog)
+            o << *log.mLog;
+        else
+            o << "{null log}";
         return o;
     }
 
@@ -125,7 +161,12 @@ namespace osuCrypto
         {
             ostreamLock r(out);
             r << v;
+
+#ifndef NO_RETURN_ELISION
+            return r;
+#else
             return std::move(r);
+#endif
         }
 
         template<typename T>
@@ -133,25 +174,41 @@ namespace osuCrypto
         {
             ostreamLock r(out);
             r << v;
+#ifndef NO_RETURN_ELISION
+            return r;
+#else
             return std::move(r);
+#endif
         }
         ostreamLock operator<< (std::ostream& (*v)(std::ostream&))
         {
             ostreamLock r(out);
             r << v;
+#ifndef NO_RETURN_ELISION
+            return r;
+#else
             return std::move(r);
+#endif
         }
         ostreamLock operator<< (std::ios& (*v)(std::ios&))
         {
             ostreamLock r(out);
             r << v;
+#ifndef NO_RETURN_ELISION
+            return r;
+#else
             return std::move(r);
+#endif
         }
         ostreamLock operator<< (std::ios_base& (*v)(std::ios_base&))
         {
             ostreamLock r(out);
             r << v;
+#ifndef NO_RETURN_ELISION
+            return r;
+#else
             return std::move(r);
+#endif
         }
     };
     extern ostreamLocker lout;

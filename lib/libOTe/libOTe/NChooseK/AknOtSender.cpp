@@ -1,4 +1,6 @@
 #include "AknOtSender.h"
+#ifdef ENABLE_AKN
+
 #include "libOTe/Base/BaseOT.h"
 #include <cryptoTools/Common/Log.h>
 #include <cryptoTools/Common/Timer.h>
@@ -157,7 +159,7 @@ namespace osuCrypto
 
         for (u64 i = 0; i < parOts.size(); ++i)
         {
-            parOts[i] = std::move(ots.split());
+            parOts[i] = (ots.split());
             auto seed = prng.get<block>();
             parThrds[i] = std::thread([&,seed, i]()
             {
@@ -185,3 +187,4 @@ namespace osuCrypto
 
     }
 }
+#endif

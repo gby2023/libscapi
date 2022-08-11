@@ -29,6 +29,9 @@
 #include "libOTe_Tests/testData/code640_BCH511.h"
 #include "libOTe_Tests/testData/code1280_BCH511.h"
 #include <cryptoTools/Common/TestCollection.h>
+#include "libOTe/NChooseOne/NcoOtExt.h"
+#include "cryptoTools/Common/BitVector.h"
+#include "cryptoTools/Crypto/PRNG.h"
 
 using namespace osuCrypto;
 
@@ -72,7 +75,6 @@ namespace tests_libOTe
         PRNG &prng1,
         Channel &recvChl)
     {
-
 
         u64 stepSize = 33;
         std::vector<block> inputs(stepSize);
@@ -152,13 +154,14 @@ namespace tests_libOTe
 
     void NcoOt_Kkrt_Test()
     {
+#ifdef ENABLE_KKRT
         setThreadName("Sender");
-
-        PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
-        PRNG prng1(_mm_set_epi32(4253465, 3434565, 234435, 23987025));
+        
+        PRNG prng0(block(4253465, 3434565));
+        PRNG prng1(block(42532335, 334565));
 
         // The total number that we wish to do
-        u64 numOTs = 1030;
+        u64 numOTs = 128;
 
         KkrtNcoOtSender sender;
         KkrtNcoOtReceiver recv;
@@ -185,12 +188,11 @@ namespace tests_libOTe
         }
 
         // set up networking
-        std::string name = "n";
         IOService ios;
-        Session ep0(ios, "localhost", 1212, SessionMode::Server, name);
-        Session ep1(ios, "localhost", 1212, SessionMode::Client, name);
-        auto recvChl = ep1.addChannel(name, name);
-        auto sendChl = ep0.addChannel(name, name);
+        Session ep0(ios, "localhost", 1212, SessionMode::Server);
+        Session ep1(ios, "localhost", 1212, SessionMode::Client);
+        auto recvChl = ep1.addChannel();
+        auto sendChl = ep0.addChannel();
 
 
         // set the base OTs
@@ -215,10 +217,9 @@ namespace tests_libOTe
 
                 prng0.get(inputs.data(), inputs.size());
 
-
-                for (u64 k = 0; k < stepSize; ++k)
+                auto ss = std::min<u64>(stepSize, numOTs - i);
+                for (u64 k = 0; k < ss; ++k)
                 {
-
                     // The receiver MUST encode before the sender. Here we are only calling encode(...) 
                     // for a single i. But the receiver can also encode many i, but should only make one 
                     // call to encode for any given value of i.
@@ -229,14 +230,15 @@ namespace tests_libOTe
                 // If we had made more or less calls to encode above (for contigious i), then we should replace
                 // stepSize with however many calls we made. In an extreme case, the reciever can perform
                 // encode for i \in {0, ..., numOTs - 1}  and then call sendCorrection(recvChl, numOTs).
-                recv.sendCorrection(recvChl, stepSize);
+                recv.sendCorrection(recvChl, ss);
 
                 // receive the next stepSize correction values. This allows the sender to now call encode
                 // on the next stepSize OTs.
-                sender.recvCorrection(sendChl, stepSize);
+                sender.recvCorrection(sendChl, ss);
 
-                for (u64 k = 0; k < stepSize; ++k)
+                for (u64 k = 0; k < ss; ++k)
                 {
+   
                     // the sender can now call encode(i, ...) for k \in {0, ..., i}. 
                     // Lets encode the same input and then we should expect to
                     // get the same encoding.
@@ -301,32 +303,26 @@ namespace tests_libOTe
             }
 
         }
-
-        sendChl.close();
-        recvChl.close();
-
-        ep0.stop();
-        ep1.stop();
-        ios.stop();
+#else
+throw UnitTestSkipped("ENALBE_KKRT is not defined.");
+#endif
     }
 
     void NcoOt_Oos_Test()
     {
+#ifdef ENABLE_OOS
         setThreadName("Sender");
 
-        PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
-        PRNG prng1(_mm_set_epi32(4253465, 3434565, 234435, 23987025));
+        PRNG prng0(block(4253465, 3434565));
+        PRNG prng1(block(42532335, 334565));
 
-        u64 numOTs = 128 * 2;
+        u64 numOTs = 128 ;
 
-
-        std::string name = "n";
         IOService ios(0);
-        Session ep0(ios, "localhost", 1212, SessionMode::Server, name);
-        Session ep1(ios, "localhost", 1212, SessionMode::Client, name);
-        auto recvChl = ep1.addChannel(name, name);
-        auto sendChl = ep0.addChannel(name, name);
-
+        Session ep0(ios, "localhost", 1212, SessionMode::Server);
+        Session ep1(ios, "localhost", 1212, SessionMode::Client);
+        auto recvChl = ep1.addChannel();
+        auto sendChl = ep0.addChannel();
 
         OosNcoOtSender sender;
         OosNcoOtReceiver recv;
@@ -337,18 +333,10 @@ namespace tests_libOTe
         if (1)
         {
             setBaseOts(sender, recv, sendChl, recvChl);
-            //for (u64 i = 0; i < sender.mBaseChoiceBits.size(); ++i)
-            //{
-            //    auto b = sender.mBaseChoiceBits[i];
-            //    if (neq(sender.mGens[i].getSeed(), recv.mGens[i][b].getSeed()))
-            //        throw RTE_LOC;
-            //}
         }
         else
         {
             u64 baseCount = sender.getBaseOTCount();
-            //u64 codeSize = (baseCount + 127) / 128;
-
             std::vector<block> baseRecv(baseCount);
             std::vector<std::array<block, 2>> baseSend(baseCount);
             BitVector baseChoice(baseCount);
@@ -377,7 +365,6 @@ namespace tests_libOTe
         }
         catch (...)
         {
-            //sendChl.mBase->mLog;
         }
         v.get();
 
@@ -386,16 +373,20 @@ namespace tests_libOTe
 
         testNco(*sender2, numOTs, prng0, sendChl, *recv2, prng1, recvChl);
 
+#else
+        throw UnitTestSkipped("ENALBE_OOS is not defined.");
+#endif
     }
 
 
     void NcoOt_Rr17_Test()
     {
-
+#ifdef ENABLE_RR
         setThreadName("Sender");
 
-        PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
-        PRNG prng1(_mm_set_epi32(4253465, 3434565, 234435, 23987025));
+
+        PRNG prng0(block(4253465, 3434565));
+        PRNG prng1(block(42532335, 334565));
 
         u64 numOTs = 80;
         u64 inputSize = 40;
@@ -406,36 +397,33 @@ namespace tests_libOTe
         sender.configure(true, 40, inputSize);
         recv.configure(true, 40, inputSize);
 
-        std::string name = "n";
-        IOService ios(0);
-        Session ep0(ios, "localhost", 1212, SessionMode::Server, name);
-        Session ep1(ios, "localhost", 1212, SessionMode::Client, name);
-        auto recvChl = ep1.addChannel(name, name);
-        auto sendChl = ep0.addChannel(name, name);
-
-
-
+        IOService ios;
+        Session ep0(ios, "localhost", 1212, SessionMode::Server);
+        Session ep1(ios, "localhost", 1212, SessionMode::Client);
+        auto recvChl = ep1.addChannel();
+        auto sendChl = ep0.addChannel();
 
         setBaseOts(sender, recv, sendChl, recvChl);
-
         testNco(sender, numOTs, prng0, sendChl, recv, prng1, recvChl);
-
 
         auto sender2 = sender.split();
         auto recv2 = recv.split();
 
         testNco(*sender2, numOTs, prng0, sendChl, *recv2, prng1, recvChl);
 
+#else
+        throw UnitTestSkipped("ENALBE_RR is not defined.");
+#endif
     }
 
 
     void NcoOt_chosen()
     {
-
+#ifdef ENABLE_OOS
         setThreadName("Sender");
 
-        PRNG prng0(_mm_set_epi32(4253465, 3434565, 234435, 23987045));
-        PRNG prng1(_mm_set_epi32(4253465, 3434565, 234435, 23987025));
+        PRNG prng0(block(4253465, 3434565));
+        PRNG prng1(block(42532335, 334565));
 
         u64 numOTs = 80;
         u64 inputSize = 8;
@@ -446,12 +434,11 @@ namespace tests_libOTe
         sender.configure(true, 40, inputSize);
         recv.configure(true, 40, inputSize);
 
-        std::string name = "n";
-        IOService ios(0);
-        Session ep0(ios, "localhost", 1212, SessionMode::Server, name);
-        Session ep1(ios, "localhost", 1212, SessionMode::Client, name);
-        auto recvChl = ep1.addChannel(name, name);
-        auto sendChl = ep0.addChannel(name, name);
+        IOService ios;
+        Session ep0(ios, "localhost", 1212, SessionMode::Server);
+        Session ep1(ios, "localhost", 1212, SessionMode::Client);
+        auto recvChl = ep1.addChannel();
+        auto sendChl = ep0.addChannel();
 
         setBaseOts(sender, recv, sendChl, recvChl);
 
@@ -481,13 +468,16 @@ namespace tests_libOTe
                 throw UnitTestFail("bad message " LOCATION);
         }
 
+#else
+        throw UnitTestSkipped("ENALBE_OOS is not defined.");
+#endif
     }
 
 
 
     void NcoOt_genBaseOts_Test()
     {
-#ifdef LIBOTE_HAS_BASE_OT
+#if defined(LIBOTE_HAS_BASE_OT) && defined(ENABLE_OOS)
         IOService ios(0);
         Session ep0(ios, "127.0.0.1", 1212, SessionMode::Server);
         Session ep1(ios, "127.0.0.1", 1212, SessionMode::Client);
@@ -519,7 +509,7 @@ namespace tests_libOTe
                 throw RTE_LOC;
         }
 #else
-        throw UnitTestSkipped("no base OTs are enabled ");
+        throw UnitTestSkipped("no base OTs are enabled or ENABLE_OOS is not defined");
 #endif
     }
 
@@ -554,7 +544,7 @@ namespace tests_libOTe
         std::vector<block>
             plainText(code.plaintextBlkSize(), AllOneBlock),
             codeword(code.codewordBlkSize());
-		//gsl::span<u8>ss(plainText);
+		//span<u8>ss(plainText);
         code.encode(plainText, codeword);
 
         BitVector cw((u8*)codeword.data(), code.codewordBitSize());

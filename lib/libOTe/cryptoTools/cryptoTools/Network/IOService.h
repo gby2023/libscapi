@@ -1,10 +1,14 @@
 #pragma once
 // This file and the associated implementation has been placed in the public domain, waiving all copyright. No restrictions are placed on its use. 
+#include <cryptoTools/Common/config.h>
+#ifdef ENABLE_BOOST
+
 #include <cryptoTools/Common/Defines.h>
 #include <cryptoTools/Network/SocketAdapter.h>
 #include <cryptoTools/Network/Session.h>
 #include <cryptoTools/Network/IoBuffer.h>
 #include <cryptoTools/Common/Log.h>
+#include <unordered_set>
 
 # if defined(_WINSOCKAPI_) && !defined(_WINSOCK2API_)
 #  error WinSock.h has already been included. Please move the boost headers above the WinNet*.h headers
@@ -40,8 +44,19 @@ namespace osuCrypto
     {
         friend class Channel;
         friend class Session;
-
     public:
+#ifdef ENABLE_NET_LOG
+        Log mLog;
+        std::mutex mWorkerMtx;
+        std::unordered_map<void*, std::string> mWorkerLog;
+#endif
+        //std::unordered_set<ChannelBase*> mChannels;
+
+        block mRandSeed;
+        std::atomic<u64> mSeedIndex;
+
+        // returns a unformly random block.
+        block getRandom();
 
         IOService(const IOService&) = delete;
 
@@ -53,10 +68,10 @@ namespace osuCrypto
         boost::asio::io_service mIoService;
 		boost::asio::strand<boost::asio::io_service::executor_type> mStrand;
 
-        std::unique_ptr<boost::asio::io_service::work> mWorker;
+        Work mWorker;
 
-        std::list<std::thread> mWorkerThrds;
-
+        std::list<std::pair<std::thread, std::promise<void>>> mWorkerThrds;
+        
         // The list of acceptor objects that hold state about the ports that are being listened to. 
         std::list<Acceptor> mAcceptors;
 
@@ -73,12 +88,14 @@ namespace osuCrypto
 
         void printError(std::string msg);
 
-        bool mPrint = true;
+        void workUntil(std::future<void>& fut);
 
-#ifdef ENABLE_NET_LOG
-        Log mLog;
-#endif
-    };
+        operator boost::asio::io_context&() {
+            return mIoService;
+        }
+
+        bool mPrint = true;
+    }; 
 
 
 	namespace details
@@ -92,7 +109,7 @@ namespace osuCrypto
             boost::asio::ip::tcp::socket mSock;
             std::string mBuff;
 //#ifdef ENABLE_NET_LOG
-            u64 mIdx;
+            u64 mIdx = 0;
 //#endif
         };
 
@@ -112,6 +129,8 @@ namespace osuCrypto
 		{
 			SocketGroup() = default;
 			SocketGroup(SocketGroup&&) = default;
+
+            ~SocketGroup();
 
             // returns whether this socket group has a socket with a matching 
             // name session name and channel name.
@@ -137,11 +156,12 @@ namespace osuCrypto
 		struct SessionGroup
 		{
 			SessionGroup() = default;
+            ~SessionGroup();
 
             // return true if there are active channels waiting for a socket
             // or if there is an active session associated with this group.
 			bool hasSubscriptions() const {
-				return mChannels.size() || mBase.expired() == false;
+                return mChannels.size() || mBase.expired() == false;// || mPendingChls;
 			}
 
             // Add a newly accepted socket to this group. If there is a matching
@@ -178,6 +198,8 @@ namespace osuCrypto
 
             // The list of unmatched Channels what are associated with this session.
 			std::list<std::shared_ptr<ChannelBase>> mChannels;
+
+            std::list<std::shared_ptr<details::SessionGroup>>::iterator mSelfIter;
 		};
 	}
 
@@ -210,7 +232,7 @@ namespace osuCrypto
         // completed the initial handshake which allows them to be named.
 		std::list<details::PendingSocket> mPendingSockets;
 		
-		typedef std::list<details::SessionGroup> GroupList;
+		typedef std::list<std::shared_ptr<details::SessionGroup>> GroupList;
 		typedef std::list<details::SocketGroup> SocketGroupList;
 
         // The full list of unmatched named sockets groups associated with this Acceptor. 
@@ -250,7 +272,7 @@ namespace osuCrypto
 
         // Remove this channel from the list of channels awaiting
         // a matching socket. effectively undoes asyncGetSocket(...);
-		void cancelPendingChannel(ChannelBase* chl);
+		void cancelPendingChannel(std::shared_ptr<ChannelBase> chl);
 
         // return true if any sessions are still accepting connections or
         // if there are still some channels with unmatched sockets.
@@ -262,7 +284,9 @@ namespace osuCrypto
 
         // Make this session as interested in accepting connecctions. Will create
         // a SessionGroup.
-		void subscribe(std::shared_ptr<SessionBase>& session);
+		void asyncSubscribe(std::shared_ptr<SessionBase>& session, completion_handle ch);
+
+        //void subscribe(std::shared_ptr<ChannelBase>& chl);
 
         // returns a pointer to the session group that has the provided name and 
         // seesion ID. If no such socket group exists, one is created and returned.
@@ -279,6 +303,12 @@ namespace osuCrypto
 		bool isListening() const { return mListening; };
 
 
+        void sendServerMessage(std::list<details::PendingSocket>::iterator iter);
+
+        void recvConnectionString(std::list<details::PendingSocket>::iterator iter);
+        void erasePendingSocket(std::list<details::PendingSocket>::iterator iter);
+
+
 		std::string print() const;
 #ifdef ENABLE_NET_LOG
         Log mLog;
@@ -287,3 +317,4 @@ namespace osuCrypto
 	};
 
 }
+#endif

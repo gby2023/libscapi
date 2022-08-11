@@ -98,6 +98,14 @@ int main()
    cout << "NTL_SAFE_VECTORS\n";
 #endif
 
+#ifdef NTL_ENABLE_AVX_FFT
+   cout << "NTL_ENABLE_AVX_FFT\n";
+#endif
+
+#ifdef NTL_AVOID_AVX512
+   cout << "NTL_AVOID_AVX512\n";
+#endif
+
 #ifdef NTL_RANGE_CHECK
    cout << "NTL_RANGE_CHECK\n";
 #endif
@@ -177,6 +185,11 @@ cout << "Performance Options:\n";
 
 #ifdef NTL_GF2X_NOINLINE
    cout << "NTL_GF2X_NOINLINE\n";
+#endif
+
+
+#ifdef NTL_RANDOM_AES256CTR
+   cout << "NTL_RANDOM_AES256CTR\n";
 #endif
 
 

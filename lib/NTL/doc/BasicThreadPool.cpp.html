@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-<title>~/ntl-staging/ntl-11.0.0updated/doc/BasicThreadPool.cpp.html</title>
+<title>~/ntl-11.4.2/doc/BasicThreadPool.cpp.html</title>
 <meta name="Generator" content="Vim/8.0">
 <meta name="plugin-version" content="vim7.4_v2">
 <meta name="syntax" content="cpp">
@@ -207,6 +207,130 @@ body { font-family: monospace; color: #000000; background-color: #ffffff; }
 <span class="Comment">// execution. For example, on very small problems the runtime overhead of a</span>
 <span class="Comment">// parallel for loop may not be worthwhile, or in other situations parallel</span>
 <span class="Comment">// execution could cause incorrect behavior.  See below for details.</span>
+
+
+<span class="Comment">// ********************** Other useful patterns *************************</span>
+<span class="Comment">//</span>
+<span class="Comment">// You can use these tools together with some other elements of the</span>
+<span class="Comment">// C++11 standard library to implement some other useful patterns.</span>
+<span class="Comment">//</span>
+<span class="Comment">// ****** Accumulation:</span>
+<span class="Comment">//</span>
+<span class="Comment">// Consider again the example above of computing an inner product.</span>
+<span class="Comment">// This can be implemented more easily as follows:</span>
+
+   ZZ InnerProd(<span class="Type">const</span> ZZ *a, <span class="Type">const</span> ZZ *b, <span class="Type">long</span> n)
+   {
+      ZZ sum;
+      sum = <span class="Constant">0</span>;
+
+      std::mutex sum_mutex;
+
+      NTL_EXEC_RANGE(n, first, last)
+
+         ZZ acc;
+         acc = <span class="Constant">0</span>;
+
+         <span class="Statement">for</span> (<span class="Type">long</span> i = first; i &lt; last; i++)
+             MulAddTo(acc, a[i], b[i]);
+
+         std::lock_guard&lt;std::mutex&gt; guard(sum_mutex);
+         sum += acc;
+
+      NTL_EXEC_RANGE_END
+
+      <span class="Statement">return</span> sum;
+   }
+
+<span class="Comment">// There is some extra run-time overead, but in many cases this is negligible.</span>
+<span class="Comment">// Also, unlike the code above for computing an inner product, this code will</span>
+<span class="Comment">// require C++11.</span>
+
+<span class="Comment">// ****** dynamic scheduling</span>
+<span class="Comment">//</span>
+<span class="Comment">// Suppose you need to perform parallel tasks i = 0..n-1, but the tasks may</span>
+<span class="Comment">// vary greatly in their run time.   A more efficient approach than a simple</span>
+<span class="Comment">// NTL_EXEC_RANGE is as follows:</span>
+
+   <span class="Type">long</span> nt = AvailableThreads();
+   std::atomic&lt;<span class="Type">long</span>&gt; counter(n);
+
+   NTL_EXEC_INDEX(nt, index)
+
+      <span class="Type">long</span> i;
+      <span class="Statement">while</span> ((i = --counter) &gt;= <span class="Constant">0</span>) {
+         <span class="Comment">// perform task i</span>
+
+         ...
+      }
+
+   NTL_EXEC_INDEX_END
+
+<span class="Comment">// Each time the body of the loop is executed, a different task i = 0..n-1 is</span>
+<span class="Comment">// performed.</span>
+
+
+<span class="Comment">// ********************** Simple parallel divide and conquer ************</span>
+<span class="Comment">//</span>
+<span class="Comment">// Some tools are provided for parallelizing simple divide and conquer</span>
+<span class="Comment">// algorithms.  The interface for this set of tools is still experimental</span>
+<span class="Comment">// and subject to change (but hopefully not).</span>
+<span class="Comment">//</span>
+<span class="Comment">// Suppose you have a recursive divide and conquer algorithm:</span>
+
+   <span class="Type">void</span> rec_alg(...)
+   {
+      ...
+      <span class="Comment">// two recursive invocations that can run in parallel</span>
+      rec_alg(...call <span class="Constant">0.</span>..);
+      rec_alg(...call <span class="Constant">1</span>...);
+      ...
+   }
+
+<span class="Comment">// and this algorithm is invoked initially as </span>
+
+   <span class="Type">void</span> alg(...)
+   {
+      rec_alg(...initial call...);
+   }
+
+<span class="Comment">// Then the following recipe will paralelize it:</span>
+
+   <span class="Type">void</span> rec_alg(..., RecursiveThreadPool *pool)
+   {
+      ...
+      NTL_EXEC_DIVIDE(seq, pool, helper, load,
+         rec_alg(...call <span class="Constant">0.</span>.., helper.subpool(<span class="Constant">0</span>)),
+         rec_alg(...call <span class="Constant">1</span>..., helper.subpool(<span class="Constant">1</span>)) )
+      ...
+   }
+
+   <span class="Type">void</span> alg(...)
+   {
+      rec_alg(...initial call..., NTL_INIT_DIVIDE);
+   }
+
+<span class="Comment">// Here, seq is a boolean &quot;guard&quot; value: if true, the two recursive calls will</span>
+<span class="Comment">// run sequentially, as usual.  Also, load is a floating point number, which</span>
+<span class="Comment">// represents the fraction of threads that should be assigned to call 0.</span>
+<span class="Comment">// If the load should be equally balanced, then load=0.5 is a good choice.</span>
+<span class="Comment">// The name helper is the name of an auxilliary object, which will be in the</span>
+<span class="Comment">// scope of the two recursive calls.  It supplies a method helper.concurrent(),</span>
+<span class="Comment">// which returns true if the two calls are being run concurrently, and false</span>
+<span class="Comment">// otherwise.</span>
+
+<span class="Comment">// If thread-boosting is not enabled, these macros will revert to the normal</span>
+<span class="Comment">// sequential execution, with no overhead.  If thread-boosting is enabled, then</span>
+<span class="Comment">// the two calls may or may not run concurrently, depending on a number of</span>
+<span class="Comment">// factors.  If they do run concurrently, call 0 will run on the current</span>
+<span class="Comment">// thread, while call 1 will run on another thread; in addition, when the</span>
+<span class="Comment">// current thread finishes execution of call 0, it will wait for the execution</span>
+<span class="Comment">// of call 1 on the other thread to finish before continuing any further.</span>
+
+<span class="Comment">// As one can see, the use cases here are fairly limited to those in which you</span>
+<span class="Comment">// have a recursive algorithm that calls itself exactly twice.  One example of</span>
+<span class="Comment">// this is QuickSort.  Another example is a recursive FFT.</span>
+
 
 
 <span class="Comment">// ************************** Thread Pools ******************************</span>

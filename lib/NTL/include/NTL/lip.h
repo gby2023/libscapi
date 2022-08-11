@@ -43,9 +43,13 @@ typedef _ntl_gbigint_body *_ntl_gbigint;
 #endif
 
 
+#if (defined(NTL_ENABLE_AVX_FFT) && (NTL_SP_NBITS > 50))
+#undef NTL_SP_NBITS
+#define NTL_SP_NBITS (50)
+#endif
 
 
-#elif (NTL_LONGDOUBLE_OK && !defined(NTL_LEGACY_SP_MULMOD) && !defined(NTL_DISABLE_LONGDOUBLE))
+#elif (NTL_LONGDOUBLE_OK && !defined(NTL_LEGACY_SP_MULMOD) && !defined(NTL_DISABLE_LONGDOUBLE) && !defined(NTL_ENABLE_AVX_FFT))
 
 #define NTL_LONGDOUBLE_SP_MULMOD
 
@@ -143,6 +147,30 @@ long _ntl_gdigit(_ntl_gbigint a, long i);
 #endif
 
 
+// Some sanity checks on NTL_SP_NBITS...
+
+// First check that NTL_SP_NBITS >= 30, as the documentation
+// guarantees this.  This should only be a problem if GMP
+// uses some really funny nail bits.
+
+#if (NTL_SP_NBITS < 30)
+#error "NTL_SP_NBITS too small"
+#endif
+
+// Second, check that NTL_BITS_PER_LONG-NTL_SP_NBITS == 2 or 
+// NTL_BITS_PER_LONG-NTL_SP_NBITS >= 4.
+// Some code in sp_arith.h seems to rely on this assumption.
+// Again, this should only be a problem if GMP
+// uses some really funny nail bits.
+
+#if (NTL_BITS_PER_LONG-NTL_SP_NBITS != 2 && NTL_BITS_PER_LONG-NTL_SP_NBITS < 4)
+#error "NTL_SP_NBITS is invalid"
+#endif
+
+
+
+
+
 
 // DIRT: These are copied from lip.cpp file
 
@@ -171,6 +199,9 @@ inline long _ntl_PINNED(_ntl_gbigint p)
 
     void _ntl_gsadd(_ntl_gbigint a, long d, _ntl_gbigint *b);
        /* *b = a + d */
+
+    void _ntl_gssub(_ntl_gbigint a, long d, _ntl_gbigint *b);
+       /* *b = a - d */
 
     void _ntl_gadd(_ntl_gbigint a, _ntl_gbigint b, _ntl_gbigint *c);
        /*  *c = a + b */
@@ -669,5 +700,26 @@ _ntl_quick_accum_muladd(_ntl_gbigint x, _ntl_gbigint y, long b);
 
 void
 _ntl_quick_accum_end(_ntl_gbigint x);
+
+// special-purpose routines for SSMul in ZZX
+
+#if (defined(NTL_GMP_LIP) && (NTL_ZZ_NBITS & (NTL_ZZ_NBITS-1)) == 0)
+// NOTE: the test (NTL_ZZ_NBITS & (NTL_ZZ_NBITS-1)) == 0
+// effectively checks that NTL_ZZ_NBITS is a power of two
+
+#define NTL_PROVIDES_SS_LIP_IMPL
+
+void
+_ntl_leftrotate(_ntl_gbigint *a, const _ntl_gbigint *b, long e,
+                _ntl_gbigint p, long n, _ntl_gbigint *scratch);
+
+void 
+_ntl_ss_addmod(_ntl_gbigint *x, const _ntl_gbigint *a,
+               const _ntl_gbigint *b, _ntl_gbigint p, long n);
+void 
+_ntl_ss_submod(_ntl_gbigint *x, const _ntl_gbigint *a,
+               const _ntl_gbigint *b, _ntl_gbigint p, long n);
+#endif
+
 
 #endif

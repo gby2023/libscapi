@@ -1,6 +1,15 @@
 #pragma once
+#include <cryptoTools/Common/config.h>
+#ifdef ENABLE_BOOST
+
 #include <boost/asio.hpp>
 #include <cryptoTools/Common/Defines.h>
+#include "IoBuffer.h"
+#include <iostream>
+#include "util.h"
+#include <queue>
+#include <mutex>
+
 
 namespace osuCrypto
 {
@@ -16,59 +25,62 @@ namespace osuCrypto
         virtual ~SocketInterface() {};
 
 
-        // REQURIED: Sends one or more buffers of data over the socket. See SocketAdapter<T> for an example.
+        // REQUIRED -- buffers contains a list of buffers that are allocated
+        // by the caller. The callee should recv data into those buffers. The
+        // callee should take a move of the callback fn. When the IO is complete
+        // the callee should call the callback fn.
+        // @buffers [output]: is the vector of buffers that should be recved.
+        // @fn [input]:   A call back that should be called on completion of the IO.
+        virtual void async_recv(
+            span<boost::asio::mutable_buffer> buffers, 
+            io_completion_handle&& fn) = 0;
+
+        // REQUIRED -- buffers contains a list of buffers that are allocated
+        // by the caller. The callee should send the data in those buffers. The
+        // callee should take a move of the callback fn. When the IO is complete
+        // the callee should call the callback fn.
         // @buffers [input]: is the vector of buffers that should be sent.
-        // @error [output]:   indicates what soemthing went wrong.
-        // @bytesTransfered [output]: the number of bytes that were sent.
-        //         should be all the buffers sizes but is some cases it may not be.
-        virtual void send(span<boost::asio::mutable_buffer> buffers, bool& error, u64& bytesTransfered) = 0;
+        // @fn [input]:   A call back that should be called on completion of the IO
+        virtual void async_send(span<boost::asio::mutable_buffer> buffers, io_completion_handle&& fn) = 0;
 
-        // REQURIED: Receive one or more buffers of data over the socket. See SocketAdapter<T> for an example.
-        // @buffers [output]: is the vector of buffers that should be sent.
-        // @error [output]:   indicates what soemthing went wrong.
-        // @bytesTransfered [output]: the number of bytes that were sent.
-        //         should be all the buffers sizes but is some cases it may not be.
-        virtual void recv(span<boost::asio::mutable_buffer> buffers, bool& error, u64& bytesTransfered) = 0;
-
-
-        //////////////////////////////////   OPTIONAL //////////////////////////////////
 
         // OPTIONAL -- no-op close is default. Will be called when all Channels that refernece it are destructed/
         virtual void close() {};
 
-        // OPTIONAL -- default implementation of async_recv is synchronous
-        // @buffers [output]: is the vector of buffers that should be sent.
-        // @fn [input]:   A call back that should be called on completion of the IO
-        virtual void async_recv(span<boost::asio::mutable_buffer> buffers, const std::function<void(const boost::system::error_code&, u64 bytesTransfered)>& fn)
-        {
-            bool error;
-            u64 bytesTransfered;
-            recv(buffers, error, bytesTransfered);
-            auto ec = error ? boost::system::errc::make_error_code(boost::system::errc::io_error) : boost::system::errc::make_error_code(boost::system::errc::success);
-            fn(ec, bytesTransfered);
+        virtual void cancel() {
+            std::cout << "Please override SocketInterface::cancel() if you"<<
+            " want to properly support cancel operations. Calling std::terminate() " << LOCATION << std::endl;
+            std::terminate();
         };
 
-        // OPTIONAL -- default implementation of async_send is synchronous
-        // @buffers [input]: is the vector of buffers that should be sent.
-        // @fn [input]:   A call back that should be called on completion of the IO
-        virtual void async_send(span<boost::asio::mutable_buffer> buffers, const std::function<void(const boost::system::error_code&, u64 bytesTransfered)>& fn)
+        // OPTIONAL -- no-op close is default. Will be called right after 
+        virtual void async_accept(completion_handle&& fn)
         {
-            bool error;
-            u64 bytesTransfered;
-            send(buffers, error, bytesTransfered);
-            auto ec = error ? boost::system::errc::make_error_code(boost::system::errc::io_error) : boost::system::errc::make_error_code(boost::system::errc::success);
-            fn(ec, bytesTransfered);
-        };
+            error_code ec;
+            fn(ec);
+        }
 
+        // OPTIONAL -- no-op close is default. Will be called when all Channels that refernece it are destructed/
+        virtual void async_connect(completion_handle&& fn)
+        {
+            error_code ec;
+            fn(ec);
+        }
 
+        // a function that gives this socket access to the IOService.
+        // This is called right after being handed to the Channel.
+        virtual void setIOService(IOService& ios) { }
     };
 
+
+    void post(IOService* ios, std::function<void()>&& fn);
 
     template<typename T>
     class SocketAdapter : public SocketInterface
     {
     public:
         T& mChl;
+        IOService* mIos = nullptr;
 
         SocketAdapter(T& chl)
             :mChl(chl)
@@ -76,47 +88,236 @@ namespace osuCrypto
 
         ~SocketAdapter() override {}
 
-        void send(span<boost::asio::mutable_buffer> buffers, bool& error, u64& bytesTransfered) override
-        {
-            bytesTransfered = 0;
-            for (u64 i = 0; i < u64( buffers.size()); ++i) {
-                try {
-                    // Use boost conversions to get normal pointer size
-                    auto data = boost::asio::buffer_cast<u8*>(buffers[i]);
-                    auto size = boost::asio::buffer_size(buffers[i]);
+        void setIOService(IOService& ios) override { mIos = &ios; }
 
-                    // may throw
-                    mChl.send(data, size);
-                    bytesTransfered += size;
+        void async_send(
+            span<boost::asio::mutable_buffer> buffers, 
+            io_completion_handle&& fn) override
+        {
+            post(mIos, [this, buffers, fn]() {
+                error_code ec;
+                u64 bytesTransfered = 0;
+                for (u64 i = 0; i < u64( buffers.size()); ++i) {
+                    try {
+                        // Use boost conversions to get normal pointer size
+                        auto data = boost::asio::buffer_cast<u8*>(buffers[i]);
+                        auto size = boost::asio::buffer_size(buffers[i]);
+
+                        // NOTE: I am assuming that this is blocking. 
+                        // Blocking here cause the networking code to deadlock 
+                        // in some senarios. E.g. all threads blocks on recving data
+                        // that is not being sent since the threads are blocks. 
+                        // Make sure to give the IOService enought threads or make this 
+                        // non blocking somehow.
+                        mChl.send(data, size);
+                        bytesTransfered += size;
+                    }
+                    catch (...) {
+                        ec = boost::system::errc::make_error_code(boost::system::errc::io_error);
+                        break;
+                    }
                 }
-                catch (...) {
-                    error = true;
-                    return;
-                }
-            }
-            error = false;
+
+                // once all the IO is sent (or error), we should call the callback.
+                fn(ec, bytesTransfered);
+            });
         }
 
-        void recv(span<boost::asio::mutable_buffer> buffers, bool& error, u64& bytesTransfered) override
+        void async_recv(
+            span<boost::asio::mutable_buffer> buffers, 
+            io_completion_handle&& fn) override
         {
-            bytesTransfered = 0;
-            for (u64 i = 0; i < u64(buffers.size()); ++i) {
-                try {
-                    // Use boost conversions to get normal pointer size
-                    auto data = boost::asio::buffer_cast<u8*>(buffers[i]);
-                    auto size = boost::asio::buffer_size(buffers[i]);
+            post(mIos, [this, buffers, fn]() {
+                error_code ec;
+                u64 bytesTransfered = 0;
+                for (u64 i = 0; i < u64(buffers.size()); ++i) {
+                    try {
+                        // Use boost conversions to get normal pointer size
+                        auto data = boost::asio::buffer_cast<u8*>(buffers[i]);
+                        auto size = boost::asio::buffer_size(buffers[i]);
 
-                    // may throw
-                    mChl.recv(data, size);
-                    bytesTransfered += size;
+                        // Note that I am assuming that this is blocking. 
+                        // Blocking here cause the networking code to deadlock 
+                        // in some senarios. E.g. all threads blocks on recving data
+                        // that is not being sent since the threads are blocks. 
+                        // Make sure to give the IOService enought threads or make this 
+                        // non blocking somehow.
+                        mChl.recv(data, size);
+                        bytesTransfered += size;
+                    }
+                    catch (...) {
+                        ec = boost::system::errc::make_error_code(boost::system::errc::io_error);
+                        break;
+                    }
                 }
-                catch (...) {
-                    error = true;
-                    return;
-                }
-            }
-            error = false;
+                fn(ec, bytesTransfered);
+            });
         }
+
+        void cancel() override
+        {
+            mChl.asyncCancel([](){});
+        }
+    };
+
+
+    class BasicAdapter
+    {
+    public:
+        BasicAdapter() = default;
+        BasicAdapter(const BasicAdapter&) = delete;
+        BasicAdapter(BasicAdapter&&) = delete;
+
+
+        struct Operation
+        {
+            enum Type
+            {
+                Recv,
+                Send,
+                Done
+            };
+
+            std::vector<span<u8>> mBuffers;
+            Type mType;
+
+            io_completion_handle mFn;
+
+            void finished()
+            {
+                auto size = 0ull;
+                for (auto& b : mBuffers)
+                    size += b.size();
+
+                mFn({}, size);
+                mFn = {};
+            }
+
+            void cancel()
+            {
+                error_code ec =
+                    boost::system::errc::make_error_code(boost::system::errc::operation_canceled);
+                mFn(ec, 0);
+                mFn = {};
+            }
+        };
+
+
+        std::condition_variable mCV;
+        std::mutex mMtx;
+
+        std::queue<Operation> mOps;
+
+
+        class Socket : public SocketInterface
+        {
+        public:
+            BasicAdapter* mSock;
+
+            Socket(BasicAdapter* sock)
+                :mSock(sock) {}
+
+            //////////////////////////////////   REQUIRED //////////////////////////////////
+
+            // REQURIED: must implement a distructor as it will be called via the SocketAdpater
+            ~Socket() {};
+
+
+            // REQUIRED -- buffers contains a list of buffers that are allocated
+            // by the caller. The callee should recv data into those buffers. The
+            // callee should take a move of the callback fn. When the IO is complete
+            // the callee should call the callback fn.
+            // @buffers [output]: is the vector of buffers that should be recved.
+            // @fn [input]:   A call back that should be called on completion of the IO.
+            void async_recv(
+                span<boost::asio::mutable_buffer> buffers,
+                io_completion_handle&& fn) override
+            {
+                Operation op;
+
+                for (auto buffer : buffers)
+                {
+                    auto b = span<u8>(boost::asio::buffer_cast<u8*>(buffer), boost::asio::buffer_size(buffer));
+                    op.mBuffers.push_back(b);
+                }
+                op.mType = Operation::Recv;
+                op.mFn = std::move(fn);
+
+                {
+                    std::unique_lock<std::mutex> lk(mSock->mMtx);
+                    mSock->mOps.emplace(std::move(op));
+                }
+                mSock->signal();
+            }
+
+            // REQUIRED -- buffers contains a list of buffers that are allocated
+            // by the caller. The callee should send the data in those buffers. The
+            // callee should take a move of the callback fn. When the IO is complete
+            // the callee should call the callback fn.
+            // @buffers [input]: is the vector of buffers that should be sent.
+            // @fn [input]:   A call back that should be called on completion of the IO
+            void async_send(
+                span<boost::asio::mutable_buffer> buffers,
+                io_completion_handle&& fn) override
+            {
+                Operation op;
+                for (auto buffer : buffers)
+                {
+                    auto b = span<u8>(boost::asio::buffer_cast<u8*>(buffer), boost::asio::buffer_size(buffer));
+                    op.mBuffers.push_back(b);
+                }
+                op.mType = Operation::Send;
+                op.mFn = std::move(fn);
+
+                {
+                    std::unique_lock<std::mutex> lk(mSock->mMtx);
+                    mSock->mOps.emplace(std::move(op));
+                }
+                mSock->signal();
+            }
+
+            void close() override {
+                Operation op;
+                op.mType = Operation::Done;
+
+                {
+                    std::unique_lock<std::mutex> lk(mSock->mMtx);
+                    mSock->mOps.emplace(std::move(op));
+                }
+                mSock->signal();
+            };
+
+
+
+            void cancel() override {
+                std::cout << "Please override SocketInterface::cancel() if you" <<
+                    " want to properly support cancel operations. Calling std::terminate() " << LOCATION << std::endl;
+                std::terminate();
+            };
+        };
+
+        Socket* getSocket()
+        {
+            return new Socket(this);
+        }
+         
+        void signal()
+        {
+            mCV.notify_all();
+        }
+
+        Operation getOp()
+        {
+            std::unique_lock<std::mutex> lk(mMtx);
+
+            if (mOps.size() == 0)
+                mCV.wait(lk, [this]() {return mOps.size() > 0; });
+
+            auto op = std::move(mOps.front());
+            mOps.pop();
+            return op;
+        }
+
     };
 
 
@@ -133,44 +334,44 @@ namespace osuCrypto
         BoostSocketInterface(boost::asio::ip::tcp::socket&& ios)
             : mSock(std::forward<boost::asio::ip::tcp::socket>(ios))
         {
-            //std::cout << IoStream::lock << "create " << this << std::endl << IoStream::unlock;
         }
 
         ~BoostSocketInterface() override
         {
-            //std::cout << IoStream::lock << "destoy " << this << std::endl << IoStream::unlock;
-
             close();
         }
 
         void close() override {
 			boost::system::error_code ec;
 			mSock.close(ec);
-			if (ec) std::cout <<"BoostSocketInterface::close() error: "<< ec.message() << std::endl; 
+			if (ec) 
+                std::cout <<"BoostSocketInterface::close() error: "<< ec.message() << std::endl; 
 		}
 
-        void async_recv(span<boost::asio::mutable_buffer> buffers, const std::function<void(const boost::system::error_code&, u64 bytesTransfered)>& fn) override
+        void cancel() override
         {
-            boost::asio::async_read(mSock, buffers, fn);
+			boost::system::error_code ec;
+#if defined(BOOST_ASIO_MSVC) && (BOOST_ASIO_MSVC >= 1400) \
+  && (!defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0600) \
+  && !defined(BOOST_ASIO_ENABLE_CANCELIO)
+            mSock.close(ec);
+#else
+			mSock.cancel(ec);
+#endif
+
+			if (ec) 
+                std::cout <<"BoostSocketInterface::cancel() error: "<< ec.message() << std::endl; 
         }
 
-        void async_send(span<boost::asio::mutable_buffer> buffers, const std::function<void(const boost::system::error_code&, u64 bytesTransfered)>& fn) override
+        void async_recv(span<boost::asio::mutable_buffer> buffers, io_completion_handle&& fn) override
         {
-            boost::asio::async_write(mSock, buffers, fn);
+            boost::asio::async_read(mSock, buffers, std::forward<io_completion_handle>(fn));
         }
 
-        void send(span<boost::asio::mutable_buffer> buffers, bool& error, u64& bytesTransfered) override
+        void async_send(span<boost::asio::mutable_buffer> buffers, io_completion_handle&& fn) override
         {
-            boost::system::error_code ec;
-            bytesTransfered = boost::asio::write(mSock, buffers, ec);
-            error = static_cast<bool>(ec);
-        }
-
-        void recv(span<boost::asio::mutable_buffer> buffers, bool& error, u64& bytesTransfered) override
-        {
-            boost::system::error_code ec;
-            bytesTransfered = boost::asio::read(mSock, buffers, ec);
-            error = static_cast<bool>(ec);
+            boost::asio::async_write(mSock, buffers, std::forward<io_completion_handle>(fn));
         }
     };
 }
+#endif

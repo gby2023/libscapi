@@ -1,21 +1,3 @@
-/*
-Copyright (C) 2017 Ming-Shing Chen
-
-This file is part of BitPolyMul.
-
-BitPolyMul is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-BitPolyMul is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License
-along with BitPolyMul.  If not, see <http://www.gnu.org/licenses/>.
-*/
 #include "bitpolymul.h"
 #ifdef ENABLE_BITPOLYMUL
 #include <stdio.h>
@@ -32,8 +14,9 @@ along with BitPolyMul.  If not, see <http://www.gnu.org/licenses/>.
 #include <cryptoTools/Common/Defines.h>
 
 using namespace oc;
+using namespace bpm;
 
-namespace bpm
+namespace osuCrypto
 {
     void FFTPoly::resize(u64 n)
     {
@@ -163,133 +146,15 @@ namespace bpm
 
     void bitpolymul(uint64_t* c, const uint64_t* a, const uint64_t* b, uint64_t _n_64)
     {
-        i64 n = i64(_n_64);
-        bpm::FFTPoly A(span<const u64>(a, n));
-        bpm::FFTPoly B(span<const u64>(b, n));
+        u64 n = u64(_n_64);
+        FFTPoly A(span<const u64>(a, n));
+        FFTPoly B(span<const u64>(b, n));
 
         A.multEq(B);
 
         A.decode({ c, 2 * n });
     }
 
-
-    void bitpolymul_2_128(uint64_t* c, const uint64_t* a, const uint64_t* b, u64 _n_64)
-    {
-        if (0 == _n_64) return;
-        u64 n_64 = 0;
-        if (1 == _n_64)
-            n_64 = _n_64;
-        else {
-            n_64 = 1ull << oc::log2ceil(_n_64);
-        }
-
-        if (256 > n_64) n_64 = 256;
-
-        auto a_bc = bpm::aligned_vector<u64>(n_64);
-        auto b_bc = bpm::aligned_vector<u64>(n_64);
-
-        memcpy(a_bc.data(), a, sizeof(uint64_t) * _n_64);
-        for (u64 i = _n_64; i < n_64; i++) a_bc[i] = 0;
-        bc_to_lch_2_unit256(a_bc.data(), n_64);
-
-        memcpy(b_bc.data(), b, sizeof(uint64_t) * _n_64);
-        for (u64 i = _n_64; i < n_64; i++) b_bc[i] = 0;
-        bc_to_lch_2_unit256(b_bc.data(), n_64);
-
-
-        u64 n_terms = n_64;
-        u64 log_n = __builtin_ctzll(n_terms);
-        auto a_fx = bpm::aligned_vector<u64>(2 * n_terms);
-        auto b_fx = bpm::aligned_vector<u64>(2 * n_terms);
-
-        encode_128_half_input_zero(a_fx.data(), a_bc.data(), n_terms);
-        encode_128_half_input_zero(b_fx.data(), b_bc.data(), n_terms);
-
-        btfy_128(b_fx.data(), n_terms, 64 + log_n + 1);
-        btfy_128(a_fx.data(), n_terms, 64 + log_n + 1);
-
-        for (u64 i = 0; i < n_terms; i++)
-        {
-            gf2ext128_mul_sse(
-                (uint8_t*)& a_fx[i * 2],
-                (uint8_t*)& a_fx[i * 2],
-                (uint8_t*)& b_fx[i * 2]);
-        }
-
-        i_btfy_128(a_fx.data(), n_terms, 64 + log_n + 1);
-
-        decode_128(b_fx.data(), a_fx.data(), n_terms);
-
-        bc_to_mono_2_unit256(b_fx.data(), 2 * n_64);
-
-        for (u64 i = 0; i < (2 * _n_64); i++) {
-            c[i] = b_fx[i];
-        }
-
-    }
-
-
-
-
-
-
-    ///////////////////////////////////////////////////
-
-
-    void bitpolymul_2_64(uint64_t* c, const uint64_t* a, const uint64_t* b, u64 _n_64)
-    {
-        if (0 == _n_64) return;
-        if (_n_64 > (1 << 26)) { printf("un-supported length of polynomials."); exit(-1); }
-        u64 n_64 = 0;
-        if (1 == _n_64) n_64 = _n_64;
-        else {
-            n_64 = 1ull << oc::log2ceil(_n_64);
-        }
-
-        if (256 > n_64) n_64 = 256;
-
-        auto a_bc_ = bpm::aligned_vector<u64>(n_64);
-        auto b_bc_ = bpm::aligned_vector<u64>(n_64);
-        uint64_t* a_bc = a_bc_.data();
-        uint64_t* b_bc = b_bc_.data();
-
-        memcpy(a_bc, a, sizeof(uint64_t) * _n_64);
-        for (u64 i = _n_64; i < n_64; i++) a_bc[i] = 0;
-        bc_to_lch_2_unit256(a_bc, n_64);
-
-        memcpy(b_bc, b, sizeof(uint64_t) * _n_64);
-        for (u64 i = _n_64; i < n_64; i++) b_bc[i] = 0;
-        bc_to_lch_2_unit256(b_bc, n_64);
-
-
-        u64 n_terms = n_64 * 2;
-        u64 log_n = __builtin_ctzll(n_terms);
-
-        auto a_fx_ = bpm::aligned_vector<u64>(n_terms);
-        auto b_fx_ = bpm::aligned_vector<u64>(n_terms);
-        uint64_t* a_fx = a_fx_.data();
-        uint64_t* b_fx = b_fx_.data();
-
-        encode_64_half_input_zero(a_fx, a_bc, n_terms);
-        encode_64_half_input_zero(b_fx, b_bc, n_terms);
-
-        btfy_64(b_fx, n_terms, 32 + log_n + 1);
-        btfy_64(a_fx, n_terms, 32 + log_n + 1);
-
-        for (u64 i = 0; i < n_terms; i += 4) {
-            cache_prefetch(&a_fx[i + 4], _MM_HINT_T0);
-            cache_prefetch(&b_fx[i + 4], _MM_HINT_T0);
-            gf2ext64_mul_4x4_avx2((uint8_t*)& a_fx[i], (uint8_t*)& a_fx[i], (uint8_t*)& b_fx[i]);
-        }
-        i_btfy_64(a_fx, n_terms, 32 + log_n + 1);
-        decode_64(b_fx, a_fx, n_terms);
-
-        bc_to_mono_2_unit256(b_fx, n_terms);
-
-        for (u64 i = 0; i < (2 * _n_64); i++) {
-            c[i] = b_fx[i];
-        }
-    }
 
 }
 #endif

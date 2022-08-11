@@ -1,4 +1,5 @@
 #include "Rr17NcoOtReceiver.h"
+#ifdef ENABLE_RR
 
 #include <cryptoTools/Network/Channel.h>
 #include <cryptoTools/Crypto/RandomOracle.h>
@@ -29,10 +30,17 @@ namespace osuCrypto
         p->mEncodeSize = mEncodeSize;
         p->mKos = mKos.splitBase();
 
+#ifdef OC_NO_MOVE_ELISION 
         return std::move(ret);
+#else
+        return ret;
+#endif
     }
     void Rr17NcoOtReceiver::init(u64 numOtExt, PRNG& prng, Channel& chl)
     {
+        if (hasBaseOts() == false)
+            genBaseOts(prng, chl);
+
         mMessages.resize(mEncodeSize * numOtExt);
         mChoices.resize(mEncodeSize * numOtExt);
         //std::cout << "ots = " << log2(mMessages.size()) << std::endl;
@@ -151,3 +159,4 @@ namespace osuCrypto
         // no op
     }
 }
+#endif

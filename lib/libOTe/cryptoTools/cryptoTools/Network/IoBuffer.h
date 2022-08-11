@@ -1,9 +1,14 @@
 #pragma once
 // This file and the associated implementation has been placed in the public domain, waiving all copyright. No restrictions are placed on its use. 
+#include <cryptoTools/Common/config.h>
+#ifdef ENABLE_BOOST
+
+
 #include <cryptoTools/Common/Defines.h>
 
 #include <string> 
 #include <future> 
+#include <cassert> 
 #include <functional> 
 #include <memory> 
 #include <boost/asio.hpp>
@@ -17,10 +22,62 @@
 
 //#define ENABLE_NET_LOG
 
-namespace osuCrypto {
+namespace osuCrypto
+{
+    enum class Errc
+    {
+        success = 0
+        //CloseChannel = 1 // error indicating we should call the close handler.
+    };
+}
+namespace boost {
+    namespace system {
+        template <>
+        struct is_error_code_enum<osuCrypto::Errc> : true_type {};
+    }
+}
+
+namespace { // anonymous namespace
+
+    struct osuCryptoErrCategory : boost::system::error_category
+    {
+        const char* name() const noexcept override
+        {
+            return "osuCrypto";
+        }
+
+        std::string message(int ev) const override
+        {
+            switch (static_cast<osuCrypto::Errc>(ev))
+            {
+            case osuCrypto::Errc::success:
+                return "Success";
+
+            // case osuCrypto::Errc::CloseChannel:
+            //     return "the channel should be closed.";
+
+            default:
+                return "(unrecognized error)";
+            }
+        }
+    };
+
+    const osuCryptoErrCategory theCategory{};
+
+} // anonymous namespace
+
+namespace osuCrypto
+{
     using error_code = boost::system::error_code;
+
+    inline error_code make_error_code(Errc e)
+    {
+        return { static_cast<int>(e), theCategory };
+    }
+
     class ChannelBase;
     using io_completion_handle = std::function<void(const error_code&, u64)>;
+    using completion_handle = std::function<void(const error_code&)>;
 
     template<typename, typename T>
     struct has_resize {
@@ -51,6 +108,8 @@ namespace osuCrypto {
     };
 
 
+#define _SILENCE_CXX20_IS_POD_DEPRECATION_WARNING
+
     /// type trait that defines what is considered a STL like Container
     /// 
     /// Must have the following member types:  pointer, size_type, value_type
@@ -64,11 +123,11 @@ namespace osuCrypto {
         std::is_same<typename std::enable_if<
         std::is_convertible<
         typename Container::pointer,
-        decltype(std::declval<Container>().data())>::value &&
+        decltype(std::declval<Container>().data())>::value&&
         std::is_convertible<
         typename Container::size_type,
-        decltype(std::declval<Container>().size())>::value &&
-        std::is_pod<typename Container::value_type>::value &&
+        decltype(std::declval<Container>().size())>::value&&
+        std::is_pod<typename Container::value_type>::value&&
         std::is_pod<Container>::value == false>::type
         ,
         void>;
@@ -78,7 +137,7 @@ namespace osuCrypto {
     class ReceiveAtMost
     {
     public:
-        using pointer = T * ;
+        using pointer = T *;
         using value_type = T;
         using size_type = u64;
 
@@ -118,21 +177,19 @@ namespace osuCrypto {
             return mTrueReceiveSize;
         }
     };
+
     static_assert(is_container<ReceiveAtMost<u8>>::value, "sss");
     static_assert(has_resize<ReceiveAtMost<u8>, void(typename ReceiveAtMost<u8>::size_type)>::value, "sss");
 
     class BadReceiveBufferSize : public std::runtime_error
     {
     public:
-        //std::string mWhat;
         u64 mSize;
-        std::function<void(u8*)> mRescheduler;
-
-        BadReceiveBufferSize(const std::string& what, u64 length, std::function<void(u8*)> rescheduler)
+        
+        BadReceiveBufferSize(const std::string& what, u64 length)
             :
             std::runtime_error(what),
-            mSize(length),
-            mRescheduler(std::move(rescheduler))
+            mSize(length)
         { }
 
         BadReceiveBufferSize(const BadReceiveBufferSize& src) = default;
@@ -169,315 +226,32 @@ namespace osuCrypto {
         return true;
     }
 
-    template<typename T>
-    class SpscQueue
-    {
-    public:
-
-        struct BaseQueue
-        {
-            BaseQueue() = delete;
-            BaseQueue(const BaseQueue&) = delete;
-            BaseQueue(BaseQueue&&) = delete;
-
-            BaseQueue(u64 cap)
-                : mPopIdx(0)
-                , mPushIdx(0)
-                , mStorage((T*)new u8[cap * sizeof(T)], cap)
-            {};
-
-            ~BaseQueue()
-            {
-                while (size())
-                {
-                    pop_front();
-                }
-
-                delete[] (u8*)mStorage.data();
-            }
-
-            std::atomic<u64> mPopIdx;
-            std::atomic<u64> mPushIdx;
-            span<T> mStorage;
-
-            u64 capacity() const { return mStorage.size(); }
-            u64 size() const { return mPushIdx.load(std::memory_order_relaxed) - mPopIdx.load(std::memory_order_relaxed); }
-            bool isFull() const { return size() == capacity(); }
-            bool isEmpty() const { return size() == 0; }
-
-            void push_back(T&& v)
-            {
-                if (isFull()) // synchonize mPopIdx with #2
-                    throw std::runtime_error("Queue is full " LOCATION);
-
-                auto pushIdx = mPushIdx.load(std::memory_order_relaxed) % capacity();
-                new (&mStorage[pushIdx]) T(std::move(v));
-
-                mPushIdx.fetch_add(1, std::memory_order_release); // synchonize storage with #1
-            }
-
-            T& front()
-            {
-                auto popIdx = mPopIdx.load(std::memory_order_relaxed);  // synchonize mPopIdx with #2
-                auto pushIdx = mPushIdx.load(std::memory_order_acquire); // synchonize storage with #1
-                if (popIdx == pushIdx)
-                    throw std::runtime_error("queue is empty. " LOCATION);
-
-                return mStorage[popIdx % capacity()];
-            }
-
-            void pop_front()
-            {
-                if (isEmpty())
-                    throw std::runtime_error("queue is empty. " LOCATION);
-
-                auto popIdx = mPopIdx.load(std::memory_order_relaxed);
-                mStorage[popIdx % capacity()].~T();
-                mPopIdx.fetch_add(1, std::memory_order_relaxed);
-            }
-        };
-
-        std::list<BaseQueue> mQueues;
-        mutable std::mutex mMtx;
-
-        SpscQueue(u64 cap = 64)
-        {
-            mQueues.emplace_back(cap);
-        }
-
-        bool isEmpty() const { 
-            std::lock_guard<std::mutex> l(mMtx);
-            return mQueues.back().isEmpty(); 
-        }
-
-        void push_back(T&& v)
-        {
-            std::lock_guard<std::mutex> l(mMtx);
-            if (mQueues.back().isFull())
-            {
-                // create a new subQueue of four times the size.
-                //std::lock_guard<std::mutex> l(mMtx);
-                mQueues.emplace_back(mQueues.back().capacity() * 4);
-            }
-
-            mQueues.back().push_back(std::move(v));
-        }
-
-        T& front()
-        {
-            std::lock_guard<std::mutex> l(mMtx);
-            return mQueues.front().front();
-        }
-
-        void pop_front()
-        {
-            std::lock_guard<std::mutex> l(mMtx);
-            mQueues.front().pop_front();
-
-            if (mQueues.front().size() == 0 && mQueues.size() > 1)
-            {
-                // a larger subqueue was added and the current one is
-                // empty. Migrate to the larger one.
-                //std::lock_guard<std::mutex> l(mMtx);
-                mQueues.pop_front();
-            }
-        }
-    };
-
-
-    template<typename T, int StorageSize = 248 /* makes the whole thing 256 bytes */>
-    class SBO_ptr
-    {
-    public:
-        struct SBOInterface
-        {
-            virtual ~SBOInterface() {};
-
-            // assumes dest is uninitialized and calls the 
-            // placement new move constructor with this as 
-            // dest destination.
-            virtual void moveTo(SBO_ptr<T, StorageSize>& dest) = 0;
-        };
-
-        template<typename U>
-        struct Impl : SBOInterface
-        {
-
-            template<typename... Args,
-                typename Enabled =
-                typename std::enable_if<
-                std::is_constructible<U, Args...>::value
-                >::type
-            >
-                Impl(Args&&... args)
-                :mU(std::forward<Args>(args)...)
-            {}
-
-            void moveTo(SBO_ptr<T, StorageSize>& dest) override
-            {
-                Expects(dest.get() == nullptr);
-                dest.New<U>(std::move(mU));
-            }
-
-            U mU;
-        };
-
-        using base_type = T;
-        using Storage = typename std::aligned_storage<StorageSize>::type;
-        
-        template<typename U>
-        using Impl_type =  Impl<U>;
-
-        T* mData = nullptr;
-        Storage mStorage;
-
-        SBO_ptr() = default;
-        SBO_ptr(const SBO_ptr<T>&) = delete;
-
-        SBO_ptr(SBO_ptr<T>&& m)
-        {
-            *this = std::forward<SBO_ptr<T>>(m);
-        }
-
-        ~SBO_ptr()
-        {
-            destruct();
-        }
-
-
-        SBO_ptr<T, StorageSize>& operator=(SBO_ptr<T>&& m)
-        {
-            destruct();
-
-            if (m.isSBO())
-            {
-                m.getSBO().moveTo(*this);
-            }
-            else
-            {
-                std::swap(mData, m.mData);
-            }
-            return *this;
-        }
-
-        template<typename U, typename... Args >
-        typename std::enable_if<
-            (sizeof(Impl_type<U>) <= sizeof(Storage)) &&
-            std::is_base_of<T, U>::value &&
-            std::is_constructible<U, Args...>::value
-        >::type
-            New(Args&&... args)
-        {
-            destruct();
-
-            // Do a placement new to the local storage and then take the
-            // address of the U type and store that in our data pointer.
-            Impl<U>* ptr = (Impl<U>*)&getSBO();
-            new (ptr) Impl<U>(std::forward<Args>(args)...);
-            mData = &(ptr->mU);
-        }
-
-        template<typename U, typename... Args >
-        typename std::enable_if<
-            (sizeof(Impl_type<U>) > sizeof(Storage)) &&
-            std::is_base_of<T, U>::value &&
-            std::is_constructible<U, Args...>::value
-                >::type
-            New(Args&&... args)
-        {
-            destruct();
-
-            //int n1 = sizeof(Impl_type<U>);
-            //int n2 = sizeof(Storage);
-
-            // this object is too big, use the allocator. Local storage
-            // will be unused as denoted by (isSBO() == false).
-            mData = new U(std::forward<Args>(args)...);
-        }
-
-
-        bool isSBO() const 
-        { 
-            auto begin = (u8*)this;
-            auto end = begin + sizeof(SBO_ptr<T, StorageSize>);
-            return 
-                ((u8*)get() >= begin) &&
-                ((u8*)get() < end); 
-        }
-
-        T* operator->() { return get(); }
-        T* get() { return mData; }
-
-        const T* operator->() const { return get(); }
-        const T* get() const  { return mData; }
-
-
-    //private:
-
-        void destruct()
-        {
-            if (isSBO())
-                // manually call the virtual destructor.
-                getSBO().~SBOInterface();
-            else if(get())
-                // let the compiler call the destructor
-                delete get();
-
-            mData = nullptr;
-        }
-
-
-
-
-
-        SBOInterface& getSBO()
-        {
-            return *(SBOInterface*)&mStorage;
-        }
-
-        const SBOInterface& getSBO() const
-        {
-            return *(SBOInterface*)&mStorage;
-        }
-    };
-
-
-    template<typename T, typename U, typename... Args>
-    typename  std::enable_if<
-        std::is_constructible<U, Args...>::value &&
-        std::is_base_of<T, U>::value, SBO_ptr<T>>::type
-        make_SBO_ptr(Args&&... args)
-    {
-        SBO_ptr<T> t;
-        t.template New<U>(std::forward<Args>(args)...);
-        return (t);
-    }
-
-
     namespace details
     {
-
-        class operation_canceled :
-            public boost::system::error_category
+        class ChlOperation
         {
         public:
-            const char *name() const noexcept { return "cryptoTools"; }
-            std::string message(int ev) const { return "local party called cancel on the operation."; }
-        };
-        extern operation_canceled opCancel;
+            ChlOperation() = default;
+            ChlOperation(ChlOperation&& copy) = default;
+            ChlOperation(const ChlOperation& copy) = default;
 
-        class SendOperation
-        {
-        public:
-            SendOperation() = default;
-            SendOperation(SendOperation&& copy) = default;
-            SendOperation(const SendOperation& copy) = default;
+            virtual ~ChlOperation() {}
 
-            virtual ~SendOperation() {}
-
+            // perform the operation
             virtual void asyncPerform(ChannelBase* base, io_completion_handle&& completionHandle) = 0;
-            virtual void cancel(std::string reason) = 0;
-            virtual std::string toString() const;
+
+            // cancel the operation, this is called durring or after asyncPerform 
+            // has been called. If after then it should be a no-op.
+            virtual void asyncCancelPending(ChannelBase* base, const error_code& ec) = 0;
+
+            // cancel the operation, this is called before asyncPerform. 
+            virtual void asyncCancel(ChannelBase* base, const error_code& ec, io_completion_handle&& completionHandle) = 0; 
+            // { 
+            //     auto ec2 = boost::system::errc::make_error_code(boost::system::errc::success);
+            //     completionHandle(ec2, 0);
+            // }
+
+            virtual std::string toString() const = 0;
 
 #ifdef ENABLE_NET_LOG
             u64 mIdx = 0;
@@ -486,25 +260,42 @@ namespace osuCrypto {
 #endif
         };
 
-        class RecvOperation
+        class RecvOperation : public ChlOperation { };
+        class SendOperation : public ChlOperation { };
+
+        template<typename Base>
+        struct BaseCallbackOp : public Base
         {
-        public:
-            RecvOperation() = default;
-            RecvOperation(RecvOperation&& copy) = default;
-            RecvOperation(const RecvOperation& copy) = default;
+            std::function<void()> mCallback;
 
-            virtual ~RecvOperation() {}
+            BaseCallbackOp(const std::function<void()>& cb) : mCallback(cb){}
+            BaseCallbackOp(std::function<void()>&& cb) : mCallback(std::move(cb)){}
 
-            virtual void asyncPerform(ChannelBase* base, io_completion_handle&& completionHandle) = 0;
-            virtual void cancel(std::string reason) = 0;
-            virtual std::string toString() const;
+            void asyncPerform(ChannelBase* base, io_completion_handle&& completionHandle) override {
+                error_code ec = make_error_code(Errc::success);
+                mCallback();
+                completionHandle(ec, 0);
+            }
 
-#ifdef ENABLE_NET_LOG
-            u64 mIdx = 0;
-            Log* mLog = nullptr;
-            void log(std::string msg) { if (mLog) mLog->push(msg); }
-#endif
+            void asyncCancelPending(ChannelBase* base, const error_code& ec) override {}
+
+            void asyncCancel(ChannelBase* base, const error_code&, io_completion_handle&& completionHandle) override
+            {
+                asyncPerform(base, std::forward<io_completion_handle>(completionHandle));
+            }
+
+            std::string toString() const override
+            {
+                return std::string("CallbackOp #") 
+    #ifdef ENABLE_NET_LOG
+                    + std::to_string(Base::mIdx)
+    #endif
+                    ;
+            }
         };
+
+        using RecvCallbackOp = BaseCallbackOp<RecvOperation>;
+        using SendCallbackOp = BaseCallbackOp<SendOperation>;
 
         using size_header_type = u32;
 
@@ -527,13 +318,13 @@ namespace osuCrypto {
                 : mHeaderSize(size_header_type(size))
                 , mBuff{ (u8*)data,  span<u8>::size_type(size) }
             {
-                Expects(size < std::numeric_limits<size_header_type>::max());
+                assert(size < std::numeric_limits<size_header_type>::max());
             }
 
             void set(const u8* data, u64 size)
             {
-                Expects(size < std::numeric_limits<size_header_type>::max());
-                mBuff = {(u8*)data, span<u8>::size_type(size)};
+                assert(size < std::numeric_limits<size_header_type>::max());
+                mBuff = { (u8*)data, span<u8>::size_type(size) };
             }
 
             inline u64 getHeaderSize() const { return mHeaderSize; }
@@ -542,21 +333,21 @@ namespace osuCrypto {
 
             inline std::array<boost::asio::mutable_buffer, 2> getSendBuffer()
             {
-                Expects(mBuff.size());
+                assert(mBuff.size());
                 mHeaderSize = size_header_type(mBuff.size());
                 return { { getRecvHeaderBuffer(), getRecvBuffer() } };
             }
 
-            inline boost::asio::mutable_buffer getRecvHeaderBuffer(){
+            inline boost::asio::mutable_buffer getRecvHeaderBuffer() {
                 return boost::asio::mutable_buffer(&mHeaderSize, sizeof(size_header_type));
             }
 
-            inline boost::asio::mutable_buffer getRecvBuffer(){
+            inline boost::asio::mutable_buffer getRecvBuffer() {
                 return boost::asio::mutable_buffer(mBuff.data(), mBuff.size());
             }
 
         protected:
-            size_header_type mHeaderSize;
+            size_header_type mHeaderSize = 0;
             span<u8> mBuff;
         };
 
@@ -574,7 +365,13 @@ namespace osuCrypto {
             FixedSendBuff(FixedSendBuff&& v) = default;
 
             void asyncPerform(ChannelBase* base, io_completion_handle&& completionHandle) override;
-            void cancel(std::string _) override {};
+            
+            void asyncCancelPending(ChannelBase* base, const error_code& ec) override {}
+
+            void asyncCancel(ChannelBase* base, const error_code&, io_completion_handle&& completionHandle) override {
+                error_code ec = make_error_code(Errc::success);
+                completionHandle(ec , 0);
+            }
 
             std::string toString() const override;
         };
@@ -591,7 +388,7 @@ namespace osuCrypto {
                 set(channelBuffData(mObj), channelBuffSize(mObj));
             }
 
-            MoveSendBuff(MoveSendBuff&&v)
+            MoveSendBuff(MoveSendBuff&& v)
                 : MoveSendBuff(std::move(v.mObj))
             {}
         };
@@ -649,12 +446,13 @@ namespace osuCrypto {
         public:
 
             io_completion_handle mComHandle;
-            ChannelBase* mBase;
+            ChannelBase* mBase = nullptr;
             std::promise<void> mPromise;
 
 
             FixedRecvBuff(FixedRecvBuff&& v)
                 : BasicSizedBuff(v.getBufferData(), v.getBufferSize())
+                , RecvOperation(static_cast<RecvOperation&&>(v))
                 , mComHandle(std::move(v.mComHandle))
                 , mBase(v.mBase)
                 , mPromise(std::move(v.mPromise))
@@ -672,17 +470,16 @@ namespace osuCrypto {
             }
 
             void asyncPerform(ChannelBase* base, io_completion_handle&& completionHandle) override;
-            void cancel(std::string reason) override
+
+            void asyncCancel(ChannelBase* base, const error_code& ec, io_completion_handle&& completionHandle) override
             {
-                mPromise.set_exception(
-                    std::make_exception_ptr(
-                        CanceledOperation(std::move(reason))));
+                mPromise.set_exception(std::make_exception_ptr(std::runtime_error(ec.message())));
+                completionHandle(ec, 0);
+            }
+            
+            void asyncCancelPending(ChannelBase* base, const error_code& ec) override {}
 
-                //error_code ec{ 1, opCancel };
 
-                //mComHandle(ec, 0);
-                    
-            };
             std::string toString() const override;
 
             virtual void resizeBuffer(u64) {}
@@ -732,7 +529,7 @@ namespace osuCrypto {
 
 
 
-
+        boost::asio::io_context& getIOService(ChannelBase* base);
 
         template< typename T>
         class WithCallback : public T
@@ -740,7 +537,7 @@ namespace osuCrypto {
         public:
 
             template<typename CB, typename... Args>
-            WithCallback(CB&& cb, Args&&... args)
+            WithCallback(CB&& cb, Args&& ... args)
                 : T(std::forward<Args>(args)...)
                 , mCallback(std::forward<CB>(cb))
             {}
@@ -758,40 +555,46 @@ namespace osuCrypto {
             {
                 mWithCBCompletionHandle = std::move(completionHandle);
 
-                T::asyncPerform(base, [this](const error_code& ec, u64 bytes) mutable
-                {
-                    if (mCallback.which() == 0)
+                T::asyncPerform(base, [this, base](const error_code& ec, u64 bytes) mutable
                     {
-                        auto& c = boost::get<std::function<void()>>(mCallback);
-                        if(c)
-                            c();
-                        c = {};
-                    }
-                    else
-                    {
-                        auto& c = boost::get<std::function<void(const error_code&)>>(mCallback);
-                        if (c)
-                            c(ec);
-                        c = {};
-                    }
+                        if (mCallback.which() == 0)
+                        {
+                            auto& c = boost::get<std::function<void()>>(mCallback);
+                            if (c)
+                            {
+                                boost::asio::post(getIOService(base).get_executor(), std::move(c));
+                            }
+                        }
+                        else
+                        {
+                            auto& c = boost::get<std::function<void(const error_code&)>>(mCallback);
+                            if (c)
+                            {
+                                boost::asio::post(getIOService(base).get_executor(), [cc = std::move(c), ec](){
+                                    cc(ec);
+                                });
+                            }
+                        }
 
-                    mWithCBCompletionHandle(ec, bytes);
-                });
+                        mWithCBCompletionHandle(ec, bytes);
+                    });
             }
 
-            void cancel(std::string reason) override
+            void asyncCancel(ChannelBase* base, const error_code& ec, io_completion_handle&& completionHandle) override
             {
-                T::cancel(reason);
 
                 if (mCallback.which() == 1)
                 {
-                    error_code ec{ 1, opCancel };
                     auto& c = boost::get<std::function<void(const error_code&)>>(mCallback);
                     if (c)
                         c(ec);
                     c = {};
                 }
+
+                T::asyncCancel(base, ec, std::forward<io_completion_handle>(completionHandle));
             }
+            
+            void asyncCancelPending(ChannelBase* base, const error_code& ec) override {}
 
         };
 
@@ -801,7 +604,7 @@ namespace osuCrypto {
         public:
 
             template<typename... Args>
-            WithPromise(std::future<void>& f,Args&&... args)
+            WithPromise(std::future<void>& f, Args&& ... args)
                 : T(std::forward<Args>(args)...)
             {
                 f = mPromise.get_future();
@@ -821,25 +624,28 @@ namespace osuCrypto {
                 mWithPromCompletionHandle = std::move(completionHandle);
 
                 T::asyncPerform(base, [this](const error_code& ec, u64 bytes) mutable
-                {
-                    if (ec) mPromise.set_exception(std::make_exception_ptr(
-                        CanceledOperation("network send error: " + ec.message() + "\n" LOCATION)));
-                    else mPromise.set_value();
+                    {
+                        if (ec) mPromise.set_exception(std::make_exception_ptr(
+                            CanceledOperation("network send error: " + ec.message() + "\n" LOCATION)));
+                        else mPromise.set_value();
 
-                    mWithPromCompletionHandle(ec, bytes);
-                });
+                        mWithPromCompletionHandle(ec, bytes);
+                    });
             }
 
-            void cancel(std::string reason) override
+            void asyncCancel(ChannelBase* base,const error_code& ec, io_completion_handle&& completionHandle) override
             {
                 mPromise.set_exception(
                     std::make_exception_ptr(
-                        CanceledOperation(reason)));
+                        CanceledOperation(ec.message())));
 
-                T::cancel(std::move(reason));
+                T::asyncCancel(base, ec, std::forward<io_completion_handle>(completionHandle));
             }
+
+
         };
 
 
     }
 }
+#endif

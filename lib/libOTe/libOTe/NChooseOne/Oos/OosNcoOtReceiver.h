@@ -1,11 +1,14 @@
 #pragma once
 // This file and the associated implementation has been placed in the public domain, waiving all copyright. No restrictions are placed on its use. 
+#include "libOTe/config.h"
+#ifdef ENABLE_OOS
 #include "libOTe/NChooseOne/NcoOtExt.h"
 #include <cryptoTools/Network/Channel.h>
 #include <vector>
 #include "libOTe/Tools/LinearCode.h"
 //#include "libOTe/NChooseOne/KkrtNcoOtReceiver.h"
 #include <cryptoTools/Common/Timer.h>
+#include <future>
 #ifdef GetMessage
 #undef GetMessage
 #endif
@@ -33,6 +36,7 @@ namespace osuCrypto
         u64 mStatSecParam = 0;
         LinearCode mCode;
         u64 mCorrectionIdx, mInputByteCount = 0;
+        block mChallengeSeed = ZeroBlock;
 
         std::vector<std::array<PRNG, 2>> mGens;
         Matrix<block> mT0;
@@ -73,7 +77,7 @@ namespace osuCrypto
             v.mHasPendingSendFuture = false;
             v.mHasBase = false;
 #ifndef NDEBUG
-            mEncodeFlags = std::move(mEncodeFlags);
+            mEncodeFlags = std::move(v.mEncodeFlags);
 #endif
         }
 
@@ -167,8 +171,6 @@ namespace osuCrypto
 
         std::vector<block> mWBuff, mTBuff;
         void sendFinalization(Channel& chl, block seed);
-
-        block mChallengeSeed = ZeroBlock;
         void recvChallenge(Channel& chl);
         void computeProof();
         void sendProof(Channel& chl);
@@ -177,3 +179,4 @@ namespace osuCrypto
     };
 
 }
+#endif
