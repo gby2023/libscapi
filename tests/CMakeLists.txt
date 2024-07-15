@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 project(ScapiTests)
 
+set(SCAPI_BASE_DIR "/home/gby/libscapi")
+message(STATUS "SCAPI_BASE_DIR is set to ${SCAPI_BASE_DIR}")
+
 set(CMAKE_CXX_STANDARD 14)
 if(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES aarch64)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fPIC -march=armv8-a+crypto -flax-vector-conversions")

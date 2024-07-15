@@ -212,11 +212,11 @@ compile-libote-17:
 	$(info$(shell mkdir -p install/include/libOTe))
 ifeq ($(uname_os), Linux)
 	@cd $(builddir)/libOTe/ && find . -name "*.h" -type f |xargs -I {} cp --parents {} $(PWD)/install/include/libOTe
-	@cp -r $(builddir)/libOTe/cryptoTools/cryptoTools/gsl $(PWD)/install/include/libOTe/cryptoTools/cryptoTools
+	@cp -r $(builddir)/libOTe/cryptoTools/cryptoTools $(PWD)/install/include/libOTe/cryptoTools/cryptoTools
 endif
 ifeq ($(uname_os), Darwin)
 	@cd $(builddir)/libOTe/ && find . -name "*.h" -type f |xargs -I {} rsync -R {} $(PWD)/install/include/libOTe
-	@rsync -R $(builddir)/libOTe/cryptoTools/cryptoTools/gsl $(PWD)/install/include/libOTe/cryptoTools/cryptoTools
+	@rsync -R $(builddir)/libOTe/cryptoTools/cryptoTools $(PWD)/install/include/libOTe/cryptoTools/cryptoTools
 endif
 	@touch compile-libote
 

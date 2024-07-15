@@ -51,7 +51,7 @@ add_library(oc::cryptoTools STATIC IMPORTED)
 
 set_target_properties(oc::cryptoTools PROPERTIES
   INTERFACE_COMPILE_OPTIONS "-maes;-msse2;-msse3;-mssse3;-msse4.1;-mpclmul"
-  INTERFACE_INCLUDE_DIRECTORIES "/home/hanan/libscapi/cryptoTools/cryptoTools/..;/home/hanan/libscapi/build/libOTe/cryptoTools/cryptoTools/..;/home/hanan/libscapi/build/libOTe/out/install/linux/include"
+  INTERFACE_INCLUDE_DIRECTORIES "/home/gby/libscapi/cryptoTools/cryptoTools/..;/home/gby/libscapi/build/libOTe/cryptoTools/cryptoTools/..;/home/gby/libscapi/build/libOTe/out/install/linux/include"
   INTERFACE_LINK_LIBRARIES "nonstd::span-lite;nonstd::span-lite;Boost::system;Boost::thread;Boost::regex"
   INTERFACE_LINK_OPTIONS "-pthread"
 )
@@ -60,7 +60,7 @@ set_target_properties(oc::cryptoTools PROPERTIES
 add_library(oc::tests_cryptoTools STATIC IMPORTED)
 
 set_target_properties(oc::tests_cryptoTools PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "/home/hanan/libscapi/cryptoTools/tests_cryptoTools/..;/home/hanan/libscapi/build/libOTe/cryptoTools/tests_cryptoTools/.."
+  INTERFACE_INCLUDE_DIRECTORIES "/home/gby/libscapi/cryptoTools/tests_cryptoTools/..;/home/gby/libscapi/build/libOTe/cryptoTools/tests_cryptoTools/.."
   INTERFACE_LINK_LIBRARIES "oc::cryptoTools"
 )
 
@@ -68,14 +68,14 @@ set_target_properties(oc::tests_cryptoTools PROPERTIES
 set_property(TARGET oc::cryptoTools APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 set_target_properties(oc::cryptoTools PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "C;CXX"
-  IMPORTED_LOCATION_RELEASE "/home/hanan/libscapi/cryptoTools/cryptoTools/libcryptoTools.a"
+  IMPORTED_LOCATION_RELEASE "/home/gby/libscapi/cryptoTools/cryptoTools/libcryptoTools.a"
   )
 
 # Import target "oc::tests_cryptoTools" for configuration "Release"
 set_property(TARGET oc::tests_cryptoTools APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 set_target_properties(oc::tests_cryptoTools PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
-  IMPORTED_LOCATION_RELEASE "/home/hanan/libscapi/cryptoTools/tests_cryptoTools/libtests_cryptoTools.a"
+  IMPORTED_LOCATION_RELEASE "/home/gby/libscapi/cryptoTools/tests_cryptoTools/libtests_cryptoTools.a"
   )
 
 # This file does not depend on other imported targets which have

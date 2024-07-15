@@ -1,6 +1,5 @@
 #pragma once
 
-
 // use the miracl library for curves
 /* #undef ENABLE_MIRACL */
 
@@ -24,7 +23,6 @@
 
 // Turn on Channel logging for debugging.
 /* #undef ENABLE_NET_LOG */
-
 
 // enable the wolf ssl socket layer.
 /* #undef ENABLE_WOLFSSL */

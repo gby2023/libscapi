@@ -49,6 +49,7 @@ macro(FIND_SPAN)
     if(FETCH_SPAN_LITE)
         list(APPEND ARGS NO_DEFAULT_PATH PATHS ${OC_THIRDPARTY_HINT})
     endif()
+    list(APPEND CMAKE_PREFIX_PATH "/home/gby/libscapi/build/Release/generators/")
     find_package(span-lite ${ARGS})
 endmacro()
     
@@ -208,7 +209,7 @@ macro(FIND_BOOST)
     endif()
     #set(Boost_DEBUG ON)  #<---------- Real life saver
  
-    find_package(Boost 1.77.0 COMPONENTS system thread regex ${ARGS})
+    find_package(Boost 1.74.0 COMPONENTS system thread regex ${ARGS})
 endmacro()
 
 if(FETCH_BOOST_IMPL)

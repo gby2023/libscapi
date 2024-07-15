@@ -1,0 +1,7 @@
+[requires]
+span-lite/0.11.0
+[generators]
+CMakeDeps
+CMakeToolchain
+[layout]
+cmake_layout

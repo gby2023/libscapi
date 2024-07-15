@@ -50,7 +50,7 @@ unset(_cmake_expected_targets)
 add_library(oc::libOTe STATIC IMPORTED)
 
 set_target_properties(oc::libOTe PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "/home/hanan/libscapi/libOTe/..;/home/hanan/libscapi/build/libOTe/libOTe/.."
+  INTERFACE_INCLUDE_DIRECTORIES "/home/gby/libscapi/libOTe/..;/home/gby/libscapi/build/libOTe/libOTe/.."
   INTERFACE_LINK_LIBRARIES "oc::cryptoTools"
 )
 
@@ -58,7 +58,7 @@ set_target_properties(oc::libOTe PROPERTIES
 add_library(oc::libOTe_Tests STATIC IMPORTED)
 
 set_target_properties(oc::libOTe_Tests PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "/home/hanan/libscapi/libOTe_Tests/..;/home/hanan/libscapi/build/libOTe/libOTe_Tests/.."
+  INTERFACE_INCLUDE_DIRECTORIES "/home/gby/libscapi/libOTe_Tests/..;/home/gby/libscapi/build/libOTe/libOTe_Tests/.."
   INTERFACE_LINK_LIBRARIES "oc::libOTe"
 )
 
@@ -66,14 +66,14 @@ set_target_properties(oc::libOTe_Tests PROPERTIES
 set_property(TARGET oc::libOTe APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 set_target_properties(oc::libOTe PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
-  IMPORTED_LOCATION_RELEASE "/home/hanan/libscapi/libOTe/liblibOTe.a"
+  IMPORTED_LOCATION_RELEASE "/home/gby/libscapi/libOTe/liblibOTe.a"
   )
 
 # Import target "oc::libOTe_Tests" for configuration "Release"
 set_property(TARGET oc::libOTe_Tests APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
 set_target_properties(oc::libOTe_Tests PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_RELEASE "CXX"
-  IMPORTED_LOCATION_RELEASE "/home/hanan/libscapi/libOTe_Tests/liblibOTe_Tests.a"
+  IMPORTED_LOCATION_RELEASE "/home/gby/libscapi/libOTe_Tests/liblibOTe_Tests.a"
   )
 
 # Make sure the targets which have been exported in some other
